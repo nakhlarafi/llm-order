@@ -1,0 +1,29 @@
+{
+    "bug_id": 98,
+    "test_id": 0,
+    "test_name": "org.apache.commons.math.linear.BigMatrixImplTest.testMath209",
+    "test_body": "public void testMath209() {\nBigMatrix a = new BigMatrixImpl(new BigDecimal[][] {\n{ new BigDecimal(1), new BigDecimal(2) },\n{ new BigDecimal(3), new BigDecimal(4) },\n{ new BigDecimal(5), new BigDecimal(6) }\n}, false);\nBigDecimal[] b = a.operate(new BigDecimal[] { new BigDecimal(1), new BigDecimal(1) });\nassertEquals(a.getRowDimension(), b.length);\nassertEquals( 3.0, b[0].doubleValue(), 1.0e-12);\nassertEquals( 7.0, b[1].doubleValue(), 1.0e-12);\nassertEquals(11.0, b[2].doubleValue(), 1.0e-12);\n}\n",
+    "stack_trace": "java.lang.ArrayIndexOutOfBoundsException: 2\nat org.apache.commons.math.linear.BigMatrixImpl.operate(BigMatrixImpl.java:997)\nat org.apache.commons.math.linear.BigMatrixImplTest.testMath209(BigMatrixImplTest.java:446)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.math.linear.BigMatrixImpl:<init>([[Ljava/math/BigDecimal;Z)V",
+            "method_body": "public BigMatrixImpl(BigDecimal[][] d, boolean copyArray) {\nif (copyArray) {\ncopyIn(d);\n} else {\nif (d == null) {\nthrow new NullPointerException();\n}\nfinal int nRows = d.length;\nif (nRows == 0) {\nthrow new IllegalArgumentException(\"Matrix must have at least one row.\");\n}\nfinal int nCols = d[0].length;\nif (nCols == 0) {\nthrow new IllegalArgumentException(\"Matrix must have at least one column.\");\n}\nfor (int r = 1; r < nRows; r++) {\nif (d[r].length != nCols) {\nthrow new IllegalArgumentException(\"All input rows must have the same length.\");\n}\n}\ndata = d;\n}\nlu = null;\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.BigMatrixImpl:getColumnDimension()I",
+            "method_body": "public int getColumnDimension() {\nreturn data[0].length;\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.BigMatrixImpl:operate([Ljava/math/BigDecimal;)[Ljava/math/BigDecimal;",
+            "method_body": "public BigDecimal[] operate(BigDecimal[] v) throws IllegalArgumentException {\nif (v.length != this.getColumnDimension()) {\nthrow new IllegalArgumentException(\"vector has wrong length\");\n}\nfinal int nRows = this.getRowDimension();\nfinal int nCols = this.getColumnDimension();\nfinal BigDecimal[] out = new BigDecimal[v.length];\nfor (int row = 0; row < nRows; row++) {\nBigDecimal sum = ZERO;\nfor (int i = 0; i < nCols; i++) {\nsum = sum.add(data[row][i].multiply(v[i]));\n}\nout[row] = sum;\n}\nreturn out;\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.BigMatrixImpl:getRowDimension()I",
+            "method_body": "public int getRowDimension() {\nreturn data.length;\n}",
+            "method_id": 3
+        }
+    ]
+}

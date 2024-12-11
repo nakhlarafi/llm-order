@@ -1,0 +1,39 @@
+{
+    "bug_id": 58,
+    "test_id": 0,
+    "test_name": "org.apache.commons.lang.math.NumberUtilsTest.testLang300",
+    "test_body": "public void testLang300() {\nNumberUtils.createNumber(\"-1l\");\nNumberUtils.createNumber(\"01l\");\nNumberUtils.createNumber(\"1l\");\n}\n",
+    "stack_trace": "java.lang.NumberFormatException: 1l is not a valid number.\nat org.apache.commons.lang.math.NumberUtils.createNumber(NumberUtils.java:464)\nat org.apache.commons.lang.math.NumberUtilsTest.testLang300(NumberUtilsTest.java:1371)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.lang.math.NumberUtils:createNumber(Ljava/lang/String;)Ljava/lang/Number;",
+            "method_body": "public static Number createNumber(String str) throws NumberFormatException {\nif (str == null) {\nreturn null;\n}\nif (StringUtils.isBlank(str)) {\nthrow new NumberFormatException(\"A blank string is not a valid number\");\n}\nif (str.startsWith(\"--\")) {\n// this is protection for poorness in java.lang.BigDecimal.\n// it accepts this as a legal value, but it does not appear\n// to be in specification of class. OS X Java parses it to\n// a wrong value.\nreturn null;\n}\nif (str.startsWith(\"0x\") || str.startsWith(\"-0x\")) {\nreturn createInteger(str);\n}\nchar lastChar = str.charAt(str.length() - 1);\nString mant;\nString dec;\nString exp;\nint decPos = str.indexOf('.');\nint expPos = str.indexOf('e') + str.indexOf('E') + 1;\n\nif (decPos > -1) {\n\nif (expPos > -1) {\nif (expPos < decPos) {\nthrow new NumberFormatException(str + \" is not a valid number.\");\n}\ndec = str.substring(decPos + 1, expPos);\n} else {\ndec = str.substring(decPos + 1);\n}\nmant = str.substring(0, decPos);\n} else {\nif (expPos > -1) {\nmant = str.substring(0, expPos);\n} else {\nmant = str;\n}\ndec = null;\n}\nif (!Character.isDigit(lastChar)) {\nif (expPos > -1 && expPos < str.length() - 1) {\nexp = str.substring(expPos + 1, str.length() - 1);\n} else {\nexp = null;\n}\n//Requesting a specific type..\nString numeric = str.substring(0, str.length() - 1);\nboolean allZeros = isAllZeros(mant) && isAllZeros(exp);\nswitch (lastChar) {\ncase 'l' :\ncase 'L' :\nif (dec == null\n&& exp == null\n&& isDigits(numeric.substring(1))\n&& (numeric.charAt(0) == '-' || Character.isDigit(numeric.charAt(0)))) {\ntry {\nreturn createLong(numeric);\n} catch (NumberFormatException nfe) {\n//Too big for a long\n}\nreturn createBigInteger(numeric);\n\n}\nthrow new NumberFormatException(str + \" is not a valid number.\");\ncase 'f' :\ncase 'F' :\ntry {\nFloat f = NumberUtils.createFloat(numeric);\nif (!(f.isInfinite() || (f.floatValue() == 0.0F && !allZeros))) {\n//If it's too big for a float or the float value = 0 and the string\n//has non-zeros in it, then float does not have the precision we want\nreturn f;\n}\n\n} catch (NumberFormatException nfe) {\n// ignore the bad number\n}\n//Fall through\ncase 'd' :\ncase 'D' :\ntry {\nDouble d = NumberUtils.createDouble(numeric);\nif (!(d.isInfinite() || (d.floatValue() == 0.0D && !allZeros))) {\nreturn d;\n}\n} catch (NumberFormatException nfe) {\n// ignore the bad number\n}\ntry {\nreturn createBigDecimal(numeric);\n} catch (NumberFormatException e) {\n// ignore the bad number\n}\n//Fall through\ndefault :\nthrow new NumberFormatException(str + \" is not a valid number.\");\n\n}\n} else {\n//User doesn't have a preference on the return type, so let's start\n//small and go from there...\nif (expPos > -1 && expPos < str.length() - 1) {\nexp = str.substring(expPos + 1, str.length());\n} else {\nexp = null;\n}\nif (dec == null && exp == null) {\n//Must be an int,long,bigint\ntry {\nreturn createInteger(str);\n} catch (NumberFormatException nfe) {\n// ignore the bad number\n}\ntry {\nreturn createLong(str);\n} catch (NumberFormatException nfe) {\n// ignore the bad number\n}\nreturn createBigInteger(str);\n\n} else {\n//Must be a float,double,BigDec\nboolean allZeros = isAllZeros(mant) && isAllZeros(exp);\ntry {\nFloat f = createFloat(str);\nif (!(f.isInfinite() || (f.floatValue() == 0.0F && !allZeros))) {\nreturn f;\n}\n} catch (NumberFormatException nfe) {\n// ignore the bad number\n}\ntry {\nDouble d = createDouble(str);\nif (!(d.isInfinite() || (d.doubleValue() == 0.0D && !allZeros))) {\nreturn d;\n}\n} catch (NumberFormatException nfe) {\n// ignore the bad number\n}\n\nreturn createBigDecimal(str);\n\n}\n}\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.lang.math.NumberUtils:isAllZeros(Ljava/lang/String;)Z",
+            "method_body": "private static boolean isAllZeros(String str) {\nif (str == null) {\nreturn true;\n}\nfor (int i = str.length() - 1; i >= 0; i--) {\nif (str.charAt(i) != '0') {\nreturn false;\n}\n}\nreturn str.length() > 0;\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.lang.StringUtils:isBlank(Ljava/lang/String;)Z",
+            "method_body": "public static boolean isBlank(String str) {\nint strLen;\nif (str == null || (strLen = str.length()) == 0) {\nreturn true;\n}\nfor (int i = 0; i < strLen; i++) {\nif ((Character.isWhitespace(str.charAt(i)) == false)) {\nreturn false;\n}\n}\nreturn true;\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.lang.math.NumberUtils:createLong(Ljava/lang/String;)Ljava/lang/Long;",
+            "method_body": "public static Long createLong(String str) {\nif (str == null) {\nreturn null;\n}\nreturn Long.valueOf(str);\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.lang.math.NumberUtils:isDigits(Ljava/lang/String;)Z",
+            "method_body": "public static boolean isDigits(String str) {\nif (StringUtils.isEmpty(str)) {\nreturn false;\n}\nfor (int i = 0; i < str.length(); i++) {\nif (!Character.isDigit(str.charAt(i))) {\nreturn false;\n}\n}\nreturn true;\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.lang.StringUtils:isEmpty(Ljava/lang/String;)Z",
+            "method_body": "public static boolean isEmpty(String str) {\nreturn str == null || str.length() == 0;\n}",
+            "method_id": 5
+        }
+    ]
+}

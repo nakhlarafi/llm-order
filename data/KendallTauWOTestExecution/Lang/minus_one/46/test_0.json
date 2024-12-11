@@ -1,0 +1,24 @@
+{
+    "bug_id": 46,
+    "test_id": 0,
+    "test_name": "org.apache.commons.lang.StringEscapeUtilsTest.testEscapeJavaWithSlash",
+    "test_body": "public void testEscapeJavaWithSlash() {\nfinal String input = \"String with a slash (/) in it\";\nfinal String expected = input;\nfinal String actual = StringEscapeUtils.escapeJava(input);\n/**\n* In 2.4 StringEscapeUtils.escapeJava(String) escapes '/' characters, which are not a valid character to escape\n* in a Java string.\n*/\nassertEquals(expected, actual);\n}\n",
+    "stack_trace": "junit.framework.ComparisonFailure: expected:<...tring with a slash ([]/) in it> but was:<...tring with a slash ([\\]/) in it>\nat junit.framework.Assert.assertEquals(Assert.java:100)\nat junit.framework.Assert.assertEquals(Assert.java:107)\nat junit.framework.TestCase.assertEquals(TestCase.java:269)\nat org.apache.commons.lang.StringEscapeUtilsTest.testEscapeJavaWithSlash(StringEscapeUtilsTest.java:113)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.lang.StringEscapeUtils:escapeJavaStyleString(Ljava/io/Writer;Ljava/lang/String;Z)V",
+            "method_body": "private static void escapeJavaStyleString(Writer out, String str, boolean escapeSingleQuote) throws IOException {\nif (out == null) {\nthrow new IllegalArgumentException(\"The Writer must not be null\");\n}\nif (str == null) {\nreturn;\n}\nint sz;\nsz = str.length();\nfor (int i = 0; i < sz; i++) {\nchar ch = str.charAt(i);\n\n// handle unicode\nif (ch > 0xfff) {\nout.write(\"\\\\u\" + hex(ch));\n} else if (ch > 0xff) {\nout.write(\"\\\\u0\" + hex(ch));\n} else if (ch > 0x7f) {\nout.write(\"\\\\u00\" + hex(ch));\n} else if (ch < 32) {\nswitch (ch) {\ncase '\\b' :\nout.write('\\\\');\nout.write('b');\nbreak;\ncase '\\n' :\nout.write('\\\\');\nout.write('n');\nbreak;\ncase '\\t' :\nout.write('\\\\');\nout.write('t');\nbreak;\ncase '\\f' :\nout.write('\\\\');\nout.write('f');\nbreak;\ncase '\\r' :\nout.write('\\\\');\nout.write('r');\nbreak;\ndefault :\nif (ch > 0xf) {\nout.write(\"\\\\u00\" + hex(ch));\n} else {\nout.write(\"\\\\u000\" + hex(ch));\n}\nbreak;\n}\n} else {\nswitch (ch) {\ncase '\\'' :\nif (escapeSingleQuote) {\nout.write('\\\\');\n}\nout.write('\\'');\nbreak;\ncase '\"' :\nout.write('\\\\');\nout.write('\"');\nbreak;\ncase '\\\\' :\nout.write('\\\\');\nout.write('\\\\');\nbreak;\ncase '/' :\nout.write('\\\\');\nout.write('/');\nbreak;\ndefault :\nout.write(ch);\nbreak;\n}\n}\n}\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.lang.StringEscapeUtils:escapeJavaStyleString(Ljava/lang/String;Z)Ljava/lang/String;",
+            "method_body": "private static String escapeJavaStyleString(String str, boolean escapeSingleQuotes) {\nif (str == null) {\nreturn null;\n}\ntry {\nStringWriter writer = new StringWriter(str.length() * 2);\nescapeJavaStyleString(writer, str, escapeSingleQuotes);\nreturn writer.toString();\n} catch (IOException ioe) {\n// this should never ever happen while writing to a StringWriter\nioe.printStackTrace();\nreturn null;\n}\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.lang.StringEscapeUtils:escapeJava(Ljava/lang/String;)Ljava/lang/String;",
+            "method_body": "public static String escapeJava(String str) {\nreturn escapeJavaStyleString(str, false);\n}",
+            "method_id": 2
+        }
+    ]
+}

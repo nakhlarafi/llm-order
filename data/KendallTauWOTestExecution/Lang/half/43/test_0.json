@@ -1,0 +1,34 @@
+{
+    "bug_id": 43,
+    "test_id": 0,
+    "test_name": "org.apache.commons.lang.text.ExtendedMessageFormatTest.testEscapedQuote_LANG_477",
+    "test_body": "public void testEscapedQuote_LANG_477() {\nString pattern = \"it''s a {0,lower} 'test'!\";\nExtendedMessageFormat emf = new ExtendedMessageFormat(pattern, registry);\nassertEquals(\"it's a dummy test!\", emf.format(new Object[] {\"DUMMY\"}));\n}\n",
+    "stack_trace": "java.lang.OutOfMemoryError: Java heap space\nat java.util.Arrays.copyOf(Arrays.java:3332)\nat java.lang.AbstractStringBuilder.ensureCapacityInternal(AbstractStringBuilder.java:124)\nat java.lang.AbstractStringBuilder.append(AbstractStringBuilder.java:649)\nat java.lang.StringBuffer.append(StringBuffer.java:381)\nat org.apache.commons.lang.text.ExtendedMessageFormat.appendQuotedString(ExtendedMessageFormat.java:422)\nat org.apache.commons.lang.text.ExtendedMessageFormat.applyPattern(ExtendedMessageFormat.java:158)\nat org.apache.commons.lang.text.ExtendedMessageFormat.<init>(ExtendedMessageFormat.java:127)\nat org.apache.commons.lang.text.ExtendedMessageFormat.<init>(ExtendedMessageFormat.java:112)\nat org.apache.commons.lang.text.ExtendedMessageFormatTest.testEscapedQuote_LANG_477(ExtendedMessageFormatTest.java:100)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.lang.text.ExtendedMessageFormat:<init>(Ljava/lang/String;Ljava/util/Locale;Ljava/util/Map;)V",
+            "method_body": "public ExtendedMessageFormat(String pattern, Locale locale, Map registry) {\nsuper(DUMMY_PATTERN);\nsetLocale(locale);\nthis.registry = registry;\napplyPattern(pattern);\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.lang.text.ExtendedMessageFormat:appendQuotedString(Ljava/lang/String;Ljava/text/ParsePosition;Ljava/lang/StringBuffer;Z)Ljava/lang/StringBuffer;",
+            "method_body": "private StringBuffer appendQuotedString(String pattern, ParsePosition pos,\nStringBuffer appendTo, boolean escapingOn) {\nint start = pos.getIndex();\nchar[] c = pattern.toCharArray();\nif (escapingOn && c[start] == QUOTE) {\nreturn appendTo == null ? null : appendTo.append(QUOTE);\n}\nint lastHold = start;\nfor (int i = pos.getIndex(); i < pattern.length(); i++) {\nif (escapingOn && pattern.substring(i).startsWith(ESCAPED_QUOTE)) {\nappendTo.append(c, lastHold, pos.getIndex() - lastHold).append(\nQUOTE);\npos.setIndex(i + ESCAPED_QUOTE.length());\nlastHold = pos.getIndex();\ncontinue;\n}\nswitch (c[pos.getIndex()]) {\ncase QUOTE:\nnext(pos);\nreturn appendTo == null ? null : appendTo.append(c, lastHold,\npos.getIndex() - lastHold);\ndefault:\nnext(pos);\n}\n}\nthrow new IllegalArgumentException(\n\"Unterminated quoted string at position \" + start);\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.lang.text.ExtendedMessageFormat:next(Ljava/text/ParsePosition;)Ljava/text/ParsePosition;",
+            "method_body": "private ParsePosition next(ParsePosition pos) {\npos.setIndex(pos.getIndex() + 1);\nreturn pos;\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.lang.text.ExtendedMessageFormat:<init>(Ljava/lang/String;Ljava/util/Map;)V",
+            "method_body": "public ExtendedMessageFormat(String pattern, Map registry) {\nthis(pattern, Locale.getDefault(), registry);\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.lang.text.ExtendedMessageFormat:applyPattern(Ljava/lang/String;)V",
+            "method_body": "public final void applyPattern(String pattern) {\nif (registry == null) {\nsuper.applyPattern(pattern);\ntoPattern = super.toPattern();\nreturn;\n}\nArrayList foundFormats = new ArrayList();\nArrayList foundDescriptions = new ArrayList();\nStringBuffer stripCustom = new StringBuffer(pattern.length());\n\nParsePosition pos = new ParsePosition(0);\nchar[] c = pattern.toCharArray();\nint fmtCount = 0;\nwhile (pos.getIndex() < pattern.length()) {\nswitch (c[pos.getIndex()]) {\ncase QUOTE:\nappendQuotedString(pattern, pos, stripCustom, true);\nbreak;\ncase START_FE:\nfmtCount++;\nseekNonWs(pattern, pos);\nint start = pos.getIndex();\nint index = readArgumentIndex(pattern, next(pos));\nstripCustom.append(START_FE).append(index);\nseekNonWs(pattern, pos);\nFormat format = null;\nString formatDescription = null;\nif (c[pos.getIndex()] == START_FMT) {\nformatDescription = parseFormatDescription(pattern,\nnext(pos));\nformat = getFormat(formatDescription);\nif (format == null) {\nstripCustom.append(START_FMT).append(formatDescription);\n}\n}\nfoundFormats.add(format);\nfoundDescriptions.add(format == null ? null : formatDescription);\nValidate.isTrue(foundFormats.size() == fmtCount);\nValidate.isTrue(foundDescriptions.size() == fmtCount);\nif (c[pos.getIndex()] != END_FE) {\nthrow new IllegalArgumentException(\n\"Unreadable format element at position \" + start);\n}\n// fall through\ndefault:\nstripCustom.append(c[pos.getIndex()]);\nnext(pos);\n}\n}\nsuper.applyPattern(stripCustom.toString());\ntoPattern = insertFormats(super.toPattern(), foundDescriptions);\nif (containsElements(foundFormats)) {\nFormat[] origFormats = getFormats();\n// only loop over what we know we have, as MessageFormat on Java 1.3\n// seems to provide an extra format element:\nint i = 0;\nfor (Iterator it = foundFormats.iterator(); it.hasNext(); i++) {\nFormat f = (Format) it.next();\nif (f != null) {\norigFormats[i] = f;\n}\n}\nsuper.setFormats(origFormats);\n}\n}",
+            "method_id": 4
+        }
+    ]
+}

@@ -1,0 +1,229 @@
+{
+    "bug_id": 34,
+    "test_id": 1,
+    "test_name": "org.jsoup.parser.HtmlParserTest.handlesUnclosedCdataAtEOF",
+    "test_body": "@Test public void handlesUnclosedCdataAtEOF() {\n// https://github.com/jhy/jsoup/issues/349 would crash, as character reader would try to seek past EOF\nString h = \"<![CDATA[]]\";\nDocument doc = Jsoup.parse(h);\nassertEquals(1, doc.body().childNodeSize());\n}\n",
+    "stack_trace": "java.lang.ArrayIndexOutOfBoundsException: 11\nat org.jsoup.parser.CharacterReader.nextIndexOf(CharacterReader.java:92)\nat org.jsoup.parser.CharacterReader.consumeTo(CharacterReader.java:112)\nat org.jsoup.parser.TokeniserState$67.read(TokeniserState.java:1634)\nat org.jsoup.parser.Tokeniser.read(Tokeniser.java:42)\nat org.jsoup.parser.TreeBuilder.runParser(TreeBuilder.java:47)\nat org.jsoup.parser.TreeBuilder.parse(TreeBuilder.java:41)\nat org.jsoup.parser.HtmlTreeBuilder.parse(HtmlTreeBuilder.java:38)\nat org.jsoup.parser.Parser.parse(Parser.java:90)\nat org.jsoup.Jsoup.parse(Jsoup.java:58)\nat org.jsoup.parser.HtmlParserTest.handlesUnclosedCdataAtEOF(HtmlParserTest.java:293)",
+    "covered_methods": [
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:nextIndexOf(Ljava/lang/CharSequence;)I",
+            "method_body": "int nextIndexOf(CharSequence seq) {\n// doesn't handle scanning for surrogates\nchar startChar = seq.charAt(0);\nfor (int offset = pos; offset < length; offset++) {\n// scan to first instance of startchar:\nif (startChar != input[offset])\nwhile(++offset < length && startChar != input[offset]);\nint i = offset + 1;\nint last = i + seq.length()-1;\nif (offset < length) {\nfor (int j = 1; i < last && seq.charAt(j) == input[i]; i++, j++);\nif (i == last) // found full sequence\nreturn offset - pos;\n}\n}\nreturn -1;\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.jsoup.parser.TokeniserState$44:read(Lorg/jsoup/parser/Tokeniser;Lorg/jsoup/parser/CharacterReader;)V",
+            "method_body": "void read(Tokeniser t, CharacterReader r) {\nif (r.matchConsume(\"--\")) {\nt.createCommentPending();\nt.transition(CommentStart);\n} else if (r.matchConsumeIgnoreCase(\"DOCTYPE\")) {\nt.transition(Doctype);\n} else if (r.matchConsume(\"[CDATA[\")) {\n// todo: should actually check current namepspace, and only non-html allows cdata. until namespace\n// is implemented properly, keep handling as cdata\n//} else if (!t.currentNodeInHtmlNS() && r.matchConsume(\"[CDATA[\")) {\nt.transition(CdataSection);\n} else {\nt.error(this);\nt.advanceTransition(BogusComment); // advance so this character gets in bogus comment data's rewind\n}\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:matchesIgnoreCase(Ljava/lang/String;)Z",
+            "method_body": "boolean matchesIgnoreCase(String seq) {\nint scanLength = seq.length();\nif (scanLength > length - pos)\nreturn false;\n\nfor (int offset = 0; offset < scanLength; offset++) {\nchar upScan = Character.toUpperCase(seq.charAt(offset));\nchar upTarget = Character.toUpperCase(input[pos + offset]);\nif (upScan != upTarget)\nreturn false;\n}\nreturn true;\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:consumeTo(Ljava/lang/String;)Ljava/lang/String;",
+            "method_body": "String consumeTo(String seq) {\nint offset = nextIndexOf(seq);\nif (offset != -1) {\nString consumed = new String(input, pos, offset);\npos += offset;\nreturn consumed;\n} else {\nreturn consumeToEnd();\n}\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.jsoup.parser.TokeniserState$67:read(Lorg/jsoup/parser/Tokeniser;Lorg/jsoup/parser/CharacterReader;)V",
+            "method_body": "void read(Tokeniser t, CharacterReader r) {\nString data = r.consumeTo(\"]]>\");\nt.emit(data);\nr.matchConsume(\"]]>\");\nt.transition(Data);\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:matches(Ljava/lang/String;)Z",
+            "method_body": "boolean matches(String seq) {\nint scanLength = seq.length();\nif (scanLength > length - pos)\nreturn false;\n\nfor (int offset = 0; offset < scanLength; offset++)\nif (seq.charAt(offset) != input[pos+offset])\nreturn false;\nreturn true;\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:matchConsume(Ljava/lang/String;)Z",
+            "method_body": "boolean matchConsume(String seq) {\nif (matches(seq)) {\npos += seq.length();\nreturn true;\n} else {\nreturn false;\n}\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:matchConsumeIgnoreCase(Ljava/lang/String;)Z",
+            "method_body": "boolean matchConsumeIgnoreCase(String seq) {\nif (matchesIgnoreCase(seq)) {\npos += seq.length();\nreturn true;\n} else {\nreturn false;\n}\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:<init>(Ljava/lang/String;)V",
+            "method_body": "CharacterReader(String input) {\nValidate.notNull(input);\nthis.input = input.toCharArray();\nthis.length = this.input.length;\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.jsoup.parser.Tag:<clinit>()V",
+            "method_body": "private static final String[] formSubmitTags = {\n\"input\", \"keygen\", \"object\", \"select\", \"textarea\"\n};",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.jsoup.parser.Parser:parse(Ljava/lang/String;Ljava/lang/String;)Lorg/jsoup/nodes/Document;",
+            "method_body": "public static Document parse(String html, String baseUri) {\nTreeBuilder treeBuilder = new HtmlTreeBuilder();\nreturn treeBuilder.parse(html, baseUri, ParseErrorList.noTracking());\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:advance()V",
+            "method_body": "void advance() {\npos++;\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.jsoup.parser.HtmlTreeBuilder:<init>()V",
+            "method_body": "private HtmlTreeBuilderState state; // the current state\nprivate HtmlTreeBuilderState originalState; // original / marked state\n\nprivate boolean baseUriSetFromDoc = false;\nprivate Element headElement; // the current head element\nprivate FormElement formElement; // the current form element\nprivate Element contextElement; // fragment parse context -- could be null even if fragment parsing\nprivate DescendableLinkedList<Element> formattingElements = new DescendableLinkedList<Element>(); // active (open) formatting elements\nprivate List<Token.Character> pendingTableCharacters = new ArrayList<Token.Character>(); // chars in table to be shifted out\n\nprivate boolean framesetOk = true; // if ok to go into frameset\nprivate boolean fosterInserts = false; // if next inserts should be fostered\nprivate boolean fragmentParsing = false; // if parsing a fragment of html\n\nHtmlTreeBuilder() {}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.jsoup.parser.HtmlTreeBuilder:parse(Ljava/lang/String;Ljava/lang/String;Lorg/jsoup/parser/ParseErrorList;)Lorg/jsoup/nodes/Document;",
+            "method_body": "Document parse(String input, String baseUri, ParseErrorList errors) {\nstate = HtmlTreeBuilderState.Initial;\nreturn super.parse(input, baseUri, errors);\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "org.jsoup.parser.TreeBuilder:runParser()V",
+            "method_body": "protected void runParser() {\nwhile (true) {\nToken token = tokeniser.read();\nprocess(token);\n\nif (token.type == Token.TokenType.EOF)\nbreak;\n}\n}",
+            "method_id": 14
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:current()C",
+            "method_body": "char current() {\nreturn isEmpty() ? EOF : input[pos];\n}",
+            "method_id": 15
+        },
+        {
+            "method_signature": "org.jsoup.parser.Tag:valueOf(Ljava/lang/String;)Lorg/jsoup/parser/Tag;",
+            "method_body": "public static Tag valueOf(String tagName) {\nValidate.notNull(tagName);\nTag tag = tags.get(tagName);\n\nif (tag == null) {\ntagName = tagName.trim().toLowerCase();\nValidate.notEmpty(tagName);\ntag = tags.get(tagName);\n\nif (tag == null) {\n// not defined: create default; go anywhere, do anything! (incl be inside a <p>)\ntag = new Tag(tagName);\ntag.isBlock = false;\ntag.canContainBlock = true;\n}\n}\nreturn tag;\n}",
+            "method_id": 16
+        },
+        {
+            "method_signature": "org.jsoup.parser.Tag:<init>(Ljava/lang/String;)V",
+            "method_body": "private static final Map<String, Tag> tags = new HashMap<String, Tag>(); // map of known tags\n\nprivate String tagName;\nprivate boolean isBlock = true; // block or inline\nprivate boolean formatAsBlock = true; // should be formatted as a block\nprivate boolean canContainBlock = true; // Can this tag hold block level tags?\nprivate boolean canContainInline = true; // only pcdata if not\nprivate boolean empty = false; // can hold nothing; e.g. img\nprivate boolean selfClosing = false; // can self close (<foo />). used for unknown tags that self close, without forcing them as empty.\nprivate boolean preserveWhitespace = false; // for pre, textarea, script etc\nprivate boolean formList = false; // a control that appears in forms: input, textarea, output etc\nprivate boolean formSubmit = false; // a control that can be submitted in a form: input etc\n\nprivate Tag(String tagName) {\nthis.tagName = tagName.toLowerCase();\n}",
+            "method_id": 17
+        },
+        {
+            "method_signature": "org.jsoup.parser.Tokeniser:<init>(Lorg/jsoup/parser/CharacterReader;Lorg/jsoup/parser/ParseErrorList;)V",
+            "method_body": "Tokeniser(CharacterReader reader, ParseErrorList errors) {\nthis.reader = reader;\nthis.errors = errors;\n}",
+            "method_id": 18
+        },
+        {
+            "method_signature": "org.jsoup.parser.Tokeniser:read()Lorg/jsoup/parser/Token;",
+            "method_body": "Token read() {\nif (!selfClosingFlagAcknowledged) {\nerror(\"Self closing flag not acknowledged\");\nselfClosingFlagAcknowledged = true;\n}\n\nwhile (!isEmitPending)\nstate.read(this, reader);\n\n// if emit is pending, a non-character token was found: return any chars in buffer, and leave token for next read:\nif (charBuffer.length() > 0) {\nString str = charBuffer.toString();\ncharBuffer.delete(0, charBuffer.length());\nreturn new Token.Character(str);\n} else {\nisEmitPending = false;\nreturn emitPending;\n}\n}",
+            "method_id": 19
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:isEmpty()Z",
+            "method_body": "boolean isEmpty() {\nreturn pos >= length;\n}",
+            "method_id": 20
+        },
+        {
+            "method_signature": "org.jsoup.parser.Tokeniser:transition(Lorg/jsoup/parser/TokeniserState;)V",
+            "method_body": "void transition(TokeniserState state) {\nthis.state = state;\n}",
+            "method_id": 21
+        },
+        {
+            "method_signature": "org.jsoup.parser.Tag:register(Lorg/jsoup/parser/Tag;)V",
+            "method_body": "private static void register(Tag tag) {\ntags.put(tag.tagName, tag);\n}",
+            "method_id": 22
+        },
+        {
+            "method_signature": "org.jsoup.parser.HtmlTreeBuilderState:<init>(Ljava/lang/String;I)V",
+            "method_body": "boolean process(Token t, HtmlTreeBuilder tb) {\nif (isWhitespace(t)) {\ntb.insert(t.asCharacter());\nreturn true;\n}\nswitch (t.type) {\ncase Comment:\ntb.insert(t.asComment());\nbreak;\ncase Doctype:\ntb.error(this);\nreturn false;\ncase StartTag:\nToken.StartTag start = t.asStartTag();\nString name = start.name();\nif (name.equals(\"html\")) {\nreturn InBody.process(t, tb);\n} else if (StringUtil.in(name, \"base\", \"basefont\", \"bgsound\", \"command\", \"link\")) {\nElement el = tb.insertEmpty(start);\n// jsoup special: update base the frist time it is seen\nif (name.equals(\"base\") && el.hasAttr(\"href\"))\ntb.maybeSetBaseUri(el);\n} else if (name.equals(\"meta\")) {\nElement meta = tb.insertEmpty(start);\n// todo: charset switches\n} else if (name.equals(\"title\")) {\nhandleRcData(start, tb);\n} else if (StringUtil.in(name, \"noframes\", \"style\")) {\nhandleRawtext(start, tb);\n} else if (name.equals(\"noscript\")) {\n// else if noscript && scripting flag = true: rawtext (jsoup doesn't run script, to handle as noscript)\ntb.insert(start);\ntb.transition(InHeadNoscript);\n} else if (name.equals(\"script\")) {\n// skips some script rules as won't execute them\n\ntb.tokeniser.transition(TokeniserState.ScriptData);\ntb.markInsertionMode();\ntb.transition(Text);\ntb.insert(start);\n} else if (name.equals(\"head\")) {\ntb.error(this);\nreturn false;\n} else {\nreturn anythingElse(t, tb);\n}\nbreak;\ncase EndTag:\nToken.EndTag end = t.asEndTag();\nname = end.name();\nif (name.equals(\"head\")) {\ntb.pop();\ntb.transition(AfterHead);\n} else if (StringUtil.in(name, \"body\", \"html\", \"br\")) {\nreturn anythingElse(t, tb);\n} else {\ntb.error(this);\nreturn false;\n}\nbreak;\ndefault:\nreturn anythingElse(t, tb);\n}\nreturn true;\n}",
+            "method_id": 23
+        },
+        {
+            "method_signature": "org.jsoup.parser.TreeBuilder:parse(Ljava/lang/String;Ljava/lang/String;Lorg/jsoup/parser/ParseErrorList;)Lorg/jsoup/nodes/Document;",
+            "method_body": "Document parse(String input, String baseUri, ParseErrorList errors) {\ninitialiseParse(input, baseUri, errors);\nrunParser();\nreturn doc;\n}",
+            "method_id": 24
+        },
+        {
+            "method_signature": "org.jsoup.parser.Tokeniser:advanceTransition(Lorg/jsoup/parser/TokeniserState;)V",
+            "method_body": "void advanceTransition(TokeniserState state) {\nreader.advance();\nthis.state = state;\n}",
+            "method_id": 25
+        },
+        {
+            "method_signature": "org.jsoup.parser.TreeBuilder:initialiseParse(Ljava/lang/String;Ljava/lang/String;Lorg/jsoup/parser/ParseErrorList;)V",
+            "method_body": "protected void initialiseParse(String input, String baseUri, ParseErrorList errors) {\nValidate.notNull(input, \"String input must not be null\");\nValidate.notNull(baseUri, \"BaseURI must not be null\");\n\ndoc = new Document(baseUri);\nreader = new CharacterReader(input);\nthis.errors = errors;\ntokeniser = new Tokeniser(reader, errors);\nstack = new DescendableLinkedList<Element>();\nthis.baseUri = baseUri;\n}",
+            "method_id": 26
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Entities:toCharacterKey(Ljava/util/Map;)Ljava/util/Map;",
+            "method_body": "private static Map<Character, String> toCharacterKey(Map<String, Character> inMap) {\nMap<Character, String> outMap = new HashMap<Character, String>();\nfor (Map.Entry<String, Character> entry: inMap.entrySet()) {\nCharacter character = entry.getValue();\nString name = entry.getKey();\n\nif (outMap.containsKey(character)) {\n// dupe, prefer the lower case version\nif (name.toLowerCase().equals(name))\noutMap.put(character, name);\n} else {\noutMap.put(character, name);\n}\n}\nreturn outMap;\n}",
+            "method_id": 27
+        },
+        {
+            "method_signature": "org.jsoup.parser.TokeniserState$8:read(Lorg/jsoup/parser/Tokeniser;Lorg/jsoup/parser/CharacterReader;)V",
+            "method_body": "void read(Tokeniser t, CharacterReader r) {\nswitch (r.current()) {\ncase '!':\nt.advanceTransition(MarkupDeclarationOpen);\nbreak;\ncase '/':\nt.advanceTransition(EndTagOpen);\nbreak;\ncase '?':\nt.advanceTransition(BogusComment);\nbreak;\ndefault:\nif (r.matchesLetter()) {\nt.createTagPending(true);\nt.transition(TagName);\n} else {\nt.error(this);\nt.emit('<'); // char that got us here\nt.transition(Data);\n}\nbreak;\n}\n}",
+            "method_id": 28
+        },
+        {
+            "method_signature": "org.jsoup.parser.ParseErrorList:<init>(II)V",
+            "method_body": "ParseErrorList(int initialCapacity, int maxSize) {\nsuper(initialCapacity);\nthis.maxSize = maxSize;\n}",
+            "method_id": 29
+        },
+        {
+            "method_signature": "org.jsoup.parser.TokeniserState$1:read(Lorg/jsoup/parser/Tokeniser;Lorg/jsoup/parser/CharacterReader;)V",
+            "method_body": "void read(Tokeniser t, CharacterReader r) {\nswitch (r.current()) {\ncase '&':\nt.advanceTransition(CharacterReferenceInData);\nbreak;\ncase '<':\nt.advanceTransition(TagOpen);\nbreak;\ncase nullChar:\nt.error(this); // NOT replacement character (oddly?)\nt.emit(r.consume());\nbreak;\ncase eof:\nt.emit(new Token.EOF());\nbreak;\ndefault:\nString data = r.consumeToAny('&', '<', nullChar);\nt.emit(data);\nbreak;\n}\n}",
+            "method_id": 30
+        },
+        {
+            "method_signature": "org.jsoup.parser.ParseErrorList:noTracking()Lorg/jsoup/parser/ParseErrorList;",
+            "method_body": "static ParseErrorList noTracking() {\nreturn new ParseErrorList(0, 0);\n}",
+            "method_id": 31
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Entities:loadEntities(Ljava/lang/String;)Ljava/util/Map;",
+            "method_body": "private static Map<String, Character> loadEntities(String filename) {\nProperties properties = new Properties();\nMap<String, Character> entities = new HashMap<String, Character>();\ntry {\nInputStream in = Entities.class.getResourceAsStream(filename);\nproperties.load(in);\nin.close();\n} catch (IOException e) {\nthrow new MissingResourceException(\"Error loading entities resource: \" + e.getMessage(), \"Entities\", filename);\n}\n\nfor (Map.Entry entry: properties.entrySet()) {\nCharacter val = Character.valueOf((char) Integer.parseInt((String) entry.getValue(), 16));\nString name = (String) entry.getKey();\nentities.put(name, val);\n}\nreturn entities;\n}",
+            "method_id": 32
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Node:<init>(Ljava/lang/String;Lorg/jsoup/nodes/Attributes;)V",
+            "method_body": "protected Node(String baseUri, Attributes attributes) {\nValidate.notNull(baseUri);\nValidate.notNull(attributes);\n\nchildNodes = new ArrayList<Node>(4);\nthis.baseUri = baseUri.trim();\nthis.attributes = attributes;\n}",
+            "method_id": 33
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Element:<init>(Lorg/jsoup/parser/Tag;Ljava/lang/String;Lorg/jsoup/nodes/Attributes;)V",
+            "method_body": "public Element(Tag tag, String baseUri, Attributes attributes) {\nsuper(baseUri, attributes);\n\nValidate.notNull(tag);\nthis.tag = tag;\n}",
+            "method_id": 34
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Document$OutputSettings:<init>()V",
+            "method_body": "private Entities.EscapeMode escapeMode = Entities.EscapeMode.base;\nprivate Charset charset = Charset.forName(\"UTF-8\");\nprivate CharsetEncoder charsetEncoder = charset.newEncoder();\nprivate boolean prettyPrint = true;\nprivate boolean outline = false;\nprivate int indentAmount = 1;\n\npublic OutputSettings() {}",
+            "method_id": 35
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Document:<init>(Ljava/lang/String;)V",
+            "method_body": "private OutputSettings outputSettings = new OutputSettings();\nprivate QuirksMode quirksMode = QuirksMode.noQuirks;\n\n/**\nCreate a new, empty Document.\n@param baseUri base URI of document\n@see org.jsoup.Jsoup#parse\n@see #createShell\n*/\npublic Document(String baseUri) {\nsuper(Tag.valueOf(\"#root\"), baseUri);\n}",
+            "method_id": 36
+        },
+        {
+            "method_signature": "org.jsoup.helper.Validate:notEmpty(Ljava/lang/String;)V",
+            "method_body": "public static void notEmpty(String string) {\nif (string == null || string.length() == 0)\nthrow new IllegalArgumentException(\"String must not be empty\");\n}",
+            "method_id": 37
+        },
+        {
+            "method_signature": "org.jsoup.helper.Validate:notNull(Ljava/lang/Object;Ljava/lang/String;)V",
+            "method_body": "public static void notNull(Object obj, String msg) {\nif (obj == null)\nthrow new IllegalArgumentException(msg);\n}",
+            "method_id": 38
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Element:<init>(Lorg/jsoup/parser/Tag;Ljava/lang/String;)V",
+            "method_body": "public Element(Tag tag, String baseUri) {\nthis(tag, baseUri, new Attributes());\n}",
+            "method_id": 39
+        },
+        {
+            "method_signature": "org.jsoup.helper.DescendableLinkedList:<init>()V",
+            "method_body": "public DescendableLinkedList() {\nsuper();\n}",
+            "method_id": 40
+        },
+        {
+            "method_signature": "org.jsoup.helper.Validate:notNull(Ljava/lang/Object;)V",
+            "method_body": "public static void notNull(Object obj) {\nif (obj == null)\nthrow new IllegalArgumentException(\"Object must not be null\");\n}",
+            "method_id": 41
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Entities$EscapeMode:<init>(Ljava/lang/String;ILjava/util/Map;)V",
+            "method_body": "EscapeMode(Map<Character, String> map) {\nthis.map = map;\n}",
+            "method_id": 42
+        },
+        {
+            "method_signature": "org.jsoup.Jsoup:parse(Ljava/lang/String;)Lorg/jsoup/nodes/Document;",
+            "method_body": "public static Document parse(String html) {\nreturn Parser.parse(html, \"\");\n}",
+            "method_id": 43
+        }
+    ]
+}

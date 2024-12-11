@@ -1,0 +1,184 @@
+{
+    "bug_id": 14,
+    "test_id": 1,
+    "test_name": "org.apache.commons.csv.CSVPrinterTest.testEscapeNull5",
+    "test_body": "public void testEscapeNull5() throws IOException {\nStringWriter sw = new StringWriter();\ntry (final CSVPrinter printer = new CSVPrinter(sw, CSVFormat.DEFAULT.withEscape(null))) {\nprinter.print(\"\\\\\\\\\");\n}\nassertEquals(\"\\\\\\\\\", sw.toString());\n}\n",
+    "stack_trace": "junit.framework.AssertionFailedError: expected:<[\\\\]> but was:<[\"\\\\\"]>\nat org.junit.Assert.assertEquals(Assert.java:115)\nat org.junit.Assert.assertEquals(Assert.java:144)\nat org.apache.commons.csv.CSVPrinterTest.testEscapeNull5(CSVPrinterTest.java:382)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat$1:<clinit>()V",
+            "method_body": "private void printAndQuote(final Object object, final CharSequence value, final int offset, final int len,\nfinal Appendable out, final boolean newRecord) throws IOException {\nboolean quote = false;\nint start = offset;\nint pos = offset;\nfinal int end = offset + len;\n\nfinal char delimChar = getDelimiter();\nfinal char quoteChar = getQuoteCharacter().charValue();\n\nQuoteMode quoteModePolicy = getQuoteMode();\nif (quoteModePolicy == null) {\nquoteModePolicy = QuoteMode.MINIMAL;\n}\nswitch (quoteModePolicy) {\ncase ALL:\nquote = true;\nbreak;\ncase NON_NUMERIC:\nquote = !(object instanceof Number);\nbreak;\ncase NONE:\n// Use the existing escaping code\nprintAndEscape(value, offset, len, out);\nreturn;\ncase MINIMAL:\nif (len <= 0) {\n// always quote an empty token that is the first\n// on the line, as it may be the only thing on the\n// line. If it were not quoted in that case,\n// an empty line has no tokens.\nif (newRecord) {\nquote = true;\n}\n} else {\nchar c = value.charAt(pos);\n\n// RFC4180 (https://tools.ietf.org/html/rfc4180) TEXTDATA =  %x20-21 / %x23-2B / %x2D-7E\nif (newRecord && (c < '0' || c > '9' && c < 'A' || c > 'Z' && c < 'a' || c > 'z')) {\nquote = true;\n} else if (c <= COMMENT) {\n// Some other chars at the start of a value caused the parser to fail, so for now\n// encapsulate if we start in anything less than '#'. We are being conservative\n// by including the default comment char too.\nquote = true;\n} else {\nwhile (pos < end) {\nc = value.charAt(pos);\nif (c == LF || c == CR || c == quoteChar || c == delimChar) {\nquote = true;\nbreak;\n}\npos++;\n}\n\nif (!quote) {\npos = end - 1;\nc = value.charAt(pos);\n// Some other chars at the end caused the parser to fail, so for now\n// encapsulate if we end in anything less than ' '\nif (c <= SP) {\nquote = true;\n}\n}\n}\n}\n\nif (!quote) {\n// no encapsulation needed - write out the original value\nout.append(value, start, end);\nreturn;\n}\nbreak;\ndefault:\nthrow new IllegalStateException(\"Unexpected Quote value: \" + quoteModePolicy);\n}\n\nif (!quote) {\n// no encapsulation needed - write out the original value\nout.append(value, start, end);\nreturn;\n}\n\n// we hit something that needed encapsulation\nout.append(quoteChar);\n\n// Pick up where we left off: pos should be positioned on the first character that caused\n// the need for encapsulation.\nwhile (pos < end) {\nfinal char c = value.charAt(pos);\nif (c == quoteChar) {\n// write out the chunk up until this point\n\n// add 1 to the length to write out the encapsulator also\nout.append(value, start, pos + 1);\n// put the next starting position on the encapsulator so we will\n// write it out again with the next string (effectively doubling it)\nstart = pos;\n}\npos++;\n}\n\n// write the last segment\nout.append(value, start, pos);\nout.append(quoteChar);\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVPrinter:<init>(Ljava/lang/Appendable;Lorg/apache/commons/csv/CSVFormat;)V",
+            "method_body": "public CSVPrinter(final Appendable out, final CSVFormat format) throws IOException {\nAssertions.notNull(out, \"out\");\nAssertions.notNull(format, \"format\");\n\nthis.out = out;\nthis.format = format;\n// TODO: Is it a good idea to do this here instead of on the first call to a print method?\n// It seems a pain to have to track whether the header has already been printed or not.\nif (format.getHeaderComments() != null) {\nfor (final String line : format.getHeaderComments()) {\nif (line != null) {\nthis.printComment(line);\n}\n}\n}\nif (format.getHeader() != null && !format.getSkipHeaderRecord()) {\nthis.printRecord((Object[]) format.getHeader());\n}\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.csv.Constants:<clinit>()V",
+            "method_body": "static final char BACKSLASH = '\\\\';\n\nstatic final char BACKSPACE = '\\b';\n\nstatic final char COMMA = ',';\n\n/**\n* Starts a comment, the remainder of the line is the comment.\n*/\nstatic final char COMMENT = '#';\n\nstatic final char CR = '\\r';\n\n/** RFC 4180 defines line breaks as CRLF */\nstatic final String CRLF = \"\\r\\n\";\n\nstatic final Character DOUBLE_QUOTE_CHAR = Character.valueOf('\"');\n\nstatic final String EMPTY = \"\";\n\n/** The end of stream symbol */\nstatic final int END_OF_STREAM = -1;\n\nstatic final char FF = '\\f';\n\nstatic final char LF = '\\n';\n\n/**\n* Unicode line separator.\n*/\nstatic final String LINE_SEPARATOR = \"\\u2028\";\n\n/**\n* Unicode next line.\n*/\nstatic final String NEXT_LINE = \"\\u0085\";\n\n/**\n* Unicode paragraph separator.\n*/\nstatic final String PARAGRAPH_SEPARATOR = \"\\u2029\";\n\nstatic final char PIPE = '|';\n\n/** ASCII record separator */\nstatic final char RS = 30;\n\nstatic final char SP = ' ';\n\nstatic final char TAB = '\\t';\n\n/** Undefined state for the lookahead char */\nstatic final int UNDEFINED = -2;\n\n/** ASCII unit separator */\nstatic final char US = 31;\n\n}\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withRecordSeparator(Ljava/lang/String;)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withRecordSeparator(final String recordSeparator) {\nreturn new CSVFormat(delimiter, quoteCharacter, quoteMode, commentMarker, escapeCharacter,\nignoreSurroundingSpaces, ignoreEmptyLines, recordSeparator, nullString, headerComments, header,\nskipHeaderRecord, allowMissingColumnNames, ignoreHeaderCase, trim, trailingDelimiter);\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withRecordSeparator(C)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withRecordSeparator(final char recordSeparator) {\nreturn withRecordSeparator(String.valueOf(recordSeparator));\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withQuote(Ljava/lang/Character;)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withQuote(final Character quoteChar) {\nif (isLineBreak(quoteChar)) {\nthrow new IllegalArgumentException(\"The quoteChar cannot be a line break\");\n}\nreturn new CSVFormat(delimiter, quoteChar, quoteMode, commentMarker, escapeCharacter, ignoreSurroundingSpaces,\nignoreEmptyLines, recordSeparator, nullString, headerComments, header, skipHeaderRecord,\nallowMissingColumnNames, ignoreHeaderCase, trim, trailingDelimiter);\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withNullString(Ljava/lang/String;)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withNullString(final String nullString) {\nreturn new CSVFormat(delimiter, quoteCharacter, quoteMode, commentMarker, escapeCharacter,\nignoreSurroundingSpaces, ignoreEmptyLines, recordSeparator, nullString, headerComments, header,\nskipHeaderRecord, allowMissingColumnNames, ignoreHeaderCase, trim, trailingDelimiter);\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withIgnoreSurroundingSpaces(Z)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withIgnoreSurroundingSpaces(final boolean ignoreSurroundingSpaces) {\nreturn new CSVFormat(delimiter, quoteCharacter, quoteMode, commentMarker, escapeCharacter,\nignoreSurroundingSpaces, ignoreEmptyLines, recordSeparator, nullString, headerComments, header,\nskipHeaderRecord, allowMissingColumnNames, ignoreHeaderCase, trim, trailingDelimiter);\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withIgnoreSurroundingSpaces()Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withIgnoreSurroundingSpaces() {\nreturn this.withIgnoreSurroundingSpaces(true);\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withIgnoreEmptyLines(Z)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withIgnoreEmptyLines(final boolean ignoreEmptyLines) {\nreturn new CSVFormat(delimiter, quoteCharacter, quoteMode, commentMarker, escapeCharacter,\nignoreSurroundingSpaces, ignoreEmptyLines, recordSeparator, nullString, headerComments, header,\nskipHeaderRecord, allowMissingColumnNames, ignoreHeaderCase, trim, trailingDelimiter);\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withEscape(Ljava/lang/Character;)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withEscape(final Character escape) {\nif (isLineBreak(escape)) {\nthrow new IllegalArgumentException(\"The escape character cannot be a line break\");\n}\nreturn new CSVFormat(delimiter, quoteCharacter, quoteMode, commentMarker, escape, ignoreSurroundingSpaces,\nignoreEmptyLines, recordSeparator, nullString, headerComments, header, skipHeaderRecord,\nallowMissingColumnNames, ignoreHeaderCase, trim, trailingDelimiter);\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withEscape(C)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withEscape(final char escape) {\nreturn withEscape(Character.valueOf(escape));\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withDelimiter(C)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withDelimiter(final char delimiter) {\nif (isLineBreak(delimiter)) {\nthrow new IllegalArgumentException(\"The delimiter cannot be a line break\");\n}\nreturn new CSVFormat(delimiter, quoteCharacter, quoteMode, commentMarker, escapeCharacter,\nignoreSurroundingSpaces, ignoreEmptyLines, recordSeparator, nullString, headerComments, header,\nskipHeaderRecord, allowMissingColumnNames, ignoreHeaderCase, trim, trailingDelimiter);\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withAllowMissingColumnNames(Z)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withAllowMissingColumnNames(final boolean allowMissingColumnNames) {\nreturn new CSVFormat(delimiter, quoteCharacter, quoteMode, commentMarker, escapeCharacter,\nignoreSurroundingSpaces, ignoreEmptyLines, recordSeparator, nullString, headerComments, header,\nskipHeaderRecord, allowMissingColumnNames, ignoreHeaderCase, trim, trailingDelimiter);\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withAllowMissingColumnNames()Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withAllowMissingColumnNames() {\nreturn this.withAllowMissingColumnNames(true);\n}",
+            "method_id": 14
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:print(Ljava/lang/Object;Ljava/lang/CharSequence;IILjava/lang/Appendable;Z)V",
+            "method_body": "private void print(final Object object, final CharSequence value, final int offset, final int len,\nfinal Appendable out, final boolean newRecord) throws IOException {\nif (!newRecord) {\nout.append(getDelimiter());\n}\nif (object == null) {\nout.append(value);\n} else if (isQuoteCharacterSet()) {\n// the original object is needed so can check for Number\nprintAndQuote(object, value, offset, len, out, newRecord);\n} else if (isEscapeCharacterSet()) {\nprintAndEscape(value, offset, len, out);\n} else {\nout.append(value, offset, offset + len);\n}\n}",
+            "method_id": 15
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:print(Ljava/lang/Object;Ljava/lang/Appendable;Z)V",
+            "method_body": "public void print(final Object value, final Appendable out, final boolean newRecord) throws IOException {\n// null values are considered empty\n// Only call CharSequence.toString() if you have to, helps GC-free use cases.\nCharSequence charSequence;\nif (value == null) {\ncharSequence = nullString == null ? Constants.EMPTY : nullString;\n} else {\ncharSequence = value instanceof CharSequence ? (CharSequence) value : value.toString();\n}\ncharSequence = getTrim() ? trim(charSequence) : charSequence;\nthis.print(value, charSequence, 0, charSequence.length(), out, newRecord);\n}",
+            "method_id": 16
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:isQuoteCharacterSet()Z",
+            "method_body": "public boolean isQuoteCharacterSet() {\nreturn quoteCharacter != null;\n}",
+            "method_id": 17
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:getTrim()Z",
+            "method_body": "public boolean getTrim() {\nreturn trim;\n}",
+            "method_id": 18
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:getRecordSeparator()Ljava/lang/String;",
+            "method_body": "public String getRecordSeparator() {\nreturn recordSeparator;\n}",
+            "method_id": 19
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:getQuoteMode()Lorg/apache/commons/csv/QuoteMode;",
+            "method_body": "public QuoteMode getQuoteMode() {\nreturn quoteMode;\n}",
+            "method_id": 20
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:getQuoteCharacter()Ljava/lang/Character;",
+            "method_body": "public Character getQuoteCharacter() {\nreturn quoteCharacter;\n}",
+            "method_id": 21
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:getDelimiter()C",
+            "method_body": "public char getDelimiter() {\nreturn delimiter;\n}",
+            "method_id": 22
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:isLineBreak(Ljava/lang/Character;)Z",
+            "method_body": "private static boolean isLineBreak(final Character c) {\nreturn c != null && isLineBreak(c.charValue());\n}",
+            "method_id": 23
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:isLineBreak(C)Z",
+            "method_body": "private static boolean isLineBreak(final char c) {\nreturn c == LF || c == CR;\n}",
+            "method_id": 24
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:<clinit>()V",
+            "method_body": "public static final CSVFormat DEFAULT = new CSVFormat(COMMA, DOUBLE_QUOTE_CHAR, null, null, null, false, true, CRLF,\nnull, null, null, false, false, false, false, false);\n\n/**\n* Excel file format (using a comma as the value delimiter). Note that the actual value delimiter used by Excel is\n* locale dependent, it might be necessary to customize this format to accommodate to your regional settings.\n*\n* <p>\n* For example for parsing or generating a CSV file on a French system the following format will be used:\n* </p>\n*\n* <pre>\n* CSVFormat fmt = CSVFormat.EXCEL.withDelimiter(';');\n* </pre>\n*\n* <p>\n* Settings are:\n* </p>\n* <ul>\n* <li>{@link #withDelimiter(char) withDelimiter(',')}</li>",
+            "method_id": 25
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:<init>(CLjava/lang/Character;Lorg/apache/commons/csv/QuoteMode;Ljava/lang/Character;Ljava/lang/Character;ZZLjava/lang/String;Ljava/lang/String;[Ljava/lang/Object;[Ljava/lang/String;ZZZZZ)V",
+            "method_body": "private CSVFormat(final char delimiter, final Character quoteChar, final QuoteMode quoteMode,\nfinal Character commentStart, final Character escape, final boolean ignoreSurroundingSpaces,\nfinal boolean ignoreEmptyLines, final String recordSeparator, final String nullString,\nfinal Object[] headerComments, final String[] header, final boolean skipHeaderRecord,\nfinal boolean allowMissingColumnNames, final boolean ignoreHeaderCase, final boolean trim,\nfinal boolean trailingDelimiter) {\nthis.delimiter = delimiter;\nthis.quoteCharacter = quoteChar;\nthis.quoteMode = quoteMode;\nthis.commentMarker = commentStart;\nthis.escapeCharacter = escape;\nthis.ignoreSurroundingSpaces = ignoreSurroundingSpaces;\nthis.allowMissingColumnNames = allowMissingColumnNames;\nthis.ignoreEmptyLines = ignoreEmptyLines;\nthis.recordSeparator = recordSeparator;\nthis.nullString = nullString;\nthis.headerComments = toStringArray(headerComments);\nthis.header = header == null ? null : header.clone();\nthis.skipHeaderRecord = skipHeaderRecord;\nthis.ignoreHeaderCase = ignoreHeaderCase;\nthis.trailingDelimiter = trailingDelimiter;\nthis.trim = trim;\nvalidate();\n}",
+            "method_id": 26
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVPrinter:close()V",
+            "method_body": "public void close() throws IOException {\nif (out instanceof Closeable) {\n((Closeable) out).close();\n}\n}",
+            "method_id": 27
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVPrinter:print(Ljava/lang/Object;)V",
+            "method_body": "public void print(final Object value) throws IOException {\nformat.print(value, out, newRecord);\nnewRecord = false;\n}",
+            "method_id": 28
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:getHeader()[Ljava/lang/String;",
+            "method_body": "public String[] getHeader() {\nreturn header != null ? header.clone() : null;\n}",
+            "method_id": 29
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:getHeaderComments()[Ljava/lang/String;",
+            "method_body": "public String[] getHeaderComments() {\nreturn headerComments != null ? headerComments.clone() : null;\n}",
+            "method_id": 30
+        },
+        {
+            "method_signature": "org.apache.commons.csv.Assertions:notNull(Ljava/lang/Object;Ljava/lang/String;)V",
+            "method_body": "public static void notNull(final Object parameter, final String parameterName) {\nif (parameter == null) {\nthrow new IllegalArgumentException(\"Parameter '\" + parameterName + \"' must not be null!\");\n}\n}",
+            "method_id": 31
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:validate()V",
+            "method_body": "private void validate() throws IllegalArgumentException {\nif (isLineBreak(delimiter)) {\nthrow new IllegalArgumentException(\"The delimiter cannot be a line break\");\n}\n\nif (quoteCharacter != null && delimiter == quoteCharacter.charValue()) {\nthrow new IllegalArgumentException(\n\"The quoteChar character and the delimiter cannot be the same ('\" + quoteCharacter + \"')\");\n}\n\nif (escapeCharacter != null && delimiter == escapeCharacter.charValue()) {\nthrow new IllegalArgumentException(\n\"The escape character and the delimiter cannot be the same ('\" + escapeCharacter + \"')\");\n}\n\nif (commentMarker != null && delimiter == commentMarker.charValue()) {\nthrow new IllegalArgumentException(\n\"The comment start character and the delimiter cannot be the same ('\" + commentMarker + \"')\");\n}\n\nif (quoteCharacter != null && quoteCharacter.equals(commentMarker)) {\nthrow new IllegalArgumentException(\n\"The comment start character and the quoteChar cannot be the same ('\" + commentMarker + \"')\");\n}\n\nif (escapeCharacter != null && escapeCharacter.equals(commentMarker)) {\nthrow new IllegalArgumentException(\n\"The comment start and the escape character cannot be the same ('\" + commentMarker + \"')\");\n}\n\nif (escapeCharacter == null && quoteMode == QuoteMode.NONE) {\nthrow new IllegalArgumentException(\"No quotes mode set but no escape character is set\");\n}\n\n// validate header\nif (header != null) {\nfinal Set<String> dupCheck = new HashSet<>();\nfor (final String hdr : header) {\nif (!dupCheck.add(hdr)) {\nthrow new IllegalArgumentException(\n\"The header contains a duplicate entry: '\" + hdr + \"' in \" + Arrays.toString(header));\n}\n}\n}\n}",
+            "method_id": 32
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:toStringArray([Ljava/lang/Object;)[Ljava/lang/String;",
+            "method_body": "private String[] toStringArray(final Object[] values) {\nif (values == null) {\nreturn null;\n}\nfinal String[] strings = new String[values.length];\nfor (int i = 0; i < values.length; i++) {\nfinal Object value = values[i];\nstrings[i] = value == null ? null : value.toString();\n}\nreturn strings;\n}",
+            "method_id": 33
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:printAndQuote(Ljava/lang/Object;Ljava/lang/CharSequence;IILjava/lang/Appendable;Z)V",
+            "method_body": "private void printAndQuote(final Object object, final CharSequence value, final int offset, final int len,\nfinal Appendable out, final boolean newRecord) throws IOException {\nboolean quote = false;\nint start = offset;\nint pos = offset;\nfinal int end = offset + len;\n\nfinal char delimChar = getDelimiter();\nfinal char quoteChar = getQuoteCharacter().charValue();\n\nQuoteMode quoteModePolicy = getQuoteMode();\nif (quoteModePolicy == null) {\nquoteModePolicy = QuoteMode.MINIMAL;\n}\nswitch (quoteModePolicy) {\ncase ALL:\nquote = true;\nbreak;\ncase NON_NUMERIC:\nquote = !(object instanceof Number);\nbreak;\ncase NONE:\n// Use the existing escaping code\nprintAndEscape(value, offset, len, out);\nreturn;\ncase MINIMAL:\nif (len <= 0) {\n// always quote an empty token that is the first\n// on the line, as it may be the only thing on the\n// line. If it were not quoted in that case,\n// an empty line has no tokens.\nif (newRecord) {\nquote = true;\n}\n} else {\nchar c = value.charAt(pos);\n\n// RFC4180 (https://tools.ietf.org/html/rfc4180) TEXTDATA =  %x20-21 / %x23-2B / %x2D-7E\nif (newRecord && (c < '0' || c > '9' && c < 'A' || c > 'Z' && c < 'a' || c > 'z')) {\nquote = true;\n} else if (c <= COMMENT) {\n// Some other chars at the start of a value caused the parser to fail, so for now\n// encapsulate if we start in anything less than '#'. We are being conservative\n// by including the default comment char too.\nquote = true;\n} else {\nwhile (pos < end) {\nc = value.charAt(pos);\nif (c == LF || c == CR || c == quoteChar || c == delimChar) {\nquote = true;\nbreak;\n}\npos++;\n}\n\nif (!quote) {\npos = end - 1;\nc = value.charAt(pos);\n// Some other chars at the end caused the parser to fail, so for now\n// encapsulate if we end in anything less than ' '\nif (c <= SP) {\nquote = true;\n}\n}\n}\n}\n\nif (!quote) {\n// no encapsulation needed - write out the original value\nout.append(value, start, end);\nreturn;\n}\nbreak;\ndefault:\nthrow new IllegalStateException(\"Unexpected Quote value: \" + quoteModePolicy);\n}\n\nif (!quote) {\n// no encapsulation needed - write out the original value\nout.append(value, start, end);\nreturn;\n}\n\n// we hit something that needed encapsulation\nout.append(quoteChar);\n\n// Pick up where we left off: pos should be positioned on the first character that caused\n// the need for encapsulation.\nwhile (pos < end) {\nfinal char c = value.charAt(pos);\nif (c == quoteChar) {\n// write out the chunk up until this point\n\n// add 1 to the length to write out the encapsulator also\nout.append(value, start, pos + 1);\n// put the next starting position on the encapsulator so we will\n// write it out again with the next string (effectively doubling it)\nstart = pos;\n}\npos++;\n}\n\n// write the last segment\nout.append(value, start, pos);\nout.append(quoteChar);\n}",
+            "method_id": 34
+        }
+    ]
+}

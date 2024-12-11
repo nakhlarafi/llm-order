@@ -1,0 +1,141 @@
+{
+    "bug_id": 50,
+    "test_id": 1,
+    "test_name": "org.apache.commons.lang.time.FastDateFormatTest.test_changeDefault_Locale_DateInstance",
+    "test_body": "public void test_changeDefault_Locale_DateInstance() {\nLocale realDefaultLocale = Locale.getDefault();\ntry {\nLocale.setDefault(Locale.US);\nFastDateFormat format1 = FastDateFormat.getDateInstance(FastDateFormat.FULL, Locale.GERMANY);\nFastDateFormat format2 = FastDateFormat.getDateInstance(FastDateFormat.FULL);\nLocale.setDefault(Locale.GERMANY);\nFastDateFormat format3 = FastDateFormat.getDateInstance(FastDateFormat.FULL);\nassertSame(Locale.GERMANY, format1.getLocale());\nassertSame(Locale.US, format2.getLocale());\nassertSame(Locale.GERMANY, format3.getLocale());\nassertTrue(format1 != format2); // -- junit 3.8 version -- assertFalse(format1 == format2);\nassertTrue(format2 != format3);\n} finally {\nLocale.setDefault(realDefaultLocale);\n}\n}\n",
+    "stack_trace": "junit.framework.AssertionFailedError: expected same:<de_DE> was not:<en_US>\nat junit.framework.Assert.fail(Assert.java:57)\nat junit.framework.Assert.failNotSame(Assert.java:325)\nat junit.framework.Assert.assertSame(Assert.java:288)\nat junit.framework.Assert.assertSame(Assert.java:296)\nat junit.framework.TestCase.assertSame(TestCase.java:465)\nat org.apache.commons.lang.time.FastDateFormatTest.test_changeDefault_Locale_DateInstance(FastDateFormatTest.java:146)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.lang.time.FastDateFormat:parsePattern()Ljava/util/List;",
+            "method_body": "protected List parsePattern() {\nDateFormatSymbols symbols = new DateFormatSymbols(mLocale);\nList rules = new ArrayList();\n\nString[] ERAs = symbols.getEras();\nString[] months = symbols.getMonths();\nString[] shortMonths = symbols.getShortMonths();\nString[] weekdays = symbols.getWeekdays();\nString[] shortWeekdays = symbols.getShortWeekdays();\nString[] AmPmStrings = symbols.getAmPmStrings();\n\nint length = mPattern.length();\nint[] indexRef = new int[1];\n\nfor (int i = 0; i < length; i++) {\nindexRef[0] = i;\nString token = parseToken(mPattern, indexRef);\ni = indexRef[0];\n\nint tokenLen = token.length();\nif (tokenLen == 0) {\nbreak;\n}\n\nRule rule;\nchar c = token.charAt(0);\n\nswitch (c) {\ncase 'G': // era designator (text)\nrule = new TextField(Calendar.ERA, ERAs);\nbreak;\ncase 'y': // year (number)\nif (tokenLen >= 4) {\nrule = selectNumberRule(Calendar.YEAR, tokenLen);\n} else {\nrule = TwoDigitYearField.INSTANCE;\n}\nbreak;\ncase 'M': // month in year (text and number)\nif (tokenLen >= 4) {\nrule = new TextField(Calendar.MONTH, months);\n} else if (tokenLen == 3) {\nrule = new TextField(Calendar.MONTH, shortMonths);\n} else if (tokenLen == 2) {\nrule = TwoDigitMonthField.INSTANCE;\n} else {\nrule = UnpaddedMonthField.INSTANCE;\n}\nbreak;\ncase 'd': // day in month (number)\nrule = selectNumberRule(Calendar.DAY_OF_MONTH, tokenLen);\nbreak;\ncase 'h': // hour in am/pm (number, 1..12)\nrule = new TwelveHourField(selectNumberRule(Calendar.HOUR, tokenLen));\nbreak;\ncase 'H': // hour in day (number, 0..23)\nrule = selectNumberRule(Calendar.HOUR_OF_DAY, tokenLen);\nbreak;\ncase 'm': // minute in hour (number)\nrule = selectNumberRule(Calendar.MINUTE, tokenLen);\nbreak;\ncase 's': // second in minute (number)\nrule = selectNumberRule(Calendar.SECOND, tokenLen);\nbreak;\ncase 'S': // millisecond (number)\nrule = selectNumberRule(Calendar.MILLISECOND, tokenLen);\nbreak;\ncase 'E': // day in week (text)\nrule = new TextField(Calendar.DAY_OF_WEEK, tokenLen < 4 ? shortWeekdays : weekdays);\nbreak;\ncase 'D': // day in year (number)\nrule = selectNumberRule(Calendar.DAY_OF_YEAR, tokenLen);\nbreak;\ncase 'F': // day of week in month (number)\nrule = selectNumberRule(Calendar.DAY_OF_WEEK_IN_MONTH, tokenLen);\nbreak;\ncase 'w': // week in year (number)\nrule = selectNumberRule(Calendar.WEEK_OF_YEAR, tokenLen);\nbreak;\ncase 'W': // week in month (number)\nrule = selectNumberRule(Calendar.WEEK_OF_MONTH, tokenLen);\nbreak;\ncase 'a': // am/pm marker (text)\nrule = new TextField(Calendar.AM_PM, AmPmStrings);\nbreak;\ncase 'k': // hour in day (1..24)\nrule = new TwentyFourHourField(selectNumberRule(Calendar.HOUR_OF_DAY, tokenLen));\nbreak;\ncase 'K': // hour in am/pm (0..11)\nrule = selectNumberRule(Calendar.HOUR, tokenLen);\nbreak;\ncase 'z': // time zone (text)\nif (tokenLen >= 4) {\nrule = new TimeZoneNameRule(mTimeZone, mTimeZoneForced, mLocale, TimeZone.LONG);\n} else {\nrule = new TimeZoneNameRule(mTimeZone, mTimeZoneForced, mLocale, TimeZone.SHORT);\n}\nbreak;\ncase 'Z': // time zone (value)\nif (tokenLen == 1) {\nrule = TimeZoneNumberRule.INSTANCE_NO_COLON;\n} else {\nrule = TimeZoneNumberRule.INSTANCE_COLON;\n}\nbreak;\ncase '\\'': // literal text\nString sub = token.substring(1);\nif (sub.length() == 1) {\nrule = new CharacterLiteral(sub.charAt(0));\n} else {\nrule = new StringLiteral(sub);\n}\nbreak;\ndefault:\nthrow new IllegalArgumentException(\"Illegal pattern component: \" + token);\n}\n\nrules.add(rule);\n}\n\nreturn rules;\n}",
+            "method_id": 0,
+            "loc": 122
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.FastDateFormat$CharacterLiteral:<init>(C)V",
+            "method_body": "void appendTo(StringBuffer buffer, int value);\n}\n\n/**\n* <p>Inner class to output a constant single character.</p>\n*/\nprivate static class CharacterLiteral implements Rule {\nprivate final char mValue;\n\n/**\n* Constructs a new instance of <code>CharacterLiteral</code>\n* to hold the specified value.\n*\n* @param value the character literal\n*/\nCharacterLiteral(char value) {\nmValue = value;\n}\n\n/**\n* {@inheritDoc}\n*/\npublic int estimateLength() {\nreturn 1;\n}\n\n/**\n* {@inheritDoc}\n*/\npublic void appendTo(StringBuffer buffer, Calendar calendar) {\nbuffer.append(mValue);\n}\n}",
+            "method_id": 1,
+            "loc": 33
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.FastDateFormat$CharacterLiteral:estimateLength()I",
+            "method_body": "void appendTo(StringBuffer buffer, int value);\n}\n\n/**\n* <p>Inner class to output a constant single character.</p>\n*/\nprivate static class CharacterLiteral implements Rule {\nprivate final char mValue;\n\n/**\n* Constructs a new instance of <code>CharacterLiteral</code>\n* to hold the specified value.\n*\n* @param value the character literal\n*/\nCharacterLiteral(char value) {\nmValue = value;\n}\n\n/**\n* {@inheritDoc}\n*/\npublic int estimateLength() {\nreturn 1;\n}\n\n/**\n* {@inheritDoc}\n*/\npublic void appendTo(StringBuffer buffer, Calendar calendar) {\nbuffer.append(mValue);\n}\n}",
+            "method_id": 2,
+            "loc": 33
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.FastDateFormat:getDateInstance(ILjava/util/TimeZone;Ljava/util/Locale;)Lorg/apache/commons/lang/time/FastDateFormat;",
+            "method_body": "public static synchronized FastDateFormat getDateInstance(int style, TimeZone timeZone, Locale locale) {\nObject key = new Integer(style);\nif (timeZone != null) {\nkey = new Pair(key, timeZone);\n}\n\nif (locale != null) {\nkey = new Pair(key, locale);\n}\n\n\nFastDateFormat format = (FastDateFormat) cDateInstanceCache.get(key);\nif (format == null) {\nif (locale == null) {\nlocale = Locale.getDefault();\n}\ntry {\nSimpleDateFormat formatter = (SimpleDateFormat) DateFormat.getDateInstance(style, locale);\nString pattern = formatter.toPattern();\nformat = getInstance(pattern, timeZone, locale);\ncDateInstanceCache.put(key, format);\n\n} catch (ClassCastException ex) {\nthrow new IllegalArgumentException(\"No date pattern for locale: \" + locale);\n}\n}\nreturn format;\n}",
+            "method_id": 3,
+            "loc": 28
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.FastDateFormat:<init>(Ljava/lang/String;Ljava/util/TimeZone;Ljava/util/Locale;)V",
+            "method_body": "protected FastDateFormat(String pattern, TimeZone timeZone, Locale locale) {\nsuper();\nif (pattern == null) {\nthrow new IllegalArgumentException(\"The pattern must not be null\");\n}\nmPattern = pattern;\n\nmTimeZoneForced = (timeZone != null);\nif (timeZone == null) {\ntimeZone = TimeZone.getDefault();\n}\nmTimeZone = timeZone;\n\nmLocaleForced = (locale != null);\nif (locale == null) {\nlocale = Locale.getDefault();\n}\nmLocale = locale;\n}",
+            "method_id": 4,
+            "loc": 19
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.FastDateFormat:init()V",
+            "method_body": "protected void init() {\nList rulesList = parsePattern();\nmRules = (Rule[]) rulesList.toArray(new Rule[rulesList.size()]);\n\nint len = 0;\nfor (int i=mRules.length; --i >= 0; ) {\nlen += mRules[i].estimateLength();\n}\n\nmMaxLengthEstimate = len;\n}",
+            "method_id": 5,
+            "loc": 11
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.FastDateFormat:selectNumberRule(II)Lorg/apache/commons/lang/time/FastDateFormat$NumberRule;",
+            "method_body": "protected NumberRule selectNumberRule(int field, int padding) {\nswitch (padding) {\ncase 1:\nreturn new UnpaddedNumberField(field);\ncase 2:\nreturn new TwoDigitNumberField(field);\ndefault:\nreturn new PaddedNumberField(field, padding);\n}\n}",
+            "method_id": 6,
+            "loc": 10
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.FastDateFormat$TextField:estimateLength()I",
+            "method_body": "public int estimateLength() {\nint max = 0;\nfor (int i=mValues.length; --i >= 0; ) {\nint len = mValues[i].length();\nif (len > max) {\nmax = len;\n}\n}\nreturn max;\n}",
+            "method_id": 7,
+            "loc": 10
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.FastDateFormat:getInstance(Ljava/lang/String;Ljava/util/TimeZone;Ljava/util/Locale;)Lorg/apache/commons/lang/time/FastDateFormat;",
+            "method_body": "public static synchronized FastDateFormat getInstance(String pattern, TimeZone timeZone, Locale locale) {\nFastDateFormat emptyFormat = new FastDateFormat(pattern, timeZone, locale);\nFastDateFormat format = (FastDateFormat) cInstanceCache.get(emptyFormat);\nif (format == null) {\nformat = emptyFormat;\nformat.init();  // convert shell format into usable one\ncInstanceCache.put(format, format);  // this is OK!\n}\nreturn format;\n}",
+            "method_id": 8,
+            "loc": 10
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.FastDateFormat:hashCode()I",
+            "method_body": "public int hashCode() {\nint total = 0;\ntotal += mPattern.hashCode();\ntotal += mTimeZone.hashCode();\ntotal += (mTimeZoneForced ? 1 : 0);\ntotal += mLocale.hashCode();\ntotal += (mLocaleForced ? 1 : 0);\nreturn total;\n}",
+            "method_id": 9,
+            "loc": 9
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.FastDateFormat$PaddedNumberField:<init>(II)V",
+            "method_body": "PaddedNumberField(int field, int size) {\nif (size < 3) {\n// Should use UnpaddedNumberField or TwoDigitNumberField.\nthrow new IllegalArgumentException();\n}\nmField = field;\nmSize = size;\n}",
+            "method_id": 10,
+            "loc": 8
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.FastDateFormat$Pair:hashCode()I",
+            "method_body": "public int hashCode() {\nreturn\n(mObj1 == null ? 0 : mObj1.hashCode()) +\n(mObj2 == null ? 0 : mObj2.hashCode());\n}",
+            "method_id": 11,
+            "loc": 5
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.FastDateFormat$Pair:<init>(Ljava/lang/Object;Ljava/lang/Object;)V",
+            "method_body": "public Pair(Object obj1, Object obj2) {\nmObj1 = obj1;\nmObj2 = obj2;\n}",
+            "method_id": 12,
+            "loc": 4
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.FastDateFormat$TextField:<init>(I[Ljava/lang/String;)V",
+            "method_body": "TextField(int field, String[] values) {\nmField = field;\nmValues = values;\n}",
+            "method_id": 13,
+            "loc": 4
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.FastDateFormat:getDateInstance(I)Lorg/apache/commons/lang/time/FastDateFormat;",
+            "method_body": "public static FastDateFormat getDateInstance(int style) {\nreturn getDateInstance(style, null, null);\n}",
+            "method_id": 14,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.FastDateFormat$StringLiteral:<init>(Ljava/lang/String;)V",
+            "method_body": "StringLiteral(String value) {\nmValue = value;\n}",
+            "method_id": 15,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.FastDateFormat$PaddedNumberField:estimateLength()I",
+            "method_body": "public int estimateLength() {\nreturn 4;\n}",
+            "method_id": 16,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.FastDateFormat$StringLiteral:estimateLength()I",
+            "method_body": "public int estimateLength() {\nreturn mValue.length();\n}",
+            "method_id": 17,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.FastDateFormat$UnpaddedNumberField:estimateLength()I",
+            "method_body": "public int estimateLength() {\nreturn 4;\n}",
+            "method_id": 18,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.FastDateFormat$UnpaddedNumberField:<init>(I)V",
+            "method_body": "UnpaddedNumberField(int field) {\nmField = field;\n}",
+            "method_id": 19,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.FastDateFormat:getDateInstance(ILjava/util/Locale;)Lorg/apache/commons/lang/time/FastDateFormat;",
+            "method_body": "public static FastDateFormat getDateInstance(int style, Locale locale) {\nreturn getDateInstance(style, null, locale);\n}",
+            "method_id": 20,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.FastDateFormat:getLocale()Ljava/util/Locale;",
+            "method_body": "public Locale getLocale() {\nreturn mLocale;\n}",
+            "method_id": 21,
+            "loc": 3
+        }
+    ]
+}

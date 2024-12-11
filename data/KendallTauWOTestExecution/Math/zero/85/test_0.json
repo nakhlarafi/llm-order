@@ -1,0 +1,144 @@
+{
+    "bug_id": 85,
+    "test_id": 0,
+    "test_name": "org.apache.commons.math.distribution.NormalDistributionTest.testMath280",
+    "test_body": "public void testMath280() throws MathException {\nNormalDistribution normal = new NormalDistributionImpl(0,1);\ndouble result = normal.inverseCumulativeProbability(0.9772498680518209);\nassertEquals(2.0, result, 1.0e-12);\n}\n",
+    "stack_trace": "org.apache.commons.math.MathException: org.apache.commons.math.ConvergenceException: number of iterations=1, maximum iterations=2,147,483,647, initial=1, lower bound=0, upper bound=179,769,313,486,231,570,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000, final a value=0, final b value=2, f(a)=-0.477, f(b)=0\nat org.apache.commons.math.distribution.AbstractContinuousDistribution.inverseCumulativeProbability(AbstractContinuousDistribution.java:104)\nat org.apache.commons.math.distribution.NormalDistributionImpl.inverseCumulativeProbability(NormalDistributionImpl.java:162)\nat org.apache.commons.math.distribution.NormalDistributionTest.testMath280(NormalDistributionTest.java:169)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.UnivariateRealSolverUtils:bracket(Lorg/apache/commons/math/analysis/UnivariateRealFunction;DDDI)[D",
+            "method_body": "public static double[] bracket(UnivariateRealFunction function,\ndouble initial, double lowerBound, double upperBound,\nint maximumIterations) throws ConvergenceException,\nFunctionEvaluationException {\n\nif (function == null) {\nthrow MathRuntimeException.createIllegalArgumentException(\"function is null\");\n}\nif (maximumIterations <= 0)  {\nthrow MathRuntimeException.createIllegalArgumentException(\n\"bad value for maximum iterations number: {0}\", maximumIterations);\n}\nif (initial < lowerBound || initial > upperBound || lowerBound >= upperBound) {\nthrow MathRuntimeException.createIllegalArgumentException(\n\"invalid bracketing parameters:  lower bound={0},  initial={1}, upper bound={2}\",\nlowerBound, initial, upperBound);\n}\ndouble a = initial;\ndouble b = initial;\ndouble fa;\ndouble fb;\nint numIterations = 0 ;\n\ndo {\na = Math.max(a - 1.0, lowerBound);\nb = Math.min(b + 1.0, upperBound);\nfa = function.value(a);\n\nfb = function.value(b);\nnumIterations++ ;\n} while ((fa * fb > 0.0) && (numIterations < maximumIterations) &&\n((a > lowerBound) || (b < upperBound)));\n\nif (fa * fb >= 0.0 ) {\nthrow new ConvergenceException(\n\"number of iterations={0}, maximum iterations={1}, \" +\n\"initial={2}, lower bound={3}, upper bound={4}, final a value={5}, \" +\n\"final b value={6}, f(a)={7}, f(b)={8}\",\nnumIterations, maximumIterations, initial,\nlowerBound, upperBound, a, b, fa, fb);\n}\n\nreturn new double[]{a, b};\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.math.MathException:<init>(Ljava/lang/Throwable;)V",
+            "method_body": "public MathException(Throwable rootCause) {\nsuper(rootCause);\nthis.pattern   = getMessage();\nthis.arguments = new Object[0];\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.NormalDistributionImpl:getDomainUpperBound(D)D",
+            "method_body": "protected double getDomainUpperBound(double p) {\ndouble ret;\n\nif (p < .5) {\nret = getMean();\n} else {\nret = Double.MAX_VALUE;\n}\n\nreturn ret;\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.AbstractContinuousDistribution:inverseCumulativeProbability(D)D",
+            "method_body": "public double inverseCumulativeProbability(final double p)\nthrows MathException {\nif (p < 0.0 || p > 1.0) {\nthrow MathRuntimeException.createIllegalArgumentException(\n\"{0} out of [{1}, {2}] range\", p, 0.0, 1.0);\n}\n\n// by default, do simple root finding using bracketing and default solver.\n// subclasses can override if there is a better method.\nUnivariateRealFunction rootFindingFunction =\nnew UnivariateRealFunction() {\npublic double value(double x) throws FunctionEvaluationException {\ntry {\nreturn cumulativeProbability(x) - p;\n} catch (MathException ex) {\nthrow new FunctionEvaluationException(ex, x, ex.getPattern(), ex.getArguments());\n}\n}\n};\n\n// Try to bracket root, test domain endoints if this fails\ndouble lowerBound = getDomainLowerBound(p);\ndouble upperBound = getDomainUpperBound(p);\ndouble[] bracket = null;\ntry {\nbracket = UnivariateRealSolverUtils.bracket(\nrootFindingFunction, getInitialDomain(p),\nlowerBound, upperBound);\n}  catch (ConvergenceException ex) {\n/*\n* Check domain endpoints to see if one gives value that is within\n* the default solver's defaultAbsoluteAccuracy of 0 (will be the\n* case if density has bounded support and p is 0 or 1).\n*\n* TODO: expose the default solver, defaultAbsoluteAccuracy as\n* a constant.\n*/\nif (Math.abs(rootFindingFunction.value(lowerBound)) < 1E-6) {\nreturn lowerBound;\n}\nif (Math.abs(rootFindingFunction.value(upperBound)) < 1E-6) {\nreturn upperBound;\n}\n// Failed bracket convergence was not because of corner solution\nthrow new MathException(ex);\n}\n\n// find root\ndouble root = UnivariateRealSolverUtils.solve(rootFindingFunction,\nbracket[0],bracket[1]);\nreturn root;\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.NormalDistributionImpl:cumulativeProbability(D)D",
+            "method_body": "public double cumulativeProbability(double x) throws MathException {\ntry {\nreturn 0.5 * (1.0 + Erf.erf((x - mean) /\n(standardDeviation * Math.sqrt(2.0))));\n} catch (MaxIterationsExceededException ex) {\nif (x < (mean - 20 * standardDeviation)) { // JDK 1.5 blows at 38\nreturn 0.0d;\n} else if (x > (mean + 20 * standardDeviation)) {\nreturn 1.0d;\n} else {\nthrow ex;\n}\n}\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.NormalDistributionImpl:getStandardDeviation()D",
+            "method_body": "public double getStandardDeviation() {\nreturn standardDeviation;\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.math.MathException:<init>(Ljava/lang/String;[Ljava/lang/Object;)V",
+            "method_body": "public MathException(String pattern, Object ... arguments) {\nsuper(buildMessage(Locale.US, pattern, arguments));\nthis.pattern   = pattern;\nthis.arguments = (arguments == null) ? new Object[0] : arguments.clone();\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.NormalDistributionImpl:setStandardDeviation(D)V",
+            "method_body": "public void setStandardDeviation(double sd) {\nif (sd <= 0.0) {\nthrow MathRuntimeException.createIllegalArgumentException(\n\"standard deviation must be positive ({0})\",\nsd);\n}\nstandardDeviation = sd;\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.math.special.Gamma:regularizedGammaP(DDDI)D",
+            "method_body": "public static double regularizedGammaP(double a,\ndouble x,\ndouble epsilon,\nint maxIterations)\nthrows MathException\n{\ndouble ret;\n\nif (Double.isNaN(a) || Double.isNaN(x) || (a <= 0.0) || (x < 0.0)) {\nret = Double.NaN;\n} else if (x == 0.0) {\nret = 0.0;\n} else if (a >= 1.0 && x > a) {\n// use regularizedGammaQ because it should converge faster in this\n// case.\nret = 1.0 - regularizedGammaQ(a, x, epsilon, maxIterations);\n} else {\n// calculate series\ndouble n = 0.0; // current element index\ndouble an = 1.0 / a; // n-th element in the series\ndouble sum = an; // partial sum\nwhile (Math.abs(an) > epsilon && n < maxIterations) {\n// compute next element in the series\nn = n + 1.0;\nan = an * (x / (a + n));\n\n// update partial sum\nsum = sum + an;\n}\nif (n >= maxIterations) {\nthrow new MaxIterationsExceededException(maxIterations);\n} else {\nret = Math.exp(-x + (a * Math.log(x)) - logGamma(a)) * sum;\n}\n}\n\nreturn ret;\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.UnivariateRealSolverUtils:bracket(Lorg/apache/commons/math/analysis/UnivariateRealFunction;DDD)[D",
+            "method_body": "public static double[] bracket(UnivariateRealFunction function,\ndouble initial, double lowerBound, double upperBound)\nthrows ConvergenceException, FunctionEvaluationException {\nreturn bracket( function, initial, lowerBound, upperBound,\nInteger.MAX_VALUE ) ;\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.math.MathException:buildMessage(Ljava/util/Locale;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;",
+            "method_body": "private static String buildMessage(Locale locale, String pattern, Object ... arguments) {\nreturn (pattern == null) ? \"\" : new MessageFormat(translate(pattern, locale), locale).format(arguments);\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.NormalDistributionImpl:getDomainLowerBound(D)D",
+            "method_body": "protected double getDomainLowerBound(double p) {\ndouble ret;\n\nif (p < .5) {\nret = -Double.MAX_VALUE;\n} else {\nret = getMean();\n}\n\nreturn ret;\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.apache.commons.math.special.Gamma:logGamma(D)D",
+            "method_body": "public static double logGamma(double x) {\ndouble ret;\n\nif (Double.isNaN(x) || (x <= 0.0)) {\nret = Double.NaN;\n} else {\ndouble g = 607.0 / 128.0;\n\ndouble sum = 0.0;\nfor (int i = lanczos.length - 1; i > 0; --i) {\nsum = sum + (lanczos[i] / (x + i));\n}\nsum = sum + lanczos[0];\n\ndouble tmp = x + g + .5;\nret = ((x + .5) * Math.log(tmp)) - tmp +\nHALF_LOG_2_PI + Math.log(sum / x);\n}\n\nreturn ret;\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.apache.commons.math.MathException:translate(Ljava/lang/String;Ljava/util/Locale;)Ljava/lang/String;",
+            "method_body": "private static String translate(String s, Locale locale) {\ntry {\nResourceBundle bundle =\nResourceBundle.getBundle(\"org.apache.commons.math.MessagesResources\", locale);\nif (bundle.getLocale().getLanguage().equals(locale.getLanguage())) {\n// the value of the resource is the translated string\nreturn bundle.getString(s);\n}\n\n} catch (MissingResourceException mre) {\n// do nothing here\n}\n\n// the locale is not supported or the resource is unknown\n// don't translate and fall back to using the string as is\nreturn s;\n\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "org.apache.commons.math.MathException:getLocalizedMessage()Ljava/lang/String;",
+            "method_body": "public String getLocalizedMessage() {\nreturn getMessage(Locale.getDefault());\n}",
+            "method_id": 14
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.NormalDistributionImpl:setMean(D)V",
+            "method_body": "public void setMean(double mean) {\nthis.mean = mean;\n}",
+            "method_id": 15
+        },
+        {
+            "method_signature": "org.apache.commons.math.special.Erf:erf(D)D",
+            "method_body": "public static double erf(double x) throws MathException {\ndouble ret = Gamma.regularizedGammaP(0.5, x * x, 1.0e-15, 10000);\nif (x < 0) {\nret = -ret;\n}\nreturn ret;\n}",
+            "method_id": 16
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.AbstractContinuousDistribution:<init>()V",
+            "method_body": "protected AbstractContinuousDistribution() {\nsuper();\n}",
+            "method_id": 17
+        },
+        {
+            "method_signature": "org.apache.commons.math.MathException:getMessage(Ljava/util/Locale;)Ljava/lang/String;",
+            "method_body": "public String getMessage(Locale locale) {\nreturn buildMessage(locale, pattern, arguments);\n}",
+            "method_id": 18
+        },
+        {
+            "method_signature": "org.apache.commons.math.ConvergenceException:<init>(Ljava/lang/String;[Ljava/lang/Object;)V",
+            "method_body": "public ConvergenceException(String pattern, Object ... arguments) {\nsuper(pattern, arguments);\n}",
+            "method_id": 19
+        },
+        {
+            "method_signature": "org.apache.commons.math.MaxIterationsExceededException:<init>(I)V",
+            "method_body": "public MaxIterationsExceededException(final int maxIterations) {\nsuper(\"Maximal number of iterations ({0}) exceeded\", maxIterations);\nthis.maxIterations = maxIterations;\n}",
+            "method_id": 20
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.AbstractContinuousDistribution$1:value(D)D",
+            "method_body": "public double inverseCumulativeProbability(final double p)\nthrows MathException {\nif (p < 0.0 || p > 1.0) {\nthrow MathRuntimeException.createIllegalArgumentException(\n\"{0} out of [{1}, {2}] range\", p, 0.0, 1.0);\n}\n\n// by default, do simple root finding using bracketing and default solver.\n// subclasses can override if there is a better method.\nUnivariateRealFunction rootFindingFunction =\nnew UnivariateRealFunction() {\npublic double value(double x) throws FunctionEvaluationException {\ntry {\nreturn cumulativeProbability(x) - p;\n} catch (MathException ex) {\nthrow new FunctionEvaluationException(ex, x, ex.getPattern(), ex.getArguments());\n}\n}\n};\n\n// Try to bracket root, test domain endoints if this fails\ndouble lowerBound = getDomainLowerBound(p);\ndouble upperBound = getDomainUpperBound(p);\ndouble[] bracket = null;\ntry {\nbracket = UnivariateRealSolverUtils.bracket(\nrootFindingFunction, getInitialDomain(p),\nlowerBound, upperBound);\n}  catch (ConvergenceException ex) {\n/*\n* Check domain endpoints to see if one gives value that is within\n* the default solver's defaultAbsoluteAccuracy of 0 (will be the\n* case if density has bounded support and p is 0 or 1).\n*\n* TODO: expose the default solver, defaultAbsoluteAccuracy as\n* a constant.\n*/\nif (Math.abs(rootFindingFunction.value(lowerBound)) < 1E-6) {\nreturn lowerBound;\n}\nif (Math.abs(rootFindingFunction.value(upperBound)) < 1E-6) {\nreturn upperBound;\n}\n// Failed bracket convergence was not because of corner solution\nthrow new MathException(ex);\n}\n\n// find root\ndouble root = UnivariateRealSolverUtils.solve(rootFindingFunction,\nbracket[0],bracket[1]);\nreturn root;\n}",
+            "method_id": 21
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.NormalDistributionImpl:<init>(DD)V",
+            "method_body": "public NormalDistributionImpl(double mean, double sd){\nsuper();\nsetMean(mean);\nsetStandardDeviation(sd);\n}",
+            "method_id": 22
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.AbstractDistribution:<init>()V",
+            "method_body": "protected AbstractDistribution() {\nsuper();\n}",
+            "method_id": 23
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.NormalDistributionImpl:getMean()D",
+            "method_body": "public double getMean() {\nreturn mean;\n}",
+            "method_id": 24
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.NormalDistributionImpl:inverseCumulativeProbability(D)D",
+            "method_body": "public double inverseCumulativeProbability(final double p)\nthrows MathException {\nif (p == 0) {\nreturn Double.NEGATIVE_INFINITY;\n}\nif (p == 1) {\nreturn Double.POSITIVE_INFINITY;\n}\nreturn super.inverseCumulativeProbability(p);\n}",
+            "method_id": 25
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.NormalDistributionImpl:getInitialDomain(D)D",
+            "method_body": "protected double getInitialDomain(double p) {\ndouble ret;\n\nif (p < .5) {\nret = getMean() - getStandardDeviation();\n} else if (p > .5) {\nret = getMean() + getStandardDeviation();\n} else {\nret = getMean();\n}\n\nreturn ret;\n}",
+            "method_id": 26
+        }
+    ]
+}

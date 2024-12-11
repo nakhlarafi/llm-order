@@ -1,0 +1,49 @@
+{
+    "bug_id": 97,
+    "test_id": 0,
+    "test_name": "org.apache.commons.math.analysis.BrentSolverTest.testRootEndpoints",
+    "test_body": "public void testRootEndpoints() throws Exception {\nUnivariateRealFunction f = new SinFunction();\nUnivariateRealSolver solver = new BrentSolver(f);\n// endpoint is root\ndouble result = solver.solve(Math.PI, 4);\nassertEquals(result, Math.PI, solver.getAbsoluteAccuracy());\nresult = solver.solve(3, Math.PI);\nassertEquals(result, Math.PI, solver.getAbsoluteAccuracy());\n}\n",
+    "stack_trace": "java.lang.IllegalArgumentException: Function values at endpoints do not have different signs.  Endpoints: [3.0,3.141592653589793]  Values: [0.1411200080598672,1.2246467991473532E-16]\nat org.apache.commons.math.analysis.BrentSolver.solve(BrentSolver.java:141)\nat org.apache.commons.math.analysis.BrentSolverTest.testRootEndpoints(BrentSolverTest.java:279)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.math.analysis.UnivariateRealSolverImpl:<init>(Lorg/apache/commons/math/analysis/UnivariateRealFunction;ID)V",
+            "method_body": "protected UnivariateRealSolverImpl(\nUnivariateRealFunction f,\nint defaultMaximalIterationCount,\ndouble defaultAbsoluteAccuracy) {\n\nsuper();\n\nif (f == null) {\nthrow new IllegalArgumentException(\"function can not be null.\");\n}\n\nthis.f = f;\nthis.defaultAbsoluteAccuracy = defaultAbsoluteAccuracy;\nthis.defaultRelativeAccuracy = 1E-14;\nthis.defaultFunctionValueAccuracy = 1E-15;\nthis.absoluteAccuracy = defaultAbsoluteAccuracy;\nthis.relativeAccuracy = defaultRelativeAccuracy;\nthis.functionValueAccuracy = defaultFunctionValueAccuracy;\nthis.defaultMaximalIterationCount = defaultMaximalIterationCount;\nthis.maximalIterationCount = defaultMaximalIterationCount;\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.BrentSolver:solve(DDDDDD)D",
+            "method_body": "private double solve(double x0, double y0,\ndouble x1, double y1,\ndouble x2, double y2)\nthrows MaxIterationsExceededException, FunctionEvaluationException {\n\ndouble delta = x1 - x0;\ndouble oldDelta = delta;\n\nint i = 0;\nwhile (i < maximalIterationCount) {\nif (Math.abs(y2) < Math.abs(y1)) {\n// use the bracket point if is better than last approximation\nx0 = x1;\nx1 = x2;\nx2 = x0;\ny0 = y1;\ny1 = y2;\ny2 = y0;\n}\nif (Math.abs(y1) <= functionValueAccuracy) {\n// Avoid division by very small values. Assume\n// the iteration has converged (the problem may\n// still be ill conditioned)\nsetResult(x1, i);\nreturn result;\n}\ndouble dx = (x2 - x1);\ndouble tolerance =\nMath.max(relativeAccuracy * Math.abs(x1), absoluteAccuracy);\nif (Math.abs(dx) <= tolerance) {\nsetResult(x1, i);\nreturn result;\n}\nif ((Math.abs(oldDelta) < tolerance) ||\n(Math.abs(y0) <= Math.abs(y1))) {\n// Force bisection.\ndelta = 0.5 * dx;\noldDelta = delta;\n} else {\ndouble r3 = y1 / y0;\ndouble p;\ndouble p1;\n// the equality test (x0 == x2) is intentional,\n// it is part of the original Brent's method,\n// it should NOT be replaced by proximity test\nif (x0 == x2) {\n// Linear interpolation.\np = dx * r3;\np1 = 1.0 - r3;\n} else {\n// Inverse quadratic interpolation.\ndouble r1 = y0 / y2;\ndouble r2 = y1 / y2;\np = r3 * (dx * r1 * (r1 - r2) - (x1 - x0) * (r2 - 1.0));\np1 = (r1 - 1.0) * (r2 - 1.0) * (r3 - 1.0);\n}\nif (p > 0.0) {\np1 = -p1;\n} else {\np = -p;\n}\nif (2.0 * p >= 1.5 * dx * p1 - Math.abs(tolerance * p1) ||\np >= Math.abs(0.5 * oldDelta * p1)) {\n// Inverse quadratic interpolation gives a value\n// in the wrong direction, or progress is slow.\n// Fall back to bisection.\ndelta = 0.5 * dx;\noldDelta = delta;\n} else {\noldDelta = delta;\ndelta = p / p1;\n}\n}\n// Save old X1, Y1\nx0 = x1;\ny0 = y1;\n// Compute new X1, Y1\nif (Math.abs(delta) > tolerance) {\nx1 = x1 + delta;\n} else if (dx > 0.0) {\nx1 = x1 + 0.5 * tolerance;\n} else if (dx <= 0.0) {\nx1 = x1 - 0.5 * tolerance;\n}\ny1 = f.value(x1);\nif ((y1 > 0) == (y2 > 0)) {\nx2 = x0;\ny2 = y0;\ndelta = x1 - x0;\noldDelta = delta;\n}\ni++;\n}\nthrow new MaxIterationsExceededException(maximalIterationCount);\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.UnivariateRealSolverImpl:clearResult()V",
+            "method_body": "protected final void clearResult() {\nthis.resultComputed = false;\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.UnivariateRealSolverImpl:getAbsoluteAccuracy()D",
+            "method_body": "public double getAbsoluteAccuracy() {\nreturn absoluteAccuracy;\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.UnivariateRealSolverImpl:setResult(DI)V",
+            "method_body": "protected final void setResult(double result, int iterationCount) {\nthis.result = result;\nthis.iterationCount = iterationCount;\nthis.resultComputed = true;\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.UnivariateRealSolverImpl:verifyInterval(DD)V",
+            "method_body": "protected void verifyInterval(double lower, double upper) {\nif (lower >= upper) {\nthrow new IllegalArgumentException\n(\"Endpoints do not specify an interval: [\" + lower +\n\",\" + upper + \"]\");\n}\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.BrentSolver:<init>(Lorg/apache/commons/math/analysis/UnivariateRealFunction;)V",
+            "method_body": "public BrentSolver(UnivariateRealFunction f) {\nsuper(f, 100, 1E-6);\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.BrentSolver:solve(DD)D",
+            "method_body": "public double solve(double min, double max) throws MaxIterationsExceededException,\nFunctionEvaluationException {\n\nclearResult();\nverifyInterval(min, max);\n\ndouble ret = Double.NaN;\n\ndouble yMin = f.value(min);\ndouble yMax = f.value(max);\n\n// Verify bracketing\ndouble sign = yMin * yMax;\nif (sign >= 0) {\n// check if either value is close to a zero\n// neither value is close to zero and min and max do not bracket root.\nthrow new IllegalArgumentException\n(\"Function values at endpoints do not have different signs.\" +\n\"  Endpoints: [\" + min + \",\" + max + \"]\" +\n\"  Values: [\" + yMin + \",\" + yMax + \"]\");\n} else {\n// solve using only the first endpoint as initial guess\nret = solve(min, yMin, max, yMax, min, yMin);\n// either min or max is a root\n}\n\nreturn ret;\n}",
+            "method_id": 7
+        }
+    ]
+}

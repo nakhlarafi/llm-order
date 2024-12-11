@@ -1,0 +1,134 @@
+{
+    "bug_id": 16,
+    "test_id": 0,
+    "test_name": "org.apache.commons.math3.util.FastMathTest.testMath905LargeNegative",
+    "test_body": "public void testMath905LargeNegative() {\nfinal double start = -StrictMath.log(Double.MAX_VALUE);\nfinal double endT = StrictMath.sqrt(2) * StrictMath.sqrt(Double.MAX_VALUE);\nfinal double end = -2 * StrictMath.log(endT);\ndouble maxErr = 0;\nfor (double x = start; x > end; x -= 1e-3) {\nfinal double tst = FastMath.cosh(x);\nfinal double ref = Math.cosh(x);\nmaxErr = FastMath.max(maxErr, FastMath.abs(ref - tst) / FastMath.ulp(ref));            \n}\nAssert.assertEquals(0, maxErr, 3);\nfor (double x = start; x > end; x -= 1e-3) {\nfinal double tst = FastMath.sinh(x);\nfinal double ref = Math.sinh(x);\nmaxErr = FastMath.max(maxErr, FastMath.abs(ref - tst) / FastMath.ulp(ref));            \n}\nAssert.assertEquals(0, maxErr, 3);\n}\n",
+    "stack_trace": "junit.framework.AssertionFailedError: expected:<0.0> but was:<Infinity>\nat org.junit.Assert.fail(Assert.java:88)\nat org.junit.Assert.failNotEquals(Assert.java:743)\nat org.junit.Assert.assertEquals(Assert.java:494)\nat org.junit.Assert.assertEquals(Assert.java:592)\nat org.apache.commons.math3.util.FastMathTest.testMath905LargeNegative(FastMathTest.java:194)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.math3.dfp.DfpField:getRoundingMode()Lorg/apache/commons/math3/dfp/DfpField$RoundingMode;",
+            "method_body": "public RoundingMode getRoundingMode() {\nreturn rMode;\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.math3.dfp.DfpField:getRadixDigits()I",
+            "method_body": "public int getRadixDigits() {\nreturn radixDigits;\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.math3.random.MersenneTwister:setSeed(J)V",
+            "method_body": "public void setSeed(long seed) {\nsetSeed(new int[] { (int) (seed >>> 32), (int) (seed & 0xffffffffl) });\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.math3.dfp.Dfp:<init>(Lorg/apache/commons/math3/dfp/DfpField;J)V",
+            "method_body": "protected Dfp(final DfpField field, long x) {\n\n// initialize as if 0\nmant = new int[field.getRadixDigits()];\nnans = FINITE;\nthis.field = field;\n\nboolean isLongMin = false;\nif (x == Long.MIN_VALUE) {\n// special case for Long.MIN_VALUE (-9223372036854775808)\n// we must shift it before taking its absolute value\nisLongMin = true;\n++x;\n}\n\n// set the sign\nif (x < 0) {\nsign = -1;\nx = -x;\n} else {\nsign = 1;\n}\n\nexp = 0;\nwhile (x != 0) {\nSystem.arraycopy(mant, mant.length - exp, mant, mant.length - 1 - exp, exp);\nmant[mant.length - 1] = (int) (x % RADIX);\nx /= RADIX;\nexp++;\n}\n\nif (isLongMin) {\n// remove the shift added for Long.MIN_VALUE\n// we know in this case that fixing the last digit is sufficient\nfor (int i = 0; i < mant.length - 1; i++) {\nif (mant[i] != 0) {\nmant[i]++;\nbreak;\n}\n}\n}\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math3.dfp.DfpField:computeStringConstants(I)V",
+            "method_body": "private static void computeStringConstants(final int highPrecisionDecimalDigits) {\nif (sqr2String == null || sqr2String.length() < highPrecisionDecimalDigits - 3) {\n\n// recompute the string representation of the transcendental constants\nfinal DfpField highPrecisionField = new DfpField(highPrecisionDecimalDigits, false);\nfinal Dfp highPrecisionOne        = new Dfp(highPrecisionField, 1);\nfinal Dfp highPrecisionTwo        = new Dfp(highPrecisionField, 2);\nfinal Dfp highPrecisionThree      = new Dfp(highPrecisionField, 3);\n\nfinal Dfp highPrecisionSqr2 = highPrecisionTwo.sqrt();\nsqr2String           = highPrecisionSqr2.toString();\nsqr2ReciprocalString = highPrecisionOne.divide(highPrecisionSqr2).toString();\n\nfinal Dfp highPrecisionSqr3 = highPrecisionThree.sqrt();\nsqr3String           = highPrecisionSqr3.toString();\nsqr3ReciprocalString = highPrecisionOne.divide(highPrecisionSqr3).toString();\n\npiString   = computePi(highPrecisionOne, highPrecisionTwo, highPrecisionThree).toString();\neString    = computeExp(highPrecisionOne, highPrecisionOne).toString();\nln2String  = computeLn(highPrecisionTwo, highPrecisionOne, highPrecisionTwo).toString();\nln5String  = computeLn(new Dfp(highPrecisionField, 5),  highPrecisionOne, highPrecisionTwo).toString();\nln10String = computeLn(new Dfp(highPrecisionField, 10), highPrecisionOne, highPrecisionTwo).toString();\n\n}\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math3.dfp.DfpField:split(Ljava/lang/String;)[Lorg/apache/commons/math3/dfp/Dfp;",
+            "method_body": "private Dfp[] split(final String a) {\nDfp result[] = new Dfp[2];\nboolean leading = true;\nint sp = 0;\nint sig = 0;\n\nchar[] buf = new char[a.length()];\n\nfor (int i = 0; i < buf.length; i++) {\nbuf[i] = a.charAt(i);\n\nif (buf[i] >= '1' && buf[i] <= '9') {\nleading = false;\n}\n\nif (buf[i] == '.') {\nsig += (400 - sig) % 4;\nleading = false;\n}\n\nif (sig == (radixDigits / 2) * 4) {\nsp = i;\nbreak;\n}\n\nif (buf[i] >= '0' && buf[i] <= '9' && !leading) {\nsig ++;\n}\n}\n\nresult[0] = new Dfp(this, new String(buf, 0, sp));\n\nfor (int i = 0; i < buf.length; i++) {\nbuf[i] = a.charAt(i);\nif (buf[i] >= '0' && buf[i] <= '9' && i < sp) {\nbuf[i] = '0';\n}\n}\n\nresult[1] = new Dfp(this, new String(buf));\n\nreturn result;\n\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.math3.dfp.Dfp:getRadixDigits()I",
+            "method_body": "public int getRadixDigits() {\nreturn field.getRadixDigits();\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.math3.dfp.DfpField:<init>(IZ)V",
+            "method_body": "private DfpField(final int decimalDigits, final boolean computeConstants) {\n\nthis.radixDigits = (decimalDigits < 13) ? 4 : (decimalDigits + 3) / 4;\nthis.rMode       = RoundingMode.ROUND_HALF_EVEN;\nthis.ieeeFlags   = 0;\nthis.zero        = new Dfp(this, 0);\nthis.one         = new Dfp(this, 1);\nthis.two         = new Dfp(this, 2);\n\nif (computeConstants) {\n// set up transcendental constants\nsynchronized (DfpField.class) {\n\n// as a heuristic to circumvent Table-Maker's Dilemma, we set the string\n// representation of the constants to be at least 3 times larger than the\n// number of decimal digits, also as an attempt to really compute these\n// constants only once, we set a minimum number of digits\ncomputeStringConstants((decimalDigits < 67) ? 200 : (3 * decimalDigits));\n\n// set up the constants at current field accuracy\nsqr2           = new Dfp(this, sqr2String);\nsqr2Split      = split(sqr2String);\nsqr2Reciprocal = new Dfp(this, sqr2ReciprocalString);\nsqr3           = new Dfp(this, sqr3String);\nsqr3Reciprocal = new Dfp(this, sqr3ReciprocalString);\npi             = new Dfp(this, piString);\npiSplit        = split(piString);\ne              = new Dfp(this, eString);\neSplit         = split(eString);\nln2            = new Dfp(this, ln2String);\nln2Split       = split(ln2String);\nln5            = new Dfp(this, ln5String);\nln5Split       = split(ln5String);\nln10           = new Dfp(this, ln10String);\n\n}\n} else {\n// dummy settings for unused constants\nsqr2           = null;\nsqr2Split      = null;\nsqr2Reciprocal = null;\nsqr3           = null;\nsqr3Reciprocal = null;\npi             = null;\npiSplit        = null;\ne              = null;\neSplit         = null;\nln2            = null;\nln2Split       = null;\nln5            = null;\nln5Split       = null;\nln10           = null;\n}\n\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.math3.random.MersenneTwister:setSeed(I)V",
+            "method_body": "public void setSeed(int seed) {\n// we use a long masked by 0xffffffffL as a poor man unsigned int\nlong longMT = seed;\n// NB: unlike original C code, we are working with java longs, the cast below makes masking unnecessary\nmt[0]= (int) longMT;\nfor (mti = 1; mti < N; ++mti) {\n// See Knuth TAOCP Vol2. 3rd Ed. P.106 for multiplier.\n// initializer from the 2002-01-09 C version by Makoto Matsumoto\nlongMT = (1812433253l * (longMT ^ (longMT >> 30)) + mti) & 0xffffffffL;\nmt[mti]= (int) longMT;\n}\n\nclear(); // Clear normal deviate cache\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.math3.random.MersenneTwister:setSeed([I)V",
+            "method_body": "public void setSeed(int[] seed) {\n\nif (seed == null) {\nsetSeed(System.currentTimeMillis() + System.identityHashCode(this));\nreturn;\n}\n\nsetSeed(19650218);\nint i = 1;\nint j = 0;\n\nfor (int k = FastMath.max(N, seed.length); k != 0; k--) {\nlong l0 = (mt[i] & 0x7fffffffl)   | ((mt[i]   < 0) ? 0x80000000l : 0x0l);\nlong l1 = (mt[i-1] & 0x7fffffffl) | ((mt[i-1] < 0) ? 0x80000000l : 0x0l);\nlong l  = (l0 ^ ((l1 ^ (l1 >> 30)) * 1664525l)) + seed[j] + j; // non linear\nmt[i]   = (int) (l & 0xffffffffl);\ni++; j++;\nif (i >= N) {\nmt[0] = mt[N - 1];\ni = 1;\n}\nif (j >= seed.length) {\nj = 0;\n}\n}\n\nfor (int k = N - 1; k != 0; k--) {\nlong l0 = (mt[i] & 0x7fffffffl)   | ((mt[i]   < 0) ? 0x80000000l : 0x0l);\nlong l1 = (mt[i-1] & 0x7fffffffl) | ((mt[i-1] < 0) ? 0x80000000l : 0x0l);\nlong l  = (l0 ^ ((l1 ^ (l1 >> 30)) * 1566083941l)) - i; // non linear\nmt[i]   = (int) (l & 0xffffffffL);\ni++;\nif (i >= N) {\nmt[0] = mt[N - 1];\ni = 1;\n}\n}\n\nmt[0] = 0x80000000; // MSB is 1; assuring non-zero initial array\n\nclear(); // Clear normal deviate cache\n\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.math3.random.MersenneTwister:<init>(J)V",
+            "method_body": "public MersenneTwister(long seed) {\nmt = new int[N];\nsetSeed(seed);\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.apache.commons.math3.random.BitsStreamGenerator:clear()V",
+            "method_body": "public void clear() {\nnextGaussian = Double.NaN;\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.apache.commons.math3.dfp.Dfp:<init>(Lorg/apache/commons/math3/dfp/DfpField;Ljava/lang/String;)V",
+            "method_body": "protected Dfp(final DfpField field, final String s) {\n\n// initialize as if 0\nmant = new int[field.getRadixDigits()];\nsign = 1;\nexp = 0;\nnans = FINITE;\nthis.field = field;\n\nboolean decimalFound = false;\nfinal int rsize = 4;   // size of radix in decimal digits\nfinal int offset = 4;  // Starting offset into Striped\nfinal char[] striped = new char[getRadixDigits() * rsize + offset * 2];\n\n// Check some special cases\nif (s.equals(POS_INFINITY_STRING)) {\nsign = (byte) 1;\nnans = INFINITE;\nreturn;\n}\n\nif (s.equals(NEG_INFINITY_STRING)) {\nsign = (byte) -1;\nnans = INFINITE;\nreturn;\n}\n\nif (s.equals(NAN_STRING)) {\nsign = (byte) 1;\nnans = QNAN;\nreturn;\n}\n\n// Check for scientific notation\nint p = s.indexOf(\"e\");\nif (p == -1) { // try upper case?\np = s.indexOf(\"E\");\n}\n\nfinal String fpdecimal;\nint sciexp = 0;\nif (p != -1) {\n// scientific notation\nfpdecimal = s.substring(0, p);\nString fpexp = s.substring(p+1);\nboolean negative = false;\n\nfor (int i=0; i<fpexp.length(); i++)\n{\nif (fpexp.charAt(i) == '-')\n{\nnegative = true;\ncontinue;\n}\nif (fpexp.charAt(i) >= '0' && fpexp.charAt(i) <= '9') {\nsciexp = sciexp * 10 + fpexp.charAt(i) - '0';\n}\n}\n\nif (negative) {\nsciexp = -sciexp;\n}\n} else {\n// normal case\nfpdecimal = s;\n}\n\n// If there is a minus sign in the number then it is negative\nif (fpdecimal.indexOf(\"-\") !=  -1) {\nsign = -1;\n}\n\n// First off, find all of the leading zeros, trailing zeros, and significant digits\np = 0;\n\n// Move p to first significant digit\nint decimalPos = 0;\nfor (;;) {\nif (fpdecimal.charAt(p) >= '1' && fpdecimal.charAt(p) <= '9') {\nbreak;\n}\n\nif (decimalFound && fpdecimal.charAt(p) == '0') {\ndecimalPos--;\n}\n\nif (fpdecimal.charAt(p) == '.') {\ndecimalFound = true;\n}\n\np++;\n\nif (p == fpdecimal.length()) {\nbreak;\n}\n}\n\n// Copy the string onto Stripped\nint q = offset;\nstriped[0] = '0';\nstriped[1] = '0';\nstriped[2] = '0';\nstriped[3] = '0';\nint significantDigits=0;\nfor(;;) {\nif (p == (fpdecimal.length())) {\nbreak;\n}\n\n// Don't want to run pass the end of the array\nif (q == mant.length*rsize+offset+1) {\nbreak;\n}\n\nif (fpdecimal.charAt(p) == '.') {\ndecimalFound = true;\ndecimalPos = significantDigits;\np++;\ncontinue;\n}\n\nif (fpdecimal.charAt(p) < '0' || fpdecimal.charAt(p) > '9') {\np++;\ncontinue;\n}\n\nstriped[q] = fpdecimal.charAt(p);\nq++;\np++;\nsignificantDigits++;\n}\n\n\n// If the decimal point has been found then get rid of trailing zeros.\nif (decimalFound && q != offset) {\nfor (;;) {\nq--;\nif (q == offset) {\nbreak;\n}\nif (striped[q] == '0') {\nsignificantDigits--;\n} else {\nbreak;\n}\n}\n}\n\n// special case of numbers like \"0.00000\"\nif (decimalFound && significantDigits == 0) {\ndecimalPos = 0;\n}\n\n// Implicit decimal point at end of number if not present\nif (!decimalFound) {\ndecimalPos = q-offset;\n}\n\n// Find the number of significant trailing zeros\nq = offset;  // set q to point to first sig digit\np = significantDigits-1+offset;\n\nwhile (p > q) {\nif (striped[p] != '0') {\nbreak;\n}\np--;\n}\n\n// Make sure the decimal is on a mod 10000 boundary\nint i = ((rsize * 100) - decimalPos - sciexp % rsize) % rsize;\nq -= i;\ndecimalPos += i;\n\n// Make the mantissa length right by adding zeros at the end if necessary\nwhile ((p - q) < (mant.length * rsize)) {\nfor (i = 0; i < rsize; i++) {\nstriped[++p] = '0';\n}\n}\n\n// Ok, now we know how many trailing zeros there are,\n// and where the least significant digit is\nfor (i = mant.length - 1; i >= 0; i--) {\nmant[i] = (striped[q]   - '0') * 1000 +\n(striped[q+1] - '0') * 100  +\n(striped[q+2] - '0') * 10   +\n(striped[q+3] - '0');\nq += 4;\n}\n\n\nexp = (decimalPos+sciexp) / rsize;\n\nif (q < striped.length) {\n// Is there possible another digit?\nround((striped[q] - '0')*1000);\n}\n\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.apache.commons.math3.random.BitsStreamGenerator:<init>()V",
+            "method_body": "public BitsStreamGenerator() {\nnextGaussian = Double.NaN;\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "org.apache.commons.math3.dfp.DfpField:<init>(I)V",
+            "method_body": "public DfpField(final int decimalDigits) {\nthis(decimalDigits, true);\n}",
+            "method_id": 14
+        },
+        {
+            "method_signature": "org.apache.commons.math3.dfp.Dfp:<init>(Lorg/apache/commons/math3/dfp/DfpField;I)V",
+            "method_body": "protected Dfp(final DfpField field, int x) {\nthis(field, (long) x);\n}",
+            "method_id": 15
+        },
+        {
+            "method_signature": "org.apache.commons.math3.dfp.DfpField:setIEEEFlagsBits(I)V",
+            "method_body": "public void setIEEEFlagsBits(final int bits) {\nieeeFlags |= bits & (FLAG_INVALID | FLAG_DIV_ZERO | FLAG_OVERFLOW | FLAG_UNDERFLOW | FLAG_INEXACT);\n}",
+            "method_id": 16
+        },
+        {
+            "method_signature": "org.apache.commons.math3.util.FastMath:max(II)I",
+            "method_body": "public static int max(final int a, final int b) {\nreturn (a <= b) ? b : a;\n}",
+            "method_id": 17
+        },
+        {
+            "method_signature": "org.apache.commons.math3.util.FastMath:abs(D)D",
+            "method_body": "public static double abs(double x) {\nreturn (x < 0.0) ? -x : (x == 0.0) ? 0.0 : x; // -0.0 => +0.0\n}",
+            "method_id": 18
+        },
+        {
+            "method_signature": "org.apache.commons.math3.dfp.Dfp:round(I)I",
+            "method_body": "protected int round(int n) {\nboolean inc = false;\nswitch (field.getRoundingMode()) {\ncase ROUND_DOWN:\ninc = false;\nbreak;\n\ncase ROUND_UP:\ninc = n != 0;       // round up if n!=0\nbreak;\n\ncase ROUND_HALF_UP:\ninc = n >= 5000;  // round half up\nbreak;\n\ncase ROUND_HALF_DOWN:\ninc = n > 5000;  // round half down\nbreak;\n\ncase ROUND_HALF_EVEN:\ninc = n > 5000 || (n == 5000 && (mant[0] & 1) == 1);  // round half-even\nbreak;\n\ncase ROUND_HALF_ODD:\ninc = n > 5000 || (n == 5000 && (mant[0] & 1) == 0);  // round half-odd\nbreak;\n\ncase ROUND_CEIL:\ninc = sign == 1 && n != 0;  // round ceil\nbreak;\n\ncase ROUND_FLOOR:\ndefault:\ninc = sign == -1 && n != 0;  // round floor\nbreak;\n}\n\nif (inc) {\n// increment if necessary\nint rh = 1;\nfor (int i = 0; i < mant.length; i++) {\nfinal int r = mant[i] + rh;\nrh = r / RADIX;\nmant[i] = r - rh * RADIX;\n}\n\nif (rh != 0) {\nshiftRight();\nmant[mant.length-1] = rh;\n}\n}\n\n// check for exceptional cases and raise signals if necessary\nif (exp < MIN_EXP) {\n// Gradual Underflow\nfield.setIEEEFlagsBits(DfpField.FLAG_UNDERFLOW);\nreturn DfpField.FLAG_UNDERFLOW;\n}\n\nif (exp > MAX_EXP) {\n// Overflow\nfield.setIEEEFlagsBits(DfpField.FLAG_OVERFLOW);\nreturn DfpField.FLAG_OVERFLOW;\n}\n\nif (n != 0) {\n// Inexact\nfield.setIEEEFlagsBits(DfpField.FLAG_INEXACT);\nreturn DfpField.FLAG_INEXACT;\n}\n\nreturn 0;\n\n}",
+            "method_id": 19
+        },
+        {
+            "method_signature": "org.apache.commons.math3.util.FastMath:max(DD)D",
+            "method_body": "public static double max(final double a, final double b) {\nif (a > b) {\nreturn a;\n}\nif (a < b) {\nreturn b;\n}\n/* if either arg is NaN, return NaN */\nif (a != b) {\nreturn Double.NaN;\n}\n/* min(+0.0,-0.0) == -0.0 */\n/* 0x8000000000000000L == Double.doubleToRawLongBits(-0.0d) */\nlong bits = Double.doubleToRawLongBits(a);\nif (bits == 0x8000000000000000L) {\nreturn b;\n}\nreturn a;\n}",
+            "method_id": 20
+        },
+        {
+            "method_signature": "org.apache.commons.math3.util.FastMath:ulp(D)D",
+            "method_body": "public static double ulp(double x) {\nif (Double.isInfinite(x)) {\nreturn Double.POSITIVE_INFINITY;\n}\nreturn abs(x - Double.longBitsToDouble(Double.doubleToLongBits(x) ^ 1));\n}",
+            "method_id": 21
+        },
+        {
+            "method_signature": "org.apache.commons.math3.util.FastMath:exp(DD[D)D",
+            "method_body": "private static double exp(double x, double extra, double[] hiPrec) {\ndouble intPartA;\ndouble intPartB;\nint intVal;\n\n/* Lookup exp(floor(x)).\n* intPartA will have the upper 22 bits, intPartB will have the lower\n* 52 bits.\n*/\nif (x < 0.0) {\nintVal = (int) -x;\n\nif (intVal > 746) {\nif (hiPrec != null) {\nhiPrec[0] = 0.0;\nhiPrec[1] = 0.0;\n}\nreturn 0.0;\n}\n\nif (intVal > 709) {\n/* This will produce a subnormal output */\nfinal double result = exp(x+40.19140625, extra, hiPrec) / 285040095144011776.0;\nif (hiPrec != null) {\nhiPrec[0] /= 285040095144011776.0;\nhiPrec[1] /= 285040095144011776.0;\n}\nreturn result;\n}\n\nif (intVal == 709) {\n/* exp(1.494140625) is nearly a machine number... */\nfinal double result = exp(x+1.494140625, extra, hiPrec) / 4.455505956692756620;\nif (hiPrec != null) {\nhiPrec[0] /= 4.455505956692756620;\nhiPrec[1] /= 4.455505956692756620;\n}\nreturn result;\n}\n\nintVal++;\n\nintPartA = ExpIntTable.EXP_INT_TABLE_A[EXP_INT_TABLE_MAX_INDEX-intVal];\nintPartB = ExpIntTable.EXP_INT_TABLE_B[EXP_INT_TABLE_MAX_INDEX-intVal];\n\nintVal = -intVal;\n} else {\nintVal = (int) x;\n\nif (intVal > 709) {\nif (hiPrec != null) {\nhiPrec[0] = Double.POSITIVE_INFINITY;\nhiPrec[1] = 0.0;\n}\nreturn Double.POSITIVE_INFINITY;\n}\n\nintPartA = ExpIntTable.EXP_INT_TABLE_A[EXP_INT_TABLE_MAX_INDEX+intVal];\nintPartB = ExpIntTable.EXP_INT_TABLE_B[EXP_INT_TABLE_MAX_INDEX+intVal];\n}\n\n/* Get the fractional part of x, find the greatest multiple of 2^-10 less than\n* x and look up the exp function of it.\n* fracPartA will have the upper 22 bits, fracPartB the lower 52 bits.\n*/\nfinal int intFrac = (int) ((x - intVal) * 1024.0);\nfinal double fracPartA = ExpFracTable.EXP_FRAC_TABLE_A[intFrac];\nfinal double fracPartB = ExpFracTable.EXP_FRAC_TABLE_B[intFrac];\n\n/* epsilon is the difference in x from the nearest multiple of 2^-10.  It\n* has a value in the range 0 <= epsilon < 2^-10.\n* Do the subtraction from x as the last step to avoid possible loss of percison.\n*/\nfinal double epsilon = x - (intVal + intFrac / 1024.0);\n\n/* Compute z = exp(epsilon) - 1.0 via a minimax polynomial.  z has\nfull double precision (52 bits).  Since z < 2^-10, we will have\n62 bits of precision when combined with the contant 1.  This will be\nused in the last addition below to get proper rounding. */\n\n/* Remez generated polynomial.  Converges on the interval [0, 2^-10], error\nis less than 0.5 ULP */\ndouble z = 0.04168701738764507;\nz = z * epsilon + 0.1666666505023083;\nz = z * epsilon + 0.5000000000042687;\nz = z * epsilon + 1.0;\nz = z * epsilon + -3.940510424527919E-20;\n\n/* Compute (intPartA+intPartB) * (fracPartA+fracPartB) by binomial\nexpansion.\ntempA is exact since intPartA and intPartB only have 22 bits each.\ntempB will have 52 bits of precision.\n*/\ndouble tempA = intPartA * fracPartA;\ndouble tempB = intPartA * fracPartB + intPartB * fracPartA + intPartB * fracPartB;\n\n/* Compute the result.  (1+z)(tempA+tempB).  Order of operations is\nimportant.  For accuracy add by increasing size.  tempA is exact and\nmuch larger than the others.  If there are extra bits specified from the\npow() function, use them. */\nfinal double tempC = tempB + tempA;\nfinal double result;\nif (extra != 0.0) {\nresult = tempC*extra*z + tempC*extra + tempC*z + tempB + tempA;\n} else {\nresult = tempC*z + tempB + tempA;\n}\n\nif (hiPrec != null) {\n// If requesting high precision\nhiPrec[0] = tempA;\nhiPrec[1] = tempC*extra*z + tempC*extra + tempC*z + tempB;\n}\n\nreturn result;\n}",
+            "method_id": 22
+        },
+        {
+            "method_signature": "org.apache.commons.math3.util.FastMath:exp(D)D",
+            "method_body": "public static double exp(double x) {\nreturn exp(x, 0.0, null);\n}",
+            "method_id": 23
+        },
+        {
+            "method_signature": "org.apache.commons.math3.util.FastMath:cosh(D)D",
+            "method_body": "public static double cosh(double x) {\nif (x != x) {\nreturn x;\n}\n\n// cosh[z] = (exp(z) + exp(-z))/2\n\n// for numbers with magnitude 20 or so,\n// exp(-z) can be ignored in comparison with exp(z)\n\nif (x > 20) {\n// Avoid overflow (MATH-905).\nreturn 0.5 * exp(x);\n}\nif (x < -20) {\n// Avoid overflow (MATH-905).\nreturn 0.5 * exp(-x);\n}\n\nfinal double hiPrec[] = new double[2];\nif (x < 0.0) {\nx = -x;\n}\nexp(x, 0.0, hiPrec);\n\ndouble ya = hiPrec[0] + hiPrec[1];\ndouble yb = -(ya - hiPrec[0] - hiPrec[1]);\n\ndouble temp = ya * HEX_40000000;\ndouble yaa = ya + temp - temp;\ndouble yab = ya - yaa;\n\n// recip = 1/y\ndouble recip = 1.0/ya;\ntemp = recip * HEX_40000000;\ndouble recipa = recip + temp - temp;\ndouble recipb = recip - recipa;\n\n// Correct for rounding in division\nrecipb += (1.0 - yaa*recipa - yaa*recipb - yab*recipa - yab*recipb) * recip;\n// Account for yb\nrecipb += -yb * recip * recip;\n\n// y = y + 1/y\ntemp = ya + recipa;\nyb += -(temp - ya - recipa);\nya = temp;\ntemp = ya + recipb;\nyb += -(temp - ya - recipb);\nya = temp;\n\ndouble result = ya + yb;\nresult *= 0.5;\nreturn result;\n}",
+            "method_id": 24
+        }
+    ]
+}

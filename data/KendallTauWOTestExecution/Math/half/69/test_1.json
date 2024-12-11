@@ -1,0 +1,234 @@
+{
+    "bug_id": 69,
+    "test_id": 1,
+    "test_name": "org.apache.commons.math.stat.correlation.PearsonsCorrelationTest.testPValueNearZero",
+    "test_body": "public void testPValueNearZero() throws Exception {\n/*\n* Create a dataset that has r -> 1, p -> 0 as dimension increases.\n* Prior to the fix for MATH-371, p vanished for dimension >= 14.\n* Post fix, p-values diminish smoothly, vanishing at dimension = 127.\n* Tested value is ~1E-303.\n*/\nint dimension = 120; \ndouble[][] data = new double[dimension][2];\nfor (int i = 0; i < dimension; i++) {\ndata[i][0] = i;\ndata[i][1] = i + 1/((double)i + 1);\n}\nPearsonsCorrelation corrInstance = new PearsonsCorrelation(data);\nassertTrue(corrInstance.getCorrelationPValues().getEntry(0, 1) > 0);\n}\n",
+    "stack_trace": "junit.framework.AssertionFailedError\nat junit.framework.Assert.fail(Assert.java:55)\nat junit.framework.Assert.assertTrue(Assert.java:22)\nat junit.framework.Assert.assertTrue(Assert.java:31)\nat junit.framework.TestCase.assertTrue(TestCase.java:201)\nat org.apache.commons.math.stat.correlation.PearsonsCorrelationTest.testPValueNearZero(PearsonsCorrelationTest.java:181)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.math.linear.BlockRealMatrix:<init>(II[[DZ)V",
+            "method_body": "public BlockRealMatrix(final int rows, final int columns,\nfinal double[][] blockData, final boolean copyArray)\nthrows IllegalArgumentException {\n\nsuper(rows, columns);\nthis.rows    = rows;\nthis.columns = columns;\n\n// number of blocks\nblockRows    = (rows    + BLOCK_SIZE - 1) / BLOCK_SIZE;\nblockColumns = (columns + BLOCK_SIZE - 1) / BLOCK_SIZE;\n\nif (copyArray) {\n// allocate storage blocks, taking care of smaller ones at right and bottom\nblocks = new double[blockRows * blockColumns][];\n} else {\n// reference existing array\nblocks = blockData;\n}\n\nint index = 0;\nfor (int iBlock = 0; iBlock < blockRows; ++iBlock) {\nfinal int iHeight = blockHeight(iBlock);\nfor (int jBlock = 0; jBlock < blockColumns; ++jBlock, ++index) {\nif (blockData[index].length != iHeight * blockWidth(jBlock)) {\nthrow MathRuntimeException.createIllegalArgumentException(\n\"wrong array shape (block length = {0}, expected {1})\",\nblockData[index].length, iHeight * blockWidth(jBlock));\n}\nif (copyArray) {\nblocks[index] = blockData[index].clone();\n}\n}\n}\n\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.regression.SimpleRegression:getSlope()D",
+            "method_body": "public double getSlope() {\nif (n < 2) {\nreturn Double.NaN; //not enough data\n}\nif (Math.abs(sumXX) < 10 * Double.MIN_VALUE) {\nreturn Double.NaN; //not enough variation in x\n}\nreturn sumXY / sumXX;\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.TDistributionImpl:setDegreesOfFreedom(D)V",
+            "method_body": "public void setDegreesOfFreedom(double degreesOfFreedom) {\nsetDegreesOfFreedomInternal(degreesOfFreedom);\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.BlockRealMatrix:getRowDimension()I",
+            "method_body": "public int getRowDimension() {\nreturn rows;\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.correlation.PearsonsCorrelation:<init>(Lorg/apache/commons/math/linear/RealMatrix;)V",
+            "method_body": "public PearsonsCorrelation(RealMatrix matrix) {\ncheckSufficientData(matrix);\nnObs = matrix.getRowDimension();\ncorrelationMatrix = computeCorrelationMatrix(matrix);\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math.special.Beta:regularizedBeta(DDD)D",
+            "method_body": "public static double regularizedBeta(double x, double a, double b)\nthrows MathException\n{\nreturn regularizedBeta(x, a, b, DEFAULT_EPSILON, Integer.MAX_VALUE);\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.math.special.Beta$1:getA(ID)D",
+            "method_body": "public static double regularizedBeta(double x, final double a,\nfinal double b, double epsilon, int maxIterations) throws MathException\n{\ndouble ret;\n\nif (Double.isNaN(x) || Double.isNaN(a) || Double.isNaN(b) || (x < 0) ||\n(x > 1) || (a <= 0.0) || (b <= 0.0))\n{\nret = Double.NaN;\n} else if (x > (a + 1.0) / (a + b + 2.0)) {\nret = 1.0 - regularizedBeta(1.0 - x, b, a, epsilon, maxIterations);\n} else {\nContinuedFraction fraction = new ContinuedFraction() {\n\n@Override\nprotected double getB(int n, double x) {\ndouble ret;\ndouble m;\nif (n % 2 == 0) { // even\nm = n / 2.0;\nret = (m * (b - m) * x) /\n((a + (2 * m) - 1) * (a + (2 * m)));\n} else {\nm = (n - 1.0) / 2.0;\nret = -((a + m) * (a + b + m) * x) /\n((a + (2 * m)) * (a + (2 * m) + 1.0));\n}\nreturn ret;\n}\n\n@Override\nprotected double getA(int n, double x) {\nreturn 1.0;\n}\n};\nret = Math.exp((a * Math.log(x)) + (b * Math.log(1.0 - x)) -\nMath.log(a) - logBeta(a, b, epsilon, maxIterations)) *\n1.0 / fraction.evaluate(x, epsilon, maxIterations);\n}\n\nreturn ret;\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.correlation.PearsonsCorrelation:getCorrelationPValues()Lorg/apache/commons/math/linear/RealMatrix;",
+            "method_body": "public RealMatrix getCorrelationPValues() throws MathException {\nTDistribution tDistribution = new TDistributionImpl(nObs - 2);\nint nVars = correlationMatrix.getColumnDimension();\ndouble[][] out = new double[nVars][nVars];\nfor (int i = 0; i < nVars; i++) {\nfor (int j = 0; j < nVars; j++) {\nif (i == j) {\nout[i][j] = 0d;\n} else {\ndouble r = correlationMatrix.getEntry(i, j);\ndouble t = Math.abs(r * Math.sqrt((nObs - 2)/(1 - r * r)));\nout[i][j] = 2 * (1 - tDistribution.cumulativeProbability(t));\n}\n}\n}\nreturn new BlockRealMatrix(out);\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.TDistributionImpl:<init>(DD)V",
+            "method_body": "public TDistributionImpl(double degreesOfFreedom, double inverseCumAccuracy) {\nsuper();\nsetDegreesOfFreedomInternal(degreesOfFreedom);\nsolverAbsoluteAccuracy = inverseCumAccuracy;\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.BlockRealMatrix:<init>([[D)V",
+            "method_body": "public BlockRealMatrix(final double[][] rawData)\nthrows IllegalArgumentException {\nthis(rawData.length, rawData[0].length, toBlocksLayout(rawData), false);\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.BlockRealMatrix:getEntry(II)D",
+            "method_body": "public double getEntry(final int row, final int column)\nthrows MatrixIndexException {\ntry {\nfinal int iBlock = row    / BLOCK_SIZE;\nfinal int jBlock = column / BLOCK_SIZE;\nfinal int k      = (row    - iBlock * BLOCK_SIZE) * blockWidth(jBlock) +\n(column - jBlock * BLOCK_SIZE);\nreturn blocks[iBlock * blockColumns + jBlock][k];\n} catch (ArrayIndexOutOfBoundsException e) {\nthrow new MatrixIndexException(\n\"no entry at indices ({0}, {1}) in a {2}x{3} matrix\",\nrow, column, getRowDimension(), getColumnDimension());\n}\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.AbstractRealMatrix:<init>(II)V",
+            "method_body": "protected AbstractRealMatrix(final int rowDimension, final int columnDimension)\nthrows IllegalArgumentException {\nif (rowDimension <= 0 ) {\nthrow MathRuntimeException.createIllegalArgumentException(\n\"invalid row dimension {0} (must be positive)\",\nrowDimension);\n}\nif (columnDimension <= 0) {\nthrow MathRuntimeException.createIllegalArgumentException(\n\"invalid column dimension {0} (must be positive)\",\ncolumnDimension);\n}\nlu = null;\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.ContinuedFraction:evaluate(DDI)D",
+            "method_body": "public double evaluate(double x, double epsilon, int maxIterations)\nthrows MathException\n{\ndouble p0 = 1.0;\ndouble p1 = getA(0, x);\ndouble q0 = 0.0;\ndouble q1 = 1.0;\ndouble c = p1 / q1;\nint n = 0;\ndouble relativeError = Double.MAX_VALUE;\nwhile (n < maxIterations && relativeError > epsilon) {\n++n;\ndouble a = getA(n, x);\ndouble b = getB(n, x);\ndouble p2 = a * p1 + b * p0;\ndouble q2 = a * q1 + b * q0;\nboolean infinite = false;\nif (Double.isInfinite(p2) || Double.isInfinite(q2)) {\n/*\n* Need to scale. Try successive powers of the larger of a or b\n* up to 5th power. Throw ConvergenceException if one or both\n* of p2, q2 still overflow.\n*/\ndouble scaleFactor = 1d;\ndouble lastScaleFactor = 1d;\nfinal int maxPower = 5;\nfinal double scale = Math.max(a,b);\nif (scale <= 0) {  // Can't scale\nthrow new ConvergenceException(\n\"Continued fraction convergents diverged to +/- infinity for value {0}\",\nx);\n}\ninfinite = true;\nfor (int i = 0; i < maxPower; i++) {\nlastScaleFactor = scaleFactor;\nscaleFactor *= scale;\nif (a != 0.0 && a > b) {\np2 = p1 / lastScaleFactor + (b / scaleFactor * p0);\nq2 = q1 / lastScaleFactor + (b / scaleFactor * q0);\n} else if (b != 0) {\np2 = (a / scaleFactor * p1) + p0 / lastScaleFactor;\nq2 = (a / scaleFactor * q1) + q0 / lastScaleFactor;\n}\ninfinite = Double.isInfinite(p2) || Double.isInfinite(q2);\nif (!infinite) {\nbreak;\n}\n}\n}\n\nif (infinite) {\n// Scaling failed\nthrow new ConvergenceException(\n\"Continued fraction convergents diverged to +/- infinity for value {0}\",\nx);\n}\n\ndouble r = p2 / q2;\n\nif (Double.isNaN(r)) {\nthrow new ConvergenceException(\n\"Continued fraction diverged to NaN for value {0}\",\nx);\n}\nrelativeError = Math.abs(r / c - 1.0);\n\n// prepare for next iteration\nc = p2 / q2;\np0 = p1;\np1 = p2;\nq0 = q1;\nq1 = q2;\n}\n\nif (n >= maxIterations) {\nthrow new MaxIterationsExceededException(maxIterations,\n\"Continued fraction convergents failed to converge for value {0}\",\nx);\n}\n\nreturn c;\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.correlation.PearsonsCorrelation:<init>([[D)V",
+            "method_body": "public PearsonsCorrelation(double[][] data) {\nthis(new BlockRealMatrix(data));\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.regression.SimpleRegression:getTotalSumSquares()D",
+            "method_body": "public double getTotalSumSquares() {\nif (n < 2) {\nreturn Double.NaN;\n}\nreturn sumYY;\n}",
+            "method_id": 14
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.regression.SimpleRegression:<init>()V",
+            "method_body": "public SimpleRegression() {\nthis(new TDistributionImpl(1.0));\n}",
+            "method_id": 15
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.regression.SimpleRegression:<init>(Lorg/apache/commons/math/distribution/TDistribution;)V",
+            "method_body": "public SimpleRegression(TDistribution t) {\nsuper();\nsetDistribution(t);\n}",
+            "method_id": 16
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.regression.SimpleRegression:getSumSquaredErrors()D",
+            "method_body": "public double getSumSquaredErrors() {\nreturn Math.max(0d, sumYY - sumXY * sumXY / sumXX);\n}",
+            "method_id": 17
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.regression.SimpleRegression:getRSquare()D",
+            "method_body": "public double getRSquare() {\ndouble ssto = getTotalSumSquares();\nreturn (ssto - getSumSquaredErrors()) / ssto;\n}",
+            "method_id": 18
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.AbstractDistribution:<init>()V",
+            "method_body": "protected AbstractDistribution() {\nsuper();\n}",
+            "method_id": 19
+        },
+        {
+            "method_signature": "org.apache.commons.math.special.Beta$1:getB(ID)D",
+            "method_body": "public static double regularizedBeta(double x, final double a,\nfinal double b, double epsilon, int maxIterations) throws MathException\n{\ndouble ret;\n\nif (Double.isNaN(x) || Double.isNaN(a) || Double.isNaN(b) || (x < 0) ||\n(x > 1) || (a <= 0.0) || (b <= 0.0))\n{\nret = Double.NaN;\n} else if (x > (a + 1.0) / (a + b + 2.0)) {\nret = 1.0 - regularizedBeta(1.0 - x, b, a, epsilon, maxIterations);\n} else {\nContinuedFraction fraction = new ContinuedFraction() {\n\n@Override\nprotected double getB(int n, double x) {\ndouble ret;\ndouble m;\nif (n % 2 == 0) { // even\nm = n / 2.0;\nret = (m * (b - m) * x) /\n((a + (2 * m) - 1) * (a + (2 * m)));\n} else {\nm = (n - 1.0) / 2.0;\nret = -((a + m) * (a + b + m) * x) /\n((a + (2 * m)) * (a + (2 * m) + 1.0));\n}\nreturn ret;\n}\n\n@Override\nprotected double getA(int n, double x) {\nreturn 1.0;\n}\n};\nret = Math.exp((a * Math.log(x)) + (b * Math.log(1.0 - x)) -\nMath.log(a) - logBeta(a, b, epsilon, maxIterations)) *\n1.0 / fraction.evaluate(x, epsilon, maxIterations);\n}\n\nreturn ret;\n}",
+            "method_id": 20
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.BlockRealMatrix:getColumnDimension()I",
+            "method_body": "public int getColumnDimension() {\nreturn columns;\n}",
+            "method_id": 21
+        },
+        {
+            "method_signature": "org.apache.commons.math.special.Beta:logBeta(DDDI)D",
+            "method_body": "public static double logBeta(double a, double b, double epsilon,\nint maxIterations) {\n\ndouble ret;\n\nif (Double.isNaN(a) || Double.isNaN(b) || (a <= 0.0) || (b <= 0.0)) {\nret = Double.NaN;\n} else {\nret = Gamma.logGamma(a) + Gamma.logGamma(b) -\nGamma.logGamma(a + b);\n}\n\nreturn ret;\n}",
+            "method_id": 22
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.ContinuedFraction:<init>()V",
+            "method_body": "protected ContinuedFraction() {\nsuper();\n}",
+            "method_id": 23
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.TDistributionImpl:cumulativeProbability(D)D",
+            "method_body": "public double cumulativeProbability(double x) throws MathException{\ndouble ret;\nif (x == 0.0) {\nret = 0.5;\n} else {\ndouble t =\nBeta.regularizedBeta(\ndegreesOfFreedom / (degreesOfFreedom + (x * x)),\n0.5 * degreesOfFreedom,\n0.5);\nif (x < 0.0) {\nret = 0.5 * t;\n} else {\nret = 1.0 - 0.5 * t;\n}\n}\n\nreturn ret;\n}",
+            "method_id": 24
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.BlockRealMatrix:blockHeight(I)I",
+            "method_body": "private int blockHeight(final int blockRow) {\nreturn (blockRow == blockRows - 1) ? rows - blockRow * BLOCK_SIZE : BLOCK_SIZE;\n}",
+            "method_id": 25
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.BlockRealMatrix:toBlocksLayout([[D)[[D",
+            "method_body": "public static double[][] toBlocksLayout(final double[][] rawData)\nthrows IllegalArgumentException {\n\nfinal int rows         = rawData.length;\nfinal int columns      = rawData[0].length;\nfinal int blockRows    = (rows    + BLOCK_SIZE - 1) / BLOCK_SIZE;\nfinal int blockColumns = (columns + BLOCK_SIZE - 1) / BLOCK_SIZE;\n\n// safety checks\nfor (int i = 0; i < rawData.length; ++i) {\nfinal int length = rawData[i].length;\nif (length != columns) {\nthrow MathRuntimeException.createIllegalArgumentException(\n\"some rows have length {0} while others have length {1}\",\ncolumns, length);\n}\n}\n\n// convert array\nfinal double[][] blocks = new double[blockRows * blockColumns][];\nint blockIndex = 0;\nfor (int iBlock = 0; iBlock < blockRows; ++iBlock) {\nfinal int pStart  = iBlock * BLOCK_SIZE;\nfinal int pEnd    = Math.min(pStart + BLOCK_SIZE, rows);\nfinal int iHeight = pEnd - pStart;\nfor (int jBlock = 0; jBlock < blockColumns; ++jBlock) {\nfinal int qStart = jBlock * BLOCK_SIZE;\nfinal int qEnd   = Math.min(qStart + BLOCK_SIZE, columns);\nfinal int jWidth = qEnd - qStart;\n\n// allocate new block\nfinal double[] block = new double[iHeight * jWidth];\nblocks[blockIndex] = block;\n\n// copy data\nint index = 0;\nfor (int p = pStart; p < pEnd; ++p) {\nSystem.arraycopy(rawData[p], qStart, block, index, jWidth);\nindex += jWidth;\n}\n\n++blockIndex;\n\n}\n}\n\nreturn blocks;\n\n}",
+            "method_id": 26
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.AbstractContinuousDistribution:<init>()V",
+            "method_body": "protected AbstractContinuousDistribution() {\nsuper();\n}",
+            "method_id": 27
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.correlation.PearsonsCorrelation:checkSufficientData(Lorg/apache/commons/math/linear/RealMatrix;)V",
+            "method_body": "private void checkSufficientData(final RealMatrix matrix) {\nint nRows = matrix.getRowDimension();\nint nCols = matrix.getColumnDimension();\nif (nRows < 2 || nCols < 2) {\nthrow MathRuntimeException.createIllegalArgumentException(\n\"insufficient data: only {0} rows and {1} columns.\",\nnRows, nCols);\n}\n}",
+            "method_id": 28
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.TDistributionImpl:<init>(D)V",
+            "method_body": "public TDistributionImpl(double degreesOfFreedom) {\nthis(degreesOfFreedom, DEFAULT_INVERSE_ABSOLUTE_ACCURACY);\n}",
+            "method_id": 29
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.BlockRealMatrix:getColumn(I)[D",
+            "method_body": "public double[] getColumn(final int column)\nthrows MatrixIndexException {\n\nMatrixUtils.checkColumnIndex(this, column);\nfinal double[] out = new double[rows];\n\n// perform copy block-wise, to ensure good cache behavior\nfinal int jBlock  = column / BLOCK_SIZE;\nfinal int jColumn = column - jBlock * BLOCK_SIZE;\nfinal int jWidth  = blockWidth(jBlock);\nint outIndex      = 0;\nfor (int iBlock = 0; iBlock < blockRows; ++iBlock) {\nfinal int iHeight = blockHeight(iBlock);\nfinal double[] block = blocks[iBlock * blockColumns + jBlock];\nfor (int i = 0; i < iHeight; ++i) {\nout[outIndex++] = block[i * jWidth + jColumn];\n}\n}\n\nreturn out;\n\n}",
+            "method_id": 30
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.MatrixUtils:checkColumnIndex(Lorg/apache/commons/math/linear/AnyMatrix;I)V",
+            "method_body": "public static void checkColumnIndex(final AnyMatrix m, final int column)\nthrows MatrixIndexException {\nif (column < 0 || column >= m.getColumnDimension()) {\nthrow new MatrixIndexException(\"column index {0} out of allowed range [{1}, {2}]\",\ncolumn, 0, m.getColumnDimension() - 1);\n}\n}",
+            "method_id": 31
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.BlockRealMatrix:createBlocksLayout(II)[[D",
+            "method_body": "public static double[][] createBlocksLayout(final int rows, final int columns) {\n\nfinal int blockRows    = (rows    + BLOCK_SIZE - 1) / BLOCK_SIZE;\nfinal int blockColumns = (columns + BLOCK_SIZE - 1) / BLOCK_SIZE;\n\nfinal double[][] blocks = new double[blockRows * blockColumns][];\nint blockIndex = 0;\nfor (int iBlock = 0; iBlock < blockRows; ++iBlock) {\nfinal int pStart  = iBlock * BLOCK_SIZE;\nfinal int pEnd    = Math.min(pStart + BLOCK_SIZE, rows);\nfinal int iHeight = pEnd - pStart;\nfor (int jBlock = 0; jBlock < blockColumns; ++jBlock) {\nfinal int qStart = jBlock * BLOCK_SIZE;\nfinal int qEnd   = Math.min(qStart + BLOCK_SIZE, columns);\nfinal int jWidth = qEnd - qStart;\nblocks[blockIndex] = new double[iHeight * jWidth];\n++blockIndex;\n}\n}\n\nreturn blocks;\n\n}",
+            "method_id": 32
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.TDistributionImpl:setDegreesOfFreedomInternal(D)V",
+            "method_body": "private void setDegreesOfFreedomInternal(double newDegreesOfFreedom) {\nif (newDegreesOfFreedom <= 0.0) {\nthrow MathRuntimeException.createIllegalArgumentException(\n\"degrees of freedom must be positive ({0})\",\nnewDegreesOfFreedom);\n}\nthis.degreesOfFreedom = newDegreesOfFreedom;\n}",
+            "method_id": 33
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.correlation.PearsonsCorrelation:correlation([D[D)D",
+            "method_body": "public double correlation(final double[] xArray, final double[] yArray) throws IllegalArgumentException {\nSimpleRegression regression = new SimpleRegression();\nif(xArray.length == yArray.length && xArray.length > 1) {\nfor(int i=0; i<xArray.length; i++) {\nregression.addData(xArray[i], yArray[i]);\n}\nreturn regression.getR();\n}\nelse {\nthrow MathRuntimeException.createIllegalArgumentException(\n\"invalid array dimensions. xArray has size {0}; yArray has {1} elements\",\nxArray.length, yArray.length);\n}\n}",
+            "method_id": 34
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.regression.SimpleRegression:getR()D",
+            "method_body": "public double getR() {\ndouble b1 = getSlope();\ndouble result = Math.sqrt(getRSquare());\nif (b1 < 0) {\nresult = -result;\n}\nreturn result;\n}",
+            "method_id": 35
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.correlation.PearsonsCorrelation:computeCorrelationMatrix(Lorg/apache/commons/math/linear/RealMatrix;)Lorg/apache/commons/math/linear/RealMatrix;",
+            "method_body": "public RealMatrix computeCorrelationMatrix(RealMatrix matrix) {\nint nVars = matrix.getColumnDimension();\nRealMatrix outMatrix = new BlockRealMatrix(nVars, nVars);\nfor (int i = 0; i < nVars; i++) {\nfor (int j = 0; j < i; j++) {\ndouble corr = correlation(matrix.getColumn(i), matrix.getColumn(j));\noutMatrix.setEntry(i, j, corr);\noutMatrix.setEntry(j, i, corr);\n}\noutMatrix.setEntry(i, i, 1d);\n}\nreturn outMatrix;\n}",
+            "method_id": 36
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.BlockRealMatrix:blockWidth(I)I",
+            "method_body": "private int blockWidth(final int blockColumn) {\nreturn (blockColumn == blockColumns - 1) ? columns - blockColumn * BLOCK_SIZE : BLOCK_SIZE;\n}",
+            "method_id": 37
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.regression.SimpleRegression:setDistribution(Lorg/apache/commons/math/distribution/TDistribution;)V",
+            "method_body": "public void setDistribution(TDistribution value) {\ndistribution = value;\n\n// modify degrees of freedom\nif (n > 2) {\ndistribution.setDegreesOfFreedom(n - 2);\n}\n}",
+            "method_id": 38
+        },
+        {
+            "method_signature": "org.apache.commons.math.special.Gamma:logGamma(D)D",
+            "method_body": "public static double logGamma(double x) {\ndouble ret;\n\nif (Double.isNaN(x) || (x <= 0.0)) {\nret = Double.NaN;\n} else {\ndouble g = 607.0 / 128.0;\n\ndouble sum = 0.0;\nfor (int i = LANCZOS.length - 1; i > 0; --i) {\nsum = sum + (LANCZOS[i] / (x + i));\n}\nsum = sum + LANCZOS[0];\n\ndouble tmp = x + g + .5;\nret = ((x + .5) * Math.log(tmp)) - tmp +\nHALF_LOG_2_PI + Math.log(sum / x);\n}\n\nreturn ret;\n}",
+            "method_id": 39
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.BlockRealMatrix:<init>(II)V",
+            "method_body": "public BlockRealMatrix(final int rows, final int columns)\nthrows IllegalArgumentException {\n\nsuper(rows, columns);\nthis.rows    = rows;\nthis.columns = columns;\n\n// number of blocks\nblockRows    = (rows    + BLOCK_SIZE - 1) / BLOCK_SIZE;\nblockColumns = (columns + BLOCK_SIZE - 1) / BLOCK_SIZE;\n\n// allocate storage blocks, taking care of smaller ones at right and bottom\nblocks = createBlocksLayout(rows, columns);\n\n}",
+            "method_id": 40
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.regression.SimpleRegression:addData(DD)V",
+            "method_body": "public void addData(double x, double y) {\nif (n == 0) {\nxbar = x;\nybar = y;\n} else {\ndouble dx = x - xbar;\ndouble dy = y - ybar;\nsumXX += dx * dx * (double) n / (n + 1d);\nsumYY += dy * dy * (double) n / (n + 1d);\nsumXY += dx * dy * (double) n / (n + 1d);\nxbar += dx / (n + 1.0);\nybar += dy / (n + 1.0);\n}\nsumX += x;\nsumY += y;\nn++;\n\nif (n > 2) {\ndistribution.setDegreesOfFreedom(n - 2);\n}\n}",
+            "method_id": 41
+        },
+        {
+            "method_signature": "org.apache.commons.math.special.Beta:regularizedBeta(DDDDI)D",
+            "method_body": "public static double regularizedBeta(double x, final double a,\nfinal double b, double epsilon, int maxIterations) throws MathException\n{\ndouble ret;\n\nif (Double.isNaN(x) || Double.isNaN(a) || Double.isNaN(b) || (x < 0) ||\n(x > 1) || (a <= 0.0) || (b <= 0.0))\n{\nret = Double.NaN;\n} else if (x > (a + 1.0) / (a + b + 2.0)) {\nret = 1.0 - regularizedBeta(1.0 - x, b, a, epsilon, maxIterations);\n} else {\nContinuedFraction fraction = new ContinuedFraction() {\n\n@Override\nprotected double getB(int n, double x) {\ndouble ret;\ndouble m;\nif (n % 2 == 0) { // even\nm = n / 2.0;\nret = (m * (b - m) * x) /\n((a + (2 * m) - 1) * (a + (2 * m)));\n} else {\nm = (n - 1.0) / 2.0;\nret = -((a + m) * (a + b + m) * x) /\n((a + (2 * m)) * (a + (2 * m) + 1.0));\n}\nreturn ret;\n}\n\n@Override\nprotected double getA(int n, double x) {\nreturn 1.0;\n}\n};\nret = Math.exp((a * Math.log(x)) + (b * Math.log(1.0 - x)) -\nMath.log(a) - logBeta(a, b, epsilon, maxIterations)) *\n1.0 / fraction.evaluate(x, epsilon, maxIterations);\n}\n\nreturn ret;\n}",
+            "method_id": 42
+        },
+        {
+            "method_signature": "org.apache.commons.math.special.Beta$1:<init>(DD)V",
+            "method_body": "public static double regularizedBeta(double x, final double a,\nif (Double.isNaN(x) || Double.isNaN(a) || Double.isNaN(b) || (x < 0) ||\n} else if (x > (a + 1.0) / (a + b + 2.0)) {\nContinuedFraction fraction = new ContinuedFraction() {\nif (n % 2 == 0) { // even\nm = n / 2.0;\nret = (m * (b - m) * x) /\nm = (n - 1.0) / 2.0;\nret = -((a + m) * (a + b + m) * x) /\nreturn ret;\nreturn 1.0;\nret = Math.exp((a * Math.log(x)) + (b * Math.log(1.0 - x)) -\nreturn ret;\n}",
+            "method_id": 43
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.BlockRealMatrix:setEntry(IID)V",
+            "method_body": "public void setEntry(final int row, final int column, final double value)\nthrows MatrixIndexException {\ntry {\nfinal int iBlock = row    / BLOCK_SIZE;\nfinal int jBlock = column / BLOCK_SIZE;\nfinal int k      = (row    - iBlock * BLOCK_SIZE) * blockWidth(jBlock) +\n(column - jBlock * BLOCK_SIZE);\nblocks[iBlock * blockColumns + jBlock][k] = value;\n} catch (ArrayIndexOutOfBoundsException e) {\nthrow new MatrixIndexException(\n\"no entry at indices ({0}, {1}) in a {2}x{3} matrix\",\nrow, column, getRowDimension(), getColumnDimension());\n}\n}",
+            "method_id": 44
+        }
+    ]
+}

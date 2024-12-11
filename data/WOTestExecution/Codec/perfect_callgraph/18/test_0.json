@@ -1,0 +1,19 @@
+{
+    "bug_id": 18,
+    "test_id": 0,
+    "test_name": "org.apache.commons.codec.binary.StringUtilsTest.testEqualsCS1",
+    "test_body": "public void testEqualsCS1() {\nAssert.assertFalse(StringUtils.equals(new StringBuilder(\"abc\"), null));\nAssert.assertFalse(StringUtils.equals(null, new StringBuilder(\"abc\")));\nAssert.assertTrue(StringUtils.equals(new StringBuilder(\"abc\"), new StringBuilder(\"abc\")));\nAssert.assertFalse(StringUtils.equals(new StringBuilder(\"abc\"), new StringBuilder(\"abcd\")));\nAssert.assertFalse(StringUtils.equals(new StringBuilder(\"abcd\"), new StringBuilder(\"abc\")));\nAssert.assertFalse(StringUtils.equals(new StringBuilder(\"abc\"), new StringBuilder(\"ABC\")));\n}\n",
+    "stack_trace": "java.lang.StringIndexOutOfBoundsException: String index out of range: 3\nat java.lang.AbstractStringBuilder.charAt(AbstractStringBuilder.java:237)\nat java.lang.StringBuilder.charAt(StringBuilder.java:76)\nat org.apache.commons.codec.binary.CharSequenceUtils.regionMatches(CharSequenceUtils.java:59)\nat org.apache.commons.codec.binary.StringUtils.equals(StringUtils.java:81)\nat org.apache.commons.codec.binary.StringUtilsTest.testEqualsCS1(StringUtilsTest.java:228)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.codec.binary.StringUtils:equals(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Z",
+            "method_body": "public static boolean equals(final CharSequence cs1, final CharSequence cs2) {\nif (cs1 == cs2) {\nreturn true;\n}\nif (cs1 == null || cs2 == null) {\nreturn false;\n}\nif (cs1 instanceof String && cs2 instanceof String) {\nreturn cs1.equals(cs2);\n}\nreturn CharSequenceUtils.regionMatches(cs1, false, 0, cs2, 0, Math.max(cs1.length(), cs2.length()));\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.codec.binary.CharSequenceUtils:regionMatches(Ljava/lang/CharSequence;ZILjava/lang/CharSequence;II)Z",
+            "method_body": "static boolean regionMatches(final CharSequence cs, final boolean ignoreCase, final int thisStart,\nfinal CharSequence substring, final int start, final int length) {\nif (cs instanceof String && substring instanceof String) {\nreturn ((String) cs).regionMatches(ignoreCase, thisStart, (String) substring, start, length);\n}\nint index1 = thisStart;\nint index2 = start;\nint tmpLen = length;\n\nwhile (tmpLen-- > 0) {\nfinal char c1 = cs.charAt(index1++);\nfinal char c2 = substring.charAt(index2++);\n\nif (c1 == c2) {\ncontinue;\n}\n\nif (!ignoreCase) {\nreturn false;\n}\n\n// The same check as in String.regionMatches():\nif (Character.toUpperCase(c1) != Character.toUpperCase(c2) &&\nCharacter.toLowerCase(c1) != Character.toLowerCase(c2)) {\nreturn false;\n}\n}\n\nreturn true;\n}",
+            "method_id": 1
+        }
+    ]
+}

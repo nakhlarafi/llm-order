@@ -1,0 +1,119 @@
+{
+    "bug_id": 30,
+    "test_id": 0,
+    "test_name": "org.apache.commons.math3.stat.inference.MannWhitneyUTestTest.testBigDataSet",
+    "test_body": "public void testBigDataSet() throws Exception {\ndouble[] d1 = new double[1500];\ndouble[] d2 = new double[1500];\nfor (int i = 0; i < 1500; i++) {\nd1[i] = 2 * i;\nd2[i] = 2 * i + 1;\n}\ndouble result = testStatistic.mannWhitneyUTest(d1, d2);\nAssert.assertTrue(result > 0.1);\n}\n",
+    "stack_trace": "junit.framework.AssertionFailedError\nat org.junit.Assert.fail(Assert.java:86)\nat org.junit.Assert.assertTrue(Assert.java:41)\nat org.junit.Assert.assertTrue(Assert.java:52)\nat org.apache.commons.math3.stat.inference.MannWhitneyUTestTest.testBigDataSet(MannWhitneyUTestTest.java:113)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.math3.stat.inference.MannWhitneyUTest:concatenateSamples([D[D)[D",
+            "method_body": "private double[] concatenateSamples(final double[] x, final double[] y) {\nfinal double[] z = new double[x.length + y.length];\n\nSystem.arraycopy(x, 0, z, 0, x.length);\nSystem.arraycopy(y, 0, z, x.length, y.length);\n\nreturn z;\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.math3.stat.inference.MannWhitneyUTest:mannWhitneyU([D[D)D",
+            "method_body": "public double mannWhitneyU(final double[] x, final double[] y)\nthrows NullArgumentException, NoDataException {\n\nensureDataConformance(x, y);\n\nfinal double[] z = concatenateSamples(x, y);\nfinal double[] ranks = naturalRanking.rank(z);\n\ndouble sumRankX = 0;\n\n/*\n* The ranks for x is in the first x.length entries in ranks because x\n* is in the first x.length entries in z\n*/\nfor (int i = 0; i < x.length; ++i) {\nsumRankX += ranks[i];\n}\n\n/*\n* U1 = R1 - (n1 * (n1 + 1)) / 2 where R1 is sum of ranks for sample 1,\n* e.g. x, n1 is the number of observations in sample 1.\n*/\nfinal double U1 = sumRankX - (x.length * (x.length + 1)) / 2;\n\n/*\n* It can be shown that U1 + U2 = n1 * n2\n*/\nfinal double U2 = x.length * y.length - U1;\n\nreturn FastMath.max(U1, U2);\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.math3.stat.inference.MannWhitneyUTest:calculateAsymptoticPValue(DII)D",
+            "method_body": "private double calculateAsymptoticPValue(final double Umin,\nfinal int n1,\nfinal int n2)\nthrows ConvergenceException, MaxCountExceededException {\n\nfinal int n1n2prod = n1 * n2;\n\n// http://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U#Normal_approximation\nfinal double EU = n1n2prod / 2.0;\nfinal double VarU = n1n2prod * (n1 + n2 + 1) / 12.0;\n\nfinal double z = (Umin - EU) / FastMath.sqrt(VarU);\n\nfinal NormalDistribution standardNormal = new NormalDistribution(0, 1);\n\nreturn 2 * standardNormal.cumulativeProbability(z);\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.math3.stat.inference.MannWhitneyUTest:<init>()V",
+            "method_body": "public MannWhitneyUTest() {\nnaturalRanking = new NaturalRanking(NaNStrategy.FIXED,\nTiesStrategy.AVERAGE);\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math3.stat.inference.MannWhitneyUTest:ensureDataConformance([D[D)V",
+            "method_body": "private void ensureDataConformance(final double[] x, final double[] y)\nthrows NullArgumentException, NoDataException {\n\nif (x == null ||\ny == null) {\nthrow new NullArgumentException();\n}\nif (x.length == 0 ||\ny.length == 0) {\nthrow new NoDataException();\n}\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math3.stat.inference.MannWhitneyUTest:mannWhitneyUTest([D[D)D",
+            "method_body": "public double mannWhitneyUTest(final double[] x, final double[] y)\nthrows NullArgumentException, NoDataException,\nConvergenceException, MaxCountExceededException {\n\nensureDataConformance(x, y);\n\nfinal double Umax = mannWhitneyU(x, y);\n\n/*\n* It can be shown that U1 + U2 = n1 * n2\n*/\nfinal double Umin = x.length * y.length - Umax;\n\nreturn calculateAsymptoticPValue(Umin, x.length, y.length);\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.math3.stat.ranking.NaturalRanking:restoreNaNs([DLjava/util/List;)V",
+            "method_body": "private void restoreNaNs(double[] ranks, List<Integer> nanPositions) {\nif (nanPositions.size() == 0) {\nreturn;\n}\nIterator<Integer> iterator = nanPositions.iterator();\nwhile (iterator.hasNext()) {\nranks[iterator.next().intValue()] = Double.NaN;\n}\n\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.math3.stat.ranking.NaturalRanking:getNanPositions([Lorg/apache/commons/math3/stat/ranking/NaturalRanking$IntDoublePair;)Ljava/util/List;",
+            "method_body": "private List<Integer> getNanPositions(IntDoublePair[] ranks) {\nArrayList<Integer> out = new ArrayList<Integer>();\nfor (int i = 0; i < ranks.length; i++) {\nif (Double.isNaN(ranks[i].getValue())) {\nout.add(Integer.valueOf(i));\n}\n}\nreturn out;\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.math3.stat.ranking.NaturalRanking:<init>(Lorg/apache/commons/math3/stat/ranking/NaNStrategy;Lorg/apache/commons/math3/stat/ranking/TiesStrategy;)V",
+            "method_body": "public NaturalRanking(NaNStrategy nanStrategy, TiesStrategy tiesStrategy) {\nsuper();\nthis.nanStrategy = nanStrategy;\nthis.tiesStrategy = tiesStrategy;\nrandomData = new RandomDataImpl();\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.math3.distribution.NormalDistribution:cumulativeProbability(D)D",
+            "method_body": "public double cumulativeProbability(double x)  {\nfinal double dev = x - mean;\nif (FastMath.abs(dev) > 40 * standardDeviation) {\nreturn dev < 0 ? 0.0d : 1.0d;\n}\nreturn 0.5 * (1 + Erf.erf(dev / (standardDeviation * SQRT2)));\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.math3.stat.ranking.NaturalRanking:rank([D)[D",
+            "method_body": "public double[] rank(double[] data) {\n\n// Array recording initial positions of data to be ranked\nIntDoublePair[] ranks = new IntDoublePair[data.length];\nfor (int i = 0; i < data.length; i++) {\nranks[i] = new IntDoublePair(data[i], i);\n}\n\n// Recode, remove or record positions of NaNs\nList<Integer> nanPositions = null;\nswitch (nanStrategy) {\ncase MAXIMAL: // Replace NaNs with +INFs\nrecodeNaNs(ranks, Double.POSITIVE_INFINITY);\nbreak;\ncase MINIMAL: // Replace NaNs with -INFs\nrecodeNaNs(ranks, Double.NEGATIVE_INFINITY);\nbreak;\ncase REMOVED: // Drop NaNs from data\nranks = removeNaNs(ranks);\nbreak;\ncase FIXED:   // Record positions of NaNs\nnanPositions = getNanPositions(ranks);\nbreak;\ndefault: // this should not happen unless NaNStrategy enum is changed\nthrow new MathInternalError();\n}\n\n// Sort the IntDoublePairs\nArrays.sort(ranks);\n\n// Walk the sorted array, filling output array using sorted positions,\n// resolving ties as we go\ndouble[] out = new double[ranks.length];\nint pos = 1;  // position in sorted array\nout[ranks[0].getPosition()] = pos;\nList<Integer> tiesTrace = new ArrayList<Integer>();\ntiesTrace.add(ranks[0].getPosition());\nfor (int i = 1; i < ranks.length; i++) {\nif (Double.compare(ranks[i].getValue(), ranks[i - 1].getValue()) > 0) {\n// tie sequence has ended (or had length 1)\npos = i + 1;\nif (tiesTrace.size() > 1) {  // if seq is nontrivial, resolve\nresolveTie(out, tiesTrace);\n}\ntiesTrace = new ArrayList<Integer>();\ntiesTrace.add(ranks[i].getPosition());\n} else {\n// tie sequence continues\ntiesTrace.add(ranks[i].getPosition());\n}\nout[ranks[i].getPosition()] = pos;\n}\nif (tiesTrace.size() > 1) {  // handle tie sequence at end\nresolveTie(out, tiesTrace);\n}\nif (nanStrategy == NaNStrategy.FIXED) {\nrestoreNaNs(out, nanPositions);\n}\nreturn out;\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.apache.commons.math3.stat.ranking.NaturalRanking$IntDoublePair:<init>(DI)V",
+            "method_body": "public IntDoublePair(double value, int position) {\nthis.value = value;\nthis.position = position;\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.apache.commons.math3.stat.ranking.NaturalRanking$IntDoublePair:compareTo(Lorg/apache/commons/math3/stat/ranking/NaturalRanking$IntDoublePair;)I",
+            "method_body": "public int compareTo(IntDoublePair other) {\nreturn Double.compare(value, other.value);\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.apache.commons.math3.stat.ranking.NaturalRanking$IntDoublePair:getValue()D",
+            "method_body": "public double getValue() {\nreturn value;\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "org.apache.commons.math3.stat.ranking.NaturalRanking$IntDoublePair:getPosition()I",
+            "method_body": "public int getPosition() {\nreturn position;\n}",
+            "method_id": 14
+        },
+        {
+            "method_signature": "org.apache.commons.math3.special.Erf:erf(D)D",
+            "method_body": "public static double erf(double x) {\nif (FastMath.abs(x) > 40) {\nreturn x > 0 ? 1 : -1;\n}\nfinal double ret = Gamma.regularizedGammaP(0.5, x * x, 1.0e-15, 10000);\nreturn x < 0 ? -ret : ret;\n}",
+            "method_id": 15
+        },
+        {
+            "method_signature": "org.apache.commons.math3.distribution.NormalDistribution:<init>(DD)V",
+            "method_body": "public NormalDistribution(double mean, double sd)\nthrows NotStrictlyPositiveException {\nthis(mean, sd, DEFAULT_INVERSE_ABSOLUTE_ACCURACY);\n}",
+            "method_id": 16
+        },
+        {
+            "method_signature": "org.apache.commons.math3.distribution.NormalDistribution:<init>(DDD)V",
+            "method_body": "public NormalDistribution(double mean, double sd, double inverseCumAccuracy)\nthrows NotStrictlyPositiveException {\nif (sd <= 0) {\nthrow new NotStrictlyPositiveException(LocalizedFormats.STANDARD_DEVIATION, sd);\n}\n\nthis.mean = mean;\nstandardDeviation = sd;\nsolverAbsoluteAccuracy = inverseCumAccuracy;\n}",
+            "method_id": 17
+        },
+        {
+            "method_signature": "org.apache.commons.math3.special.Gamma:regularizedGammaP(DDDI)D",
+            "method_body": "public static double regularizedGammaP(double a,\ndouble x,\ndouble epsilon,\nint maxIterations) {\ndouble ret;\n\nif (Double.isNaN(a) || Double.isNaN(x) || (a <= 0.0) || (x < 0.0)) {\nret = Double.NaN;\n} else if (x == 0.0) {\nret = 0.0;\n} else if (x >= a + 1) {\n// use regularizedGammaQ because it should converge faster in this\n// case.\nret = 1.0 - regularizedGammaQ(a, x, epsilon, maxIterations);\n} else {\n// calculate series\ndouble n = 0.0; // current element index\ndouble an = 1.0 / a; // n-th element in the series\ndouble sum = an; // partial sum\nwhile (FastMath.abs(an/sum) > epsilon &&\nn < maxIterations &&\nsum < Double.POSITIVE_INFINITY) {\n// compute next element in the series\nn = n + 1.0;\nan = an * (x / (a + n));\n\n// update partial sum\nsum = sum + an;\n}\nif (n >= maxIterations) {\nthrow new MaxCountExceededException(maxIterations);\n} else if (Double.isInfinite(sum)) {\nret = 1.0;\n} else {\nret = FastMath.exp(-x + (a * FastMath.log(x)) - logGamma(a)) * sum;\n}\n}\n\nreturn ret;\n}",
+            "method_id": 18
+        },
+        {
+            "method_signature": "org.apache.commons.math3.util.FastMath:max(DD)D",
+            "method_body": "public static double max(final double a, final double b) {\nif (a > b) {\nreturn a;\n}\nif (a < b) {\nreturn b;\n}\n/* if either arg is NaN, return NaN */\nif (a != b) {\nreturn Double.NaN;\n}\n/* min(+0.0,-0.0) == -0.0 */\n/* 0x8000000000000000L == Double.doubleToRawLongBits(-0.0d) */\nlong bits = Double.doubleToRawLongBits(a);\nif (bits == 0x8000000000000000L) {\nreturn b;\n}\nreturn a;\n}",
+            "method_id": 19
+        },
+        {
+            "method_signature": "org.apache.commons.math3.util.FastMath:abs(D)D",
+            "method_body": "public static double abs(double x) {\nreturn (x < 0.0) ? -x : (x == 0.0) ? 0.0 : x; // -0.0 => +0.0\n}",
+            "method_id": 20
+        },
+        {
+            "method_signature": "org.apache.commons.math3.util.FastMath:sqrt(D)D",
+            "method_body": "public static double sqrt(final double a) {\nreturn Math.sqrt(a);\n}",
+            "method_id": 21
+        }
+    ]
+}

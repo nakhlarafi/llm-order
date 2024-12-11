@@ -1,0 +1,164 @@
+{
+    "bug_id": 43,
+    "test_id": 2,
+    "test_name": "org.apache.commons.math.stat.descriptive.SummaryStatisticsTest.testOverrideMeanWithMathClass",
+    "test_body": "public void testOverrideMeanWithMathClass() throws Exception {\ndouble[] scores = {1, 2, 3, 4};\nSummaryStatistics stats = new SummaryStatistics();\nstats.setMeanImpl(new Mean()); \nfor(double i : scores) {\nstats.addValue(i);\n}\nAssert.assertEquals((new Mean()).evaluate(scores),stats.getMean(), 0); \n}\n",
+    "stack_trace": "junit.framework.AssertionFailedError: expected:<2.5> but was:<NaN>\nat org.junit.Assert.fail(Assert.java:88)\nat org.junit.Assert.failNotEquals(Assert.java:743)\nat org.junit.Assert.assertEquals(Assert.java:494)\nat org.junit.Assert.assertEquals(Assert.java:592)\nat org.apache.commons.math.stat.descriptive.SummaryStatisticsTest.testOverrideMeanWithMathClass(SummaryStatisticsTest.java:335)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.moment.Mean:evaluate([DII)D",
+            "method_body": "public double evaluate(final double[] values,final int begin, final int length) {\nif (test(values, begin, length)) {\nSum sum = new Sum();\ndouble sampleSize = length;\n\n// Compute initial estimate using definitional formula\ndouble xbar = sum.evaluate(values, begin, length) / sampleSize;\n\n// Compute correction factor in second pass\ndouble correction = 0;\nfor (int i = begin; i < begin + length; i++) {\ncorrection += values[i] - xbar;\n}\nreturn xbar + (correction/sampleSize);\n}\nreturn Double.NaN;\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.summary.Sum:evaluate([DII)D",
+            "method_body": "public double evaluate(final double[] values, final int begin, final int length) {\ndouble sum = Double.NaN;\nif (test(values, begin, length, true)) {\nsum = 0.0;\nfor (int i = begin; i < begin + length; i++) {\nsum += values[i];\n}\n}\nreturn sum;\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.moment.FirstMoment:increment(D)V",
+            "method_body": "public void increment(final double d) {\nif (n == 0) {\nm1 = 0.0;\n}\nn++;\ndouble n0 = n;\ndev = d - m1;\nnDev = dev / n0;\nm1 += nDev;\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.moment.SecondMoment:increment(D)V",
+            "method_body": "public void increment(final double d) {\nif (n < 1) {\nm1 = m2 = 0.0;\n}\nsuper.increment(d);\nm2 += ((double) n - 1) * dev * nDev;\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.SummaryStatistics:addValue(D)V",
+            "method_body": "public void addValue(double value) {\nsumImpl.increment(value);\nsumsqImpl.increment(value);\nminImpl.increment(value);\nmaxImpl.increment(value);\nsumLogImpl.increment(value);\nsecondMoment.increment(value);\n// If mean, variance or geomean have been overridden,\n// need to increment these\nif (!(meanImpl instanceof Mean)) {\nmeanImpl.increment(value);\n}\nif (!(varianceImpl instanceof Variance)) {\nvarianceImpl.increment(value);\n}\nif (!(geoMeanImpl instanceof GeometricMean)) {\ngeoMeanImpl.increment(value);\n}\nn++;\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.SummaryStatistics:getMean()D",
+            "method_body": "public double getMean() {\nreturn meanImpl.getResult();\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.moment.Mean:<init>()V",
+            "method_body": "public Mean() {\nincMoment = true;\nmoment = new FirstMoment();\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.SummaryStatistics:checkEmpty()V",
+            "method_body": "private void checkEmpty() {\nif (n > 0) {\nthrow new MathIllegalStateException(\nLocalizedFormats.VALUES_ADDED_BEFORE_CONFIGURING_STATISTIC, n);\n}\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.summary.Sum:<init>()V",
+            "method_body": "public Sum() {\nn = 0;\nvalue = 0;\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.SummaryStatistics:setMeanImpl(Lorg/apache/commons/math/stat/descriptive/StorelessUnivariateStatistic;)V",
+            "method_body": "public void setMeanImpl(StorelessUnivariateStatistic meanImpl) {\ncheckEmpty();\nthis.meanImpl = meanImpl;\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.moment.Mean:<init>(Lorg/apache/commons/math/stat/descriptive/moment/FirstMoment;)V",
+            "method_body": "public Mean(final FirstMoment m1) {\nthis.moment = m1;\nincMoment = false;\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.moment.Variance:<init>(Lorg/apache/commons/math/stat/descriptive/moment/SecondMoment;)V",
+            "method_body": "public Variance(final SecondMoment m2) {\nincMoment = false;\nthis.moment = m2;\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.moment.GeometricMean:<init>(Lorg/apache/commons/math/stat/descriptive/summary/SumOfLogs;)V",
+            "method_body": "public GeometricMean(SumOfLogs sumOfLogs) {\nthis.sumOfLogs = sumOfLogs;\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.rank.Max:increment(D)V",
+            "method_body": "public void increment(final double d) {\nif (d > value || Double.isNaN(value)) {\nvalue = d;\n}\nn++;\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.rank.Min:increment(D)V",
+            "method_body": "public void increment(final double d) {\nif (d < value || Double.isNaN(value)) {\nvalue = d;\n}\nn++;\n}",
+            "method_id": 14
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.summary.SumOfLogs:increment(D)V",
+            "method_body": "public void increment(final double d) {\nvalue += FastMath.log(d);\nn++;\n}",
+            "method_id": 15
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.summary.SumOfSquares:increment(D)V",
+            "method_body": "public void increment(final double d) {\nvalue += d * d;\nn++;\n}",
+            "method_id": 16
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.summary.Sum:increment(D)V",
+            "method_body": "public void increment(final double d) {\nvalue += d;\nn++;\n}",
+            "method_id": 17
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.rank.Max:<init>()V",
+            "method_body": "public Max() {\nn = 0;\nvalue = Double.NaN;\n}",
+            "method_id": 18
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.rank.Min:<init>()V",
+            "method_body": "public Min() {\nn = 0;\nvalue = Double.NaN;\n}",
+            "method_id": 19
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.summary.SumOfSquares:<init>()V",
+            "method_body": "public SumOfSquares() {\nn = 0;\nvalue = 0;\n}",
+            "method_id": 20
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.summary.SumOfLogs:<init>()V",
+            "method_body": "public SumOfLogs() {\nvalue = 0d;\nn = 0;\n}",
+            "method_id": 21
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.AbstractUnivariateStatistic:test([DIIZ)Z",
+            "method_body": "protected boolean test(final double[] values, final int begin, final int length, final boolean allowEmpty){\n\nif (values == null) {\nthrow new NullArgumentException(LocalizedFormats.INPUT_ARRAY);\n}\n\nif (begin < 0) {\nthrow new NotPositiveException(LocalizedFormats.START_POSITION, begin);\n}\n\nif (length < 0) {\nthrow new NotPositiveException(LocalizedFormats.LENGTH, length);\n}\n\nif (begin + length > values.length) {\nthrow new NumberIsTooLargeException(LocalizedFormats.SUBARRAY_ENDS_AFTER_ARRAY_END,\nbegin + length, values.length, true);\n}\n\nif (length == 0 && !allowEmpty) {\nreturn false;\n}\n\nreturn true;\n\n}",
+            "method_id": 22
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.AbstractStorelessUnivariateStatistic:evaluate([D)D",
+            "method_body": "public double evaluate(final double[] values) {\nif (values == null) {\nthrow new NullArgumentException(LocalizedFormats.INPUT_ARRAY);\n}\nreturn evaluate(values, 0, values.length);\n}",
+            "method_id": 23
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.moment.SecondMoment:<init>()V",
+            "method_body": "public SecondMoment() {\nsuper();\nm2 = Double.NaN;\n}",
+            "method_id": 24
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.moment.FirstMoment:<init>()V",
+            "method_body": "public FirstMoment() {\nn = 0;\nm1 = Double.NaN;\ndev = Double.NaN;\nnDev = Double.NaN;\n}",
+            "method_id": 25
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.AbstractUnivariateStatistic:test([DII)Z",
+            "method_body": "public abstract UnivariateStatistic copy();\n\n/**\n* This method is used by <code>evaluate(double[], int, int)</code> methods\n* to verify that the input parameters designate a subarray of positive length.\n* <p>\n* <ul>\n* <li>returns <code>true</code> iff the parameters designate a subarray of\n* positive length</li>\n* <li>throws <code>IllegalArgumentException</code> if the array is null or\n* or the indices are invalid</li>\n* <li>returns <code>false</li> if the array is non-null, but\n* <code>length</code> is 0.\n* </ul></p>\n*\n* @param values the input array\n* @param begin index of the first array element to include\n* @param length the number of elements to include\n* @return true if the parameters are valid and designate a subarray of positive length\n* @throws IllegalArgumentException if the indices are invalid or the array is null\n*/\nprotected boolean test(\nfinal double[] values,\nfinal int begin,\nfinal int length) {\nreturn test(values, begin, length, false);\n}",
+            "method_id": 26
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.FastMath:log(D)D",
+            "method_body": "public static double log(final double x) {\nreturn log(x, null);\n}",
+            "method_id": 27
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.moment.Mean:getResult()D",
+            "method_body": "public double getResult() {\nreturn moment.m1;\n}",
+            "method_id": 28
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.FastMath:log(D[D)D",
+            "method_body": "private static double log(final double x, final double[] hiPrec) {\nif (x==0) { // Handle special case of +0/-0\nreturn Double.NEGATIVE_INFINITY;\n}\nlong bits = Double.doubleToLongBits(x);\n\n/* Handle special cases of negative input, and NaN */\nif ((bits & 0x8000000000000000L) != 0 || x != x) {\nif (x != 0.0) {\nif (hiPrec != null) {\nhiPrec[0] = Double.NaN;\n}\n\nreturn Double.NaN;\n}\n}\n\n/* Handle special cases of Positive infinity. */\nif (x == Double.POSITIVE_INFINITY) {\nif (hiPrec != null) {\nhiPrec[0] = Double.POSITIVE_INFINITY;\n}\n\nreturn Double.POSITIVE_INFINITY;\n}\n\n/* Extract the exponent */\nint exp = (int)(bits >> 52)-1023;\n\nif ((bits & 0x7ff0000000000000L) == 0) {\n// Subnormal!\nif (x == 0) {\n// Zero\nif (hiPrec != null) {\nhiPrec[0] = Double.NEGATIVE_INFINITY;\n}\n\nreturn Double.NEGATIVE_INFINITY;\n}\n\n/* Normalize the subnormal number. */\nbits <<= 1;\nwhile ( (bits & 0x0010000000000000L) == 0) {\nexp--;\nbits <<= 1;\n}\n}\n\n\nif (exp == -1 || exp == 0) {\nif (x < 1.01 && x > 0.99 && hiPrec == null) {\n/* The normal method doesn't work well in the range [0.99, 1.01], so call do a straight\npolynomial expansion in higer precision. */\n\n/* Compute x - 1.0 and split it */\ndouble xa = x - 1.0;\ndouble xb = xa - x + 1.0;\ndouble tmp = xa * HEX_40000000;\ndouble aa = xa + tmp - tmp;\ndouble ab = xa - aa;\nxa = aa;\nxb = ab;\n\ndouble ya = LN_QUICK_COEF[LN_QUICK_COEF.length-1][0];\ndouble yb = LN_QUICK_COEF[LN_QUICK_COEF.length-1][1];\n\nfor (int i = LN_QUICK_COEF.length - 2; i >= 0; i--) {\n/* Multiply a = y * x */\naa = ya * xa;\nab = ya * xb + yb * xa + yb * xb;\n/* split, so now y = a */\ntmp = aa * HEX_40000000;\nya = aa + tmp - tmp;\nyb = aa - ya + ab;\n\n/* Add  a = y + lnQuickCoef */\naa = ya + LN_QUICK_COEF[i][0];\nab = yb + LN_QUICK_COEF[i][1];\n/* Split y = a */\ntmp = aa * HEX_40000000;\nya = aa + tmp - tmp;\nyb = aa - ya + ab;\n}\n\n/* Multiply a = y * x */\naa = ya * xa;\nab = ya * xb + yb * xa + yb * xb;\n/* split, so now y = a */\ntmp = aa * HEX_40000000;\nya = aa + tmp - tmp;\nyb = aa - ya + ab;\n\nreturn ya + yb;\n}\n}\n\n// lnm is a log of a number in the range of 1.0 - 2.0, so 0 <= lnm < ln(2)\ndouble lnm[] = lnMant.LN_MANT[(int)((bits & 0x000ffc0000000000L) >> 42)];\n\n/*\ndouble epsilon = x / Double.longBitsToDouble(bits & 0xfffffc0000000000L);\n\nepsilon -= 1.0;\n*/\n\n// y is the most significant 10 bits of the mantissa\n//double y = Double.longBitsToDouble(bits & 0xfffffc0000000000L);\n//double epsilon = (x - y) / y;\ndouble epsilon = (bits & 0x3ffffffffffL) / (TWO_POWER_52 + (bits & 0x000ffc0000000000L));\n\ndouble lnza = 0.0;\ndouble lnzb = 0.0;\n\nif (hiPrec != null) {\n/* split epsilon -> x */\ndouble tmp = epsilon * HEX_40000000;\ndouble aa = epsilon + tmp - tmp;\ndouble ab = epsilon - aa;\ndouble xa = aa;\ndouble xb = ab;\n\n/* Need a more accurate epsilon, so adjust the division. */\ndouble numer = bits & 0x3ffffffffffL;\ndouble denom = TWO_POWER_52 + (bits & 0x000ffc0000000000L);\naa = numer - xa*denom - xb * denom;\nxb += aa / denom;\n\n/* Remez polynomial evaluation */\ndouble ya = LN_HI_PREC_COEF[LN_HI_PREC_COEF.length-1][0];\ndouble yb = LN_HI_PREC_COEF[LN_HI_PREC_COEF.length-1][1];\n\nfor (int i = LN_HI_PREC_COEF.length - 2; i >= 0; i--) {\n/* Multiply a = y * x */\naa = ya * xa;\nab = ya * xb + yb * xa + yb * xb;\n/* split, so now y = a */\ntmp = aa * HEX_40000000;\nya = aa + tmp - tmp;\nyb = aa - ya + ab;\n\n/* Add  a = y + lnHiPrecCoef */\naa = ya + LN_HI_PREC_COEF[i][0];\nab = yb + LN_HI_PREC_COEF[i][1];\n/* Split y = a */\ntmp = aa * HEX_40000000;\nya = aa + tmp - tmp;\nyb = aa - ya + ab;\n}\n\n/* Multiply a = y * x */\naa = ya * xa;\nab = ya * xb + yb * xa + yb * xb;\n\n/* split, so now lnz = a */\n/*\ntmp = aa * 1073741824.0;\nlnza = aa + tmp - tmp;\nlnzb = aa - lnza + ab;\n*/\nlnza = aa + ab;\nlnzb = -(lnza - aa - ab);\n} else {\n/* High precision not required.  Eval Remez polynomial\nusing standard double precision */\nlnza = -0.16624882440418567;\nlnza = lnza * epsilon + 0.19999954120254515;\nlnza = lnza * epsilon + -0.2499999997677497;\nlnza = lnza * epsilon + 0.3333333333332802;\nlnza = lnza * epsilon + -0.5;\nlnza = lnza * epsilon + 1.0;\nlnza = lnza * epsilon;\n}\n\n/* Relative sizes:\n* lnzb     [0, 2.33E-10]\n* lnm[1]   [0, 1.17E-7]\n* ln2B*exp [0, 1.12E-4]\n* lnza      [0, 9.7E-4]\n* lnm[0]   [0, 0.692]\n* ln2A*exp [0, 709]\n*/\n\n/* Compute the following sum:\n* lnzb + lnm[1] + ln2B*exp + lnza + lnm[0] + ln2A*exp;\n*/\n\n//return lnzb + lnm[1] + ln2B*exp + lnza + lnm[0] + ln2A*exp;\ndouble a = LN_2_A*exp;\ndouble b = 0.0;\ndouble c = a+lnm[0];\ndouble d = -(c-a-lnm[0]);\na = c;\nb = b + d;\n\nc = a + lnza;\nd = -(c - a - lnza);\na = c;\nb = b + d;\n\nc = a + LN_2_B*exp;\nd = -(c - a - LN_2_B*exp);\na = c;\nb = b + d;\n\nc = a + lnm[1];\nd = -(c - a - lnm[1]);\na = c;\nb = b + d;\n\nc = a + lnzb;\nd = -(c - a - lnzb);\na = c;\nb = b + d;\n\nif (hiPrec != null) {\nhiPrec[0] = a;\nhiPrec[1] = b;\n}\n\nreturn a + b;\n}",
+            "method_id": 29
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.FastMath:sqrt(D)D",
+            "method_body": "public static double sqrt(final double a) {\nreturn Math.sqrt(a);\n}",
+            "method_id": 30
+        }
+    ]
+}

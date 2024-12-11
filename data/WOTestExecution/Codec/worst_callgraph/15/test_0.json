@@ -1,0 +1,54 @@
+{
+    "bug_id": 15,
+    "test_id": 0,
+    "test_name": "org.apache.commons.codec.language.SoundexTest.testHWRuleEx1",
+    "test_body": "public void testHWRuleEx1() {\n// From\n// http://www.archives.gov/research_room/genealogy/census/soundex.html:\n// Ashcraft is coded A-261 (A, 2 for the S, C ignored, 6 for the R, 1\n// for the F). It is not coded A-226.\nAssert.assertEquals(\"A261\", this.getStringEncoder().encode(\"Ashcraft\"));\nAssert.assertEquals(\"A261\", this.getStringEncoder().encode(\"Ashcroft\"));\nAssert.assertEquals(\"Y330\", this.getStringEncoder().encode(\"yehudit\"));\nAssert.assertEquals(\"Y330\", this.getStringEncoder().encode(\"yhwdyt\"));\n}\n",
+    "stack_trace": "junit.framework.AssertionFailedError: expected:<Y3[3]0> but was:<Y3[0]0>\nat org.junit.Assert.assertEquals(Assert.java:115)\nat org.junit.Assert.assertEquals(Assert.java:144)\nat org.apache.commons.codec.language.SoundexTest.testHWRuleEx1(SoundexTest.java:232)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.codec.language.Soundex:getSoundexMapping()[C",
+            "method_body": "private char[] getSoundexMapping() {\nreturn this.soundexMapping;\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.Soundex:<clinit>()V",
+            "method_body": "public static final String US_ENGLISH_MAPPING_STRING = \"01230120022455012623010202\";\n\n/**\n* This is a default mapping of the 26 letters used in US English. A value of <code>0</code> for a letter position\n* means do not encode.\n*\n* @see Soundex#Soundex(char[])\n*/\nprivate static final char[] US_ENGLISH_MAPPING = US_ENGLISH_MAPPING_STRING.toCharArray();\n\n/**\n* An instance of Soundex using the US_ENGLISH_MAPPING mapping.\n*\n* @see #US_ENGLISH_MAPPING\n*/\npublic static final Soundex US_ENGLISH = new Soundex();\n\n/**\n* The maximum length of a Soundex code - Soundex codes are only four characters by definition.\n*\n* @deprecated This feature is not needed since the encoding size must be constant. Will be removed in 2.0.\n*/\n@Deprecated\nprivate int maxLength = 4;\n\n/**\n* Every letter of the alphabet is \"mapped\" to a numerical value. This char array holds the values to which each\n* letter is mapped. This implementation contains a default map for US_ENGLISH\n*/\nprivate final char[] soundexMapping;\n\n/**\n* Creates an instance using US_ENGLISH_MAPPING\n*\n* @see Soundex#Soundex(char[])\n* @see Soundex#US_ENGLISH_MAPPING\n*/\npublic Soundex() {\nthis.soundexMapping = US_ENGLISH_MAPPING;\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.Soundex:<init>(Ljava/lang/String;)V",
+            "method_body": "public static final String US_ENGLISH_MAPPING_STRING = \"01230120022455012623010202\";\nprivate static final char[] US_ENGLISH_MAPPING = US_ENGLISH_MAPPING_STRING.toCharArray();\npublic static final Soundex US_ENGLISH = new Soundex();\n@Deprecated\npublic Soundex() {\nthis.soundexMapping = US_ENGLISH_MAPPING;\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.Soundex:<init>()V",
+            "method_body": "public Soundex() {\nthis.soundexMapping = US_ENGLISH_MAPPING;\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.Soundex:map(C)C",
+            "method_body": "private char map(final char ch) {\nfinal int index = ch - 'A';\nif (index < 0 || index >= this.getSoundexMapping().length) {\nthrow new IllegalArgumentException(\"The character is not mapped: \" + ch);\n}\nreturn this.getSoundexMapping()[index];\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.SoundexUtils:clean(Ljava/lang/String;)Ljava/lang/String;",
+            "method_body": "static String clean(final String str) {\nif (str == null || str.length() == 0) {\nreturn str;\n}\nfinal int len = str.length();\nfinal char[] chars = new char[len];\nint count = 0;\nfor (int i = 0; i < len; i++) {\nif (Character.isLetter(str.charAt(i))) {\nchars[count++] = str.charAt(i);\n}\n}\nif (count == len) {\nreturn str.toUpperCase(java.util.Locale.ENGLISH);\n}\nreturn new String(chars, 0, count).toUpperCase(java.util.Locale.ENGLISH);\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.Soundex:soundex(Ljava/lang/String;)Ljava/lang/String;",
+            "method_body": "public String soundex(String str) {\nif (str == null) {\nreturn null;\n}\nstr = SoundexUtils.clean(str);\nif (str.length() == 0) {\nreturn str;\n}\nfinal char out[] = {'0', '0', '0', '0'};\nchar last, mapped;\nint incount = 1, count = 1;\nout[0] = str.charAt(0);\n// getMappingCode() throws IllegalArgumentException\nlast = getMappingCode(str, 0);\nwhile (incount < str.length() && count < out.length) {\nmapped = getMappingCode(str, incount++);\nif (mapped != 0) {\nif (mapped != '0' && mapped != last) {\nout[count++] = mapped;\n}\nlast = mapped;\n}\n}\nreturn new String(out);\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.Soundex:encode(Ljava/lang/String;)Ljava/lang/String;",
+            "method_body": "public String encode(final String str) {\nreturn soundex(str);\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.Soundex:getMappingCode(Ljava/lang/String;I)C",
+            "method_body": "private char getMappingCode(final String str, final int index) {\n// map() throws IllegalArgumentException\nfinal char mappedChar = this.map(str.charAt(index));\n// HW rule check\nif (index > 1 && mappedChar != '0') {\nfinal char hwChar = str.charAt(index - 1);\nif ('H' == hwChar || 'W' == hwChar) {\nfinal char preHWChar = str.charAt(index - 2);\nfinal char firstCode = this.map(preHWChar);\nif (firstCode == mappedChar || 'H' == preHWChar || 'W' == preHWChar) {\nreturn 0;\n}\n}\n}\nreturn mappedChar;\n}",
+            "method_id": 8
+        }
+    ]
+}

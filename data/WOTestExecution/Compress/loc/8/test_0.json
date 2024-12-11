@@ -1,0 +1,15 @@
+{
+    "bug_id": 8,
+    "test_id": 0,
+    "test_name": "org.apache.commons.compress.archivers.tar.TarUtilsTest.testParseOctalInvalid",
+    "test_body": "public void testParseOctalInvalid() throws Exception{\nbyte [] buffer;\nbuffer=new byte[0]; // empty byte array\ntry {\nTarUtils.parseOctal(buffer,0, buffer.length);\nfail(\"Expected IllegalArgumentException - should be at least 2 bytes long\");\n} catch (IllegalArgumentException expected) {\n}\nbuffer=new byte[]{0}; // 1-byte array\ntry {\nTarUtils.parseOctal(buffer,0, buffer.length);\nfail(\"Expected IllegalArgumentException - should be at least 2 bytes long\");\n} catch (IllegalArgumentException expected) {\n}\nbuffer=new byte[]{0,0,' '}; // not all NULs\ntry {\nTarUtils.parseOctal(buffer,0, buffer.length);\nfail(\"Expected IllegalArgumentException - not all NULs\");\n} catch (IllegalArgumentException expected) {\n}\nbuffer=new byte[]{' ',0,0,0}; // not all NULs\ntry {\nTarUtils.parseOctal(buffer,0, buffer.length);\nfail(\"Expected IllegalArgumentException - not all NULs\");\n} catch (IllegalArgumentException expected) {\n}\nbuffer = \"abcdef \".getBytes(\"UTF-8\"); // Invalid input\ntry {\nTarUtils.parseOctal(buffer,0, buffer.length);\nfail(\"Expected IllegalArgumentException\");\n} catch (IllegalArgumentException expected) {\n}\nbuffer = \"77777777777\".getBytes(\"UTF-8\"); // Invalid input - no trailer\ntry {\nTarUtils.parseOctal(buffer,0, buffer.length);\nfail(\"Expected IllegalArgumentException - no trailer\");\n} catch (IllegalArgumentException expected) {\n}\nbuffer = \" 0 07 \".getBytes(\"UTF-8\"); // Invalid - embedded space\ntry {\nTarUtils.parseOctal(buffer,0, buffer.length);\nfail(\"Expected IllegalArgumentException - embedded space\");\n} catch (IllegalArgumentException expected) {\n}\nbuffer = \" 0\\00007 \".getBytes(\"UTF-8\"); // Invalid - embedded NUL\ntry {\nTarUtils.parseOctal(buffer,0, buffer.length);\nfail(\"Expected IllegalArgumentException - embedded NUL\");\n} catch (IllegalArgumentException expected) {\n}\n}\n",
+    "stack_trace": "",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.compress.archivers.tar.TarUtils:parseOctal([BII)J",
+            "method_body": "public static long parseOctal(final byte[] buffer, final int offset, final int length) {\nlong    result = 0;\nboolean stillPadding = true;\nint     end = offset + length;\nint     start = offset;\n\nfor (int i = start; i < end; i++){\nfinal byte currentByte = buffer[i];\nif (currentByte == 0) {\nbreak;\n}\n\n// Skip leading spaces\nif (currentByte == (byte) ' ' || currentByte == '0') {\nif (stillPadding) {\ncontinue;\n}\nif (currentByte == (byte) ' ') {\nbreak;\n}\n}\n\n// Must have trailing NUL or space\n// May have additional NUL or space\n\nstillPadding = false;\n// CheckStyle:MagicNumber OFF\nif (currentByte < '0' || currentByte > '7'){\nthrow new IllegalArgumentException(\nexceptionMessage(buffer, offset, length, start, currentByte));\n}\nresult = (result << 3) + (currentByte - '0'); // convert from ASCII\n// CheckStyle:MagicNumber ON\n}\n\nreturn result;\n}",
+            "method_id": 0,
+            "loc": 37
+        }
+    ]
+}

@@ -1,0 +1,104 @@
+{
+    "bug_id": 12,
+    "test_id": 0,
+    "test_name": "org.apache.commons.compress.archivers.TarTestCase.testCOMPRESS178",
+    "test_body": "public void testCOMPRESS178() throws Exception {\nfinal File input = getFile(\"COMPRESS-178.tar\");\nfinal InputStream is = new FileInputStream(input);\nfinal ArchiveInputStream in = new ArchiveStreamFactory().createArchiveInputStream(\"tar\", is);\ntry {\nin.getNextEntry();\nfail(\"Expected IOException\");\n} catch (IOException e) {\nThrowable t = e.getCause();\nassertTrue(\"Expected cause = IllegalArgumentException\", t instanceof IllegalArgumentException);\n}\nin.close();\n}\n",
+    "stack_trace": "",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.compress.archivers.tar.TarUtils:parseOctal([BII)J",
+            "method_body": "public static long parseOctal(final byte[] buffer, final int offset, final int length) {\nlong    result = 0;\nint     end = offset + length;\nint     start = offset;\n\nif (length < 2){\nthrow new IllegalArgumentException(\"Length \"+length+\" must be at least 2\");\n}\n\nboolean allNUL = true;\nfor (int i = start; i < end; i++){\nif (buffer[i] != 0){\nallNUL = false;\nbreak;\n}\n}\nif (allNUL) {\nreturn 0L;\n}\n\n// Skip leading spaces\nwhile (start < end){\nif (buffer[start] == ' '){\nstart++;\n} else {\nbreak;\n}\n}\n\n// Must have trailing NUL or space\nbyte trailer;\ntrailer = buffer[end-1];\nif (trailer == 0 || trailer == ' '){\nend--;\n} else {\nthrow new IllegalArgumentException(\nexceptionMessage(buffer, offset, length, end-1, trailer));\n}\n// May have additional NUL or space\ntrailer = buffer[end-1];\nif (trailer == 0 || trailer == ' '){\nend--;\n}\n\nfor ( ;start < end; start++) {\nfinal byte currentByte = buffer[start];\n// CheckStyle:MagicNumber OFF\nif (currentByte < '0' || currentByte > '7'){\nthrow new IllegalArgumentException(\nexceptionMessage(buffer, offset, length, start, currentByte));\n}\nresult = (result << 3) + (currentByte - '0'); // convert from ASCII\n// CheckStyle:MagicNumber ON\n}\n\nreturn result;\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.tar.TarArchiveInputStream:getNextEntry()Lorg/apache/commons/compress/archivers/ArchiveEntry;",
+            "method_body": "public ArchiveEntry getNextEntry() throws IOException {\nreturn getNextTarEntry();\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.tar.TarBuffer:isEOFRecord([B)Z",
+            "method_body": "public boolean isEOFRecord(byte[] record) {\nfor (int i = 0, sz = getRecordSize(); i < sz; ++i) {\nif (record[i] != 0) {\nreturn false;\n}\n}\n\nreturn true;\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.tar.TarArchiveInputStream:<init>(Ljava/io/InputStream;)V",
+            "method_body": "public TarArchiveInputStream(InputStream is) {\nthis(is, TarBuffer.DEFAULT_BLKSIZE, TarBuffer.DEFAULT_RCDSIZE);\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.tar.TarBuffer:readBlock()Z",
+            "method_body": "private boolean readBlock() throws IOException {\nif (inStream == null) {\nthrow new IOException(\"reading from an output buffer\");\n}\n\ncurrRecIdx = 0;\n\nint offset = 0;\nint bytesNeeded = blockSize;\n\nwhile (bytesNeeded > 0) {\nlong numBytes = inStream.read(blockBuffer, offset,\nbytesNeeded);\n\n//\n// NOTE\n// We have fit EOF, and the block is not full!\n//\n// This is a broken archive. It does not follow the standard\n// blocking algorithm. However, because we are generous, and\n// it requires little effort, we will simply ignore the error\n// and continue as if the entire block were read. This does\n// not appear to break anything upstream. We used to return\n// false in this case.\n//\n// Thanks to 'Yohann.Roussel@alcatel.fr' for this fix.\n//\nif (numBytes == -1) {\nif (offset == 0) {\n// Ensure that we do not read gigabytes of zeros\n// for a corrupt tar file.\n// See http://issues.apache.org/bugzilla/show_bug.cgi?id=39924\nreturn false;\n}\n// However, just leaving the unread portion of the buffer dirty does\n// cause problems in some cases.  This problem is described in\n// http://issues.apache.org/bugzilla/show_bug.cgi?id=29877\n//\n// The solution is to fill the unused portion of the buffer with zeros.\n\nArrays.fill(blockBuffer, offset, offset + bytesNeeded, (byte) 0);\n\nbreak;\n}\n\noffset += numBytes;\nbytesNeeded -= numBytes;\n\nif (numBytes != blockSize) {\n// TODO: Incomplete Read occured - throw exception?\n}\n}\n\ncurrBlkIdx++;\n\nreturn true;\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.tar.TarUtils:parseOctalOrBinary([BII)J",
+            "method_body": "public static long parseOctalOrBinary(final byte[] buffer, final int offset,\nfinal int length) {\n\nif ((buffer[offset] & 0x80) == 0) {\nreturn parseOctal(buffer, offset, length);\n}\n\nlong val = buffer[offset] & 0x7f;\nfor (int i = 1; i < length; i++) {\nif (val >= (1L << (63 - 8))) {\nthrow new IllegalArgumentException(\n\"At offset \" + offset + \", \" + length + \" byte \" +\n\"binary number exceeds maximum signed long value\");\n}\nval = (val << 8) + (buffer[offset + i] & 0xff);\n}\nreturn val;\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.tar.TarUtils:parseName([BII)Ljava/lang/String;",
+            "method_body": "public static String parseName(byte[] buffer, final int offset, final int length) {\nStringBuffer result = new StringBuffer(length);\nint          end = offset + length;\n\nfor (int i = offset; i < end; ++i) {\nbyte b = buffer[i];\nif (b == 0) { // Trailing null\nbreak;\n}\nresult.append((char) (b & 0xFF)); // Allow for sign-extension\n}\n\nreturn result.toString();\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.tar.TarArchiveInputStream:getRecord()[B",
+            "method_body": "private byte[] getRecord() throws IOException {\nif (hasHitEOF) {\nreturn null;\n}\n\nbyte[] headerBuf = buffer.readRecord();\n\nif (headerBuf == null) {\nhasHitEOF = true;\n} else if (buffer.isEOFRecord(headerBuf)) {\nhasHitEOF = true;\n}\n\nreturn hasHitEOF ? null : headerBuf;\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.ArchiveStreamFactory:createArchiveInputStream(Ljava/lang/String;Ljava/io/InputStream;)Lorg/apache/commons/compress/archivers/ArchiveInputStream;",
+            "method_body": "public ArchiveInputStream createArchiveInputStream(\nfinal String archiverName, final InputStream in)\nthrows ArchiveException {\n\nif (archiverName == null) {\nthrow new IllegalArgumentException(\"Archivername must not be null.\");\n}\n\nif (in == null) {\nthrow new IllegalArgumentException(\"InputStream must not be null.\");\n}\n\nif (AR.equalsIgnoreCase(archiverName)) {\nreturn new ArArchiveInputStream(in);\n}\nif (ZIP.equalsIgnoreCase(archiverName)) {\nreturn new ZipArchiveInputStream(in);\n}\nif (TAR.equalsIgnoreCase(archiverName)) {\nreturn new TarArchiveInputStream(in);\n}\nif (JAR.equalsIgnoreCase(archiverName)) {\nreturn new JarArchiveInputStream(in);\n}\nif (CPIO.equalsIgnoreCase(archiverName)) {\nreturn new CpioArchiveInputStream(in);\n}\nif (DUMP.equalsIgnoreCase(archiverName)) {\nreturn new DumpArchiveInputStream(in);\n}\n\nthrow new ArchiveException(\"Archiver: \" + archiverName + \" not found.\");\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.tar.TarArchiveEntry:parseTarHeader([B)V",
+            "method_body": "public void parseTarHeader(byte[] header) {\nint offset = 0;\n\nname = TarUtils.parseName(header, offset, NAMELEN);\noffset += NAMELEN;\nmode = (int) TarUtils.parseOctal(header, offset, MODELEN);\noffset += MODELEN;\nuserId = (int) TarUtils.parseOctalOrBinary(header, offset, UIDLEN);\noffset += UIDLEN;\ngroupId = (int) TarUtils.parseOctalOrBinary(header, offset, GIDLEN);\noffset += GIDLEN;\nsize = TarUtils.parseOctalOrBinary(header, offset, SIZELEN);\noffset += SIZELEN;\nmodTime = TarUtils.parseOctal(header, offset, MODTIMELEN);\noffset += MODTIMELEN;\noffset += CHKSUMLEN;\nlinkFlag = header[offset++];\nlinkName = TarUtils.parseName(header, offset, NAMELEN);\noffset += NAMELEN;\nmagic = TarUtils.parseName(header, offset, MAGICLEN);\noffset += MAGICLEN;\nversion = TarUtils.parseName(header, offset, VERSIONLEN);\noffset += VERSIONLEN;\nuserName = TarUtils.parseName(header, offset, UNAMELEN);\noffset += UNAMELEN;\ngroupName = TarUtils.parseName(header, offset, GNAMELEN);\noffset += GNAMELEN;\ndevMajor = (int) TarUtils.parseOctal(header, offset, DEVLEN);\noffset += DEVLEN;\ndevMinor = (int) TarUtils.parseOctal(header, offset, DEVLEN);\noffset += DEVLEN;\n\nint type = evaluateType(header);\nswitch (type) {\ncase FORMAT_OLDGNU: {\noffset += ATIMELEN_GNU;\noffset += CTIMELEN_GNU;\noffset += OFFSETLEN_GNU;\noffset += LONGNAMESLEN_GNU;\noffset += PAD2LEN_GNU;\noffset += SPARSELEN_GNU;\nisExtended = TarUtils.parseBoolean(header, offset);\noffset += ISEXTENDEDLEN_GNU;\nrealSize = TarUtils.parseOctal(header, offset, REALSIZELEN_GNU);\noffset += REALSIZELEN_GNU;\nbreak;\n}\ncase FORMAT_POSIX:\ndefault: {\nString prefix = TarUtils.parseName(header, offset, PREFIXLEN);\n// SunOS tar -E does not add / to directory names, so fix\n// up to be consistent\nif (isDirectory() && !name.endsWith(\"/\")){\nname = name + \"/\";\n}\nif (prefix.length() > 0){\nname = prefix + \"/\" + name;\n}\n}\n}\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.tar.TarBuffer:readRecord()[B",
+            "method_body": "public byte[] readRecord() throws IOException {\nif (inStream == null) {\nif (outStream == null) {\nthrow new IOException(\"input buffer is closed\");\n}\nthrow new IOException(\"reading from an output buffer\");\n}\n\nif (currRecIdx >= recsPerBlock && !readBlock()) {\nreturn null;\n}\n\nbyte[] result = new byte[recordSize];\n\nSystem.arraycopy(blockBuffer,\n(currRecIdx * recordSize), result, 0,\nrecordSize);\n\ncurrRecIdx++;\n\nreturn result;\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.tar.TarBuffer:getRecordSize()I",
+            "method_body": "public int getRecordSize() {\nreturn this.recordSize;\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.tar.TarArchiveInputStream:getNextTarEntry()Lorg/apache/commons/compress/archivers/tar/TarArchiveEntry;",
+            "method_body": "public TarArchiveEntry getNextTarEntry() throws IOException {\nif (hasHitEOF) {\nreturn null;\n}\n\nif (currEntry != null) {\nlong numToSkip = entrySize - entryOffset;\n\nwhile (numToSkip > 0) {\nlong skipped = skip(numToSkip);\nif (skipped <= 0) {\nthrow new RuntimeException(\"failed to skip current tar entry\");\n}\nnumToSkip -= skipped;\n}\n\nreadBuf = null;\n}\n\nbyte[] headerBuf = getRecord();\n\nif (hasHitEOF) {\ncurrEntry = null;\nreturn null;\n}\n\ncurrEntry = new TarArchiveEntry(headerBuf);\nentryOffset = 0;\nentrySize = currEntry.getSize();\n\nif (currEntry.isGNULongNameEntry()) {\n// read in the name\nStringBuffer longName = new StringBuffer();\nbyte[] buf = new byte[SMALL_BUFFER_SIZE];\nint length = 0;\nwhile ((length = read(buf)) >= 0) {\nlongName.append(new String(buf, 0, length));\n}\ngetNextEntry();\nif (currEntry == null) {\n// Bugzilla: 40334\n// Malformed tar file - long entry name not followed by entry\nreturn null;\n}\n// remove trailing null terminator\nif (longName.length() > 0\n&& longName.charAt(longName.length() - 1) == 0) {\nlongName.deleteCharAt(longName.length() - 1);\n}\ncurrEntry.setName(longName.toString());\n}\n\nif (currEntry.isPaxHeader()){ // Process Pax headers\npaxHeaders();\n}\n\nif (currEntry.isGNUSparse()){ // Process sparse files\nreadGNUSparse();\n}\n\n// If the size of the next element in the archive has changed\n// due to a new size being reported in the posix header\n// information, we update entrySize here so that it contains\n// the correct value.\nentrySize = currEntry.getSize();\nreturn currEntry;\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.tar.TarArchiveEntry:<init>([B)V",
+            "method_body": "public TarArchiveEntry(byte[] headerBuf) {\nthis();\nparseTarHeader(headerBuf);\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.tar.TarBuffer:<init>(Ljava/io/InputStream;II)V",
+            "method_body": "public TarBuffer(InputStream inStream, int blockSize, int recordSize) {\nthis.inStream = inStream;\nthis.outStream = null;\n\nthis.initialize(blockSize, recordSize);\n}",
+            "method_id": 14
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.tar.TarArchiveInputStream:<init>(Ljava/io/InputStream;II)V",
+            "method_body": "public TarArchiveInputStream(InputStream is, int blockSize, int recordSize) {\nthis.buffer = new TarBuffer(is, blockSize, recordSize);\nthis.readBuf = null;\nthis.hasHitEOF = false;\n}",
+            "method_id": 15
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.tar.TarArchiveEntry:<init>()V",
+            "method_body": "private TarArchiveEntry () {\nthis.magic = MAGIC_POSIX;\nthis.version = VERSION_POSIX;\nthis.name = \"\";\nthis.linkName = \"\";\n\nString user = System.getProperty(\"user.name\", \"\");\n\nif (user.length() > MAX_NAMELEN) {\nuser = user.substring(0, MAX_NAMELEN);\n}\n\nthis.userId = 0;\nthis.groupId = 0;\nthis.userName = user;\nthis.groupName = \"\";\nthis.file = null;\n}",
+            "method_id": 16
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.tar.TarBuffer:initialize(II)V",
+            "method_body": "private void initialize(int blockSize, int recordSize) {\nthis.blockSize = blockSize;\nthis.recordSize = recordSize;\nthis.recsPerBlock = (this.blockSize / this.recordSize);\nthis.blockBuffer = new byte[this.blockSize];\n\nif (this.inStream != null) {\nthis.currBlkIdx = -1;\nthis.currRecIdx = this.recsPerBlock;\n} else {\nthis.currBlkIdx = 0;\nthis.currRecIdx = 0;\n}\n}",
+            "method_id": 17
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.tar.TarUtils:exceptionMessage([BIIIB)Ljava/lang/String;",
+            "method_body": "private static String exceptionMessage(byte[] buffer, final int offset,\nfinal int length, int current, final byte currentByte) {\nString string = new String(buffer, offset, length);\nstring=string.replaceAll(\"\\0\", \"{NUL}\"); // Replace NULs to allow string to be printed\nfinal String s = \"Invalid byte \"+currentByte+\" at offset \"+(current-offset)+\" in '\"+string+\"' len=\"+length;\nreturn s;\n}",
+            "method_id": 18
+        }
+    ]
+}

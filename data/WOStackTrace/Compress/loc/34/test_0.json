@@ -1,0 +1,153 @@
+{
+    "bug_id": 34,
+    "test_id": 0,
+    "test_name": "org.apache.commons.compress.archivers.zip.X7875_NewUnixTest.testParseReparse",
+    "test_body": "public void testParseReparse() throws ZipException {\n// Version=1, Len=0, Len=0.\nfinal byte[] ZERO_LEN = {1, 0, 0};\n// Version=1, Len=1, zero, Len=1, zero.\nfinal byte[] ZERO_UID_GID = {1, 1, 0, 1, 0};\n// Version=1, Len=1, one, Len=1, one\nfinal byte[] ONE_UID_GID = {1, 1, 1, 1, 1};\n// Version=1, Len=2, one thousand, Len=2, one thousand\nfinal byte[] ONE_THOUSAND_UID_GID = {1, 2, -24, 3, 2, -24, 3};\n// (2^32 - 2).   I guess they avoid (2^32 - 1) since it's identical to -1 in\n// two's complement, and -1 often has a special meaning.\nfinal byte[] UNIX_MAX_UID_GID = {1, 4, -2, -1, -1, -1, 4, -2, -1, -1, -1};\n// Version=1, Len=5, 2^32, Len=5, 2^32 + 1\n// Esoteric test:  can we handle 40 bit numbers?\nfinal byte[] LENGTH_5 = {1, 5, 0, 0, 0, 0, 1, 5, 1, 0, 0, 0, 1};\n// Version=1, Len=8, 2^63 - 2, Len=8, 2^63 - 1\n// Esoteric test:  can we handle 64 bit numbers?\nfinal byte[] LENGTH_8 = {1, 8, -2, -1, -1, -1, -1, -1, -1, 127, 8, -1, -1, -1, -1, -1, -1, -1, 127};\nfinal long TWO_TO_32 = 0x100000000L;\nfinal long MAX = TWO_TO_32 - 2;\nparseReparse(0, 0, ZERO_LEN, 0, 0);\nparseReparse(0, 0, ZERO_UID_GID, 0, 0);\nparseReparse(1, 1, ONE_UID_GID, 1, 1);\nparseReparse(1000, 1000, ONE_THOUSAND_UID_GID, 1000, 1000);\nparseReparse(MAX, MAX, UNIX_MAX_UID_GID, MAX, MAX);\nparseReparse(-2, -2, UNIX_MAX_UID_GID, MAX, MAX);\nparseReparse(TWO_TO_32, TWO_TO_32 + 1, LENGTH_5, TWO_TO_32, TWO_TO_32 + 1);\nparseReparse(Long.MAX_VALUE - 1, Long.MAX_VALUE, LENGTH_8, Long.MAX_VALUE - 1, Long.MAX_VALUE);\n// We never emit this, but we should be able to parse it:\nfinal byte[] SPURIOUS_ZEROES_1 = {1, 4, -1, 0, 0, 0, 4, -128, 0, 0, 0};\nfinal byte[] EXPECTED_1 = {1, 1, -1, 1, -128};\nxf.parseFromLocalFileData(SPURIOUS_ZEROES_1, 0, SPURIOUS_ZEROES_1.length);\nassertEquals(255, xf.getUID());\nassertEquals(128, xf.getGID());\nassertTrue(Arrays.equals(EXPECTED_1, xf.getLocalFileDataData()));\nfinal byte[] SPURIOUS_ZEROES_2 = {1, 4, -1, -1, 0, 0, 4, 1, 2, 0, 0};\nfinal byte[] EXPECTED_2 = {1, 2, -1, -1, 2, 1, 2};\nxf.parseFromLocalFileData(SPURIOUS_ZEROES_2, 0, SPURIOUS_ZEROES_2.length);\nassertEquals(65535, xf.getUID());\nassertEquals(513, xf.getGID());\nassertTrue(Arrays.equals(EXPECTED_2, xf.getLocalFileDataData()));\n}\n",
+    "stack_trace": "",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.ZipLong:<clinit>()V",
+            "method_body": "private static final long serialVersionUID = 1L;\n\n//private static final int BYTE_BIT_SIZE = 8;\n\nprivate static final int BYTE_1 = 1;\nprivate static final int BYTE_1_MASK = 0xFF00;\nprivate static final int BYTE_1_SHIFT = 8;\n\nprivate static final int BYTE_2 = 2;\nprivate static final int BYTE_2_MASK = 0xFF0000;\nprivate static final int BYTE_2_SHIFT = 16;\n\nprivate static final int BYTE_3 = 3;\nprivate static final long BYTE_3_MASK = 0xFF000000L;\nprivate static final int BYTE_3_SHIFT = 24;\n\nprivate final long value;\n\n/** Central File Header Signature */\npublic static final ZipLong CFH_SIG = new ZipLong(0X02014B50L);\n\n/** Local File Header Signature */\npublic static final ZipLong LFH_SIG = new ZipLong(0X04034B50L);\n\n/**\n* Data Descriptor signature.\n*\n* <p>Actually, PKWARE uses this as marker for split/spanned\n* archives and other archivers have started to use it as Data\n* Descriptor signature (as well).</p>\n* @since 1.1\n*/\npublic static final ZipLong DD_SIG = new ZipLong(0X08074B50L);\n\n/**\n* Value stored in size and similar fields if ZIP64 extensions are\n* used.\n* @since 1.3\n*/\nstatic final ZipLong ZIP64_MAGIC = new ZipLong(ZipConstants.ZIP64_MAGIC);\n\n/**\n* Marks ZIP archives that were supposed to be split or spanned\n* but only needed a single segment in then end (so are actually\n* neither split nor spanned).\n*\n* <p>This is the \"PK00\" prefix found in some archives.</p>\n* @since 1.5\n*/\npublic static final ZipLong SINGLE_SEGMENT_SPLIT_MARKER =\nnew ZipLong(0X30304B50L);\n\n/**\n* Archive extra data record signature.\n* @since 1.5\n*/\npublic static final ZipLong AED_SIG = new ZipLong(0X08064B50L);\n\n/**\n* Create instance from a number.\n* @param value the long to store as a ZipLong\n*/\npublic ZipLong(long value) {\nthis.value = value;\n}",
+            "method_id": 0,
+            "loc": 65
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.X7875_NewUnix:trimLeadingZeroesForceMinLength([B)[B",
+            "method_body": "static byte[] trimLeadingZeroesForceMinLength(byte[] array) {\nif (array == null) {\nreturn array;\n}\n\nint pos = 0;\nfor (byte b : array) {\nif (b == 0) {\npos++;\n} else {\nbreak;\n}\n}\n\n/*\n\nI agonized over my choice of MIN_LENGTH=1.  Here's the situation:\nInfoZip (the tool I am using to test interop) always sets these\nto length=4.  And so a UID of 0 (typically root) for example is\nencoded as {4,0,0,0,0} (len=4, 32 bits of zero), when it could just\nas easily be encoded as {1,0} (len=1, 8 bits of zero) according to\nthe spec.\n\nIn the end I decided on MIN_LENGTH=1 for four reasons:\n\n1.)  We are adhering to the spec as far as I can tell, and so\na consumer that cannot parse this is broken.\n\n2.)  Fundamentally, zip files are about shrinking things, so\nlet's save a few bytes per entry while we can.\n\n3.)  Of all the people creating zip files using commons-\ncompress, how many care about UNIX UID/GID attributes\nof the files they store?   (e.g., I am probably thinking\nway too hard about this and no one cares!)\n\n4.)  InfoZip's tool, even though it carefully stores every UID/GID\nfor every file zipped on a unix machine (by default) currently\nappears unable to ever restore UID/GID.\nunzip -X has no effect on my machine, even when run as root!!!!\n\nAnd thus it is decided:  MIN_LENGTH=1.\n\nIf anyone runs into interop problems from this, feel free to set\nit to MIN_LENGTH=4 at some future time, and then we will behave\nexactly like InfoZip (requires changes to unit tests, though).\n\nAnd I am sorry that the time you spent reading this comment is now\ngone and you can never have it back.\n\n*/\nfinal int MIN_LENGTH = 1;\n\nbyte[] trimmedArray = new byte[Math.max(MIN_LENGTH, array.length - pos)];\nint startPos = trimmedArray.length - (array.length - pos);\nSystem.arraycopy(array, pos, trimmedArray, startPos, trimmedArray.length - startPos);\nreturn trimmedArray;\n}",
+            "method_id": 1,
+            "loc": 58
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.X7875_NewUnix:getLocalFileDataData()[B",
+            "method_body": "public byte[] getLocalFileDataData() {\nbyte[] uidBytes = uid.toByteArray();\nbyte[] gidBytes = gid.toByteArray();\n\n// BigInteger might prepend a leading-zero to force a positive representation\n// (e.g., so that the sign-bit is set to zero).  We need to remove that\n// before sending the number over the wire.\nuidBytes = trimLeadingZeroesForceMinLength(uidBytes);\ngidBytes = trimLeadingZeroesForceMinLength(gidBytes);\n\n// Couldn't bring myself to just call getLocalFileDataLength() when we've\n// already got the arrays right here.  Yeah, yeah, I know, premature\n// optimization is the root of all...\n//\n// The 3 comes from:  version=1 + uidsize=1 + gidsize=1\nbyte[] data = new byte[3 + uidBytes.length + gidBytes.length];\n\n// reverse() switches byte array from big-endian to little-endian.\nreverse(uidBytes);\nreverse(gidBytes);\n\nint pos = 0;\ndata[pos++] = unsignedIntToSignedByte(version);\ndata[pos++] = unsignedIntToSignedByte(uidBytes.length);\nSystem.arraycopy(uidBytes, 0, data, pos, uidBytes.length);\npos += uidBytes.length;\ndata[pos++] = unsignedIntToSignedByte(gidBytes.length);\nSystem.arraycopy(gidBytes, 0, data, pos, gidBytes.length);\nreturn data;\n}",
+            "method_id": 2,
+            "loc": 30
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.X7875_NewUnix:<clinit>()V",
+            "method_body": "private static final ZipShort HEADER_ID = new ZipShort(0x7875);\nprivate static final BigInteger ONE_THOUSAND = BigInteger.valueOf(1000);\nprivate static final long serialVersionUID = 1L;\n\nprivate int version = 1; // always '1' according to current info-zip spec.\n\n// BigInteger helps us with little-endian / big-endian conversions.\n// (thanks to BigInteger.toByteArray() and a reverse() method we created).\n// Also, the spec theoretically allows UID/GID up to 255 bytes long!\n//\n// NOTE:  equals() and hashCode() currently assume these can never be null.\nprivate BigInteger uid;\nprivate BigInteger gid;\n\n/**\n* Constructor for X7875_NewUnix.\n*/\npublic X7875_NewUnix() {\nreset();\n}",
+            "method_id": 3,
+            "loc": 20
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.X7875_NewUnix:parseFromLocalFileData([BII)V",
+            "method_body": "public void parseFromLocalFileData(\nbyte[] data, int offset, int length\n) throws ZipException {\nreset();\nthis.version = signedByteToUnsignedInt(data[offset++]);\nint uidSize = signedByteToUnsignedInt(data[offset++]);\nbyte[] uidBytes = new byte[uidSize];\nSystem.arraycopy(data, offset, uidBytes, 0, uidSize);\noffset += uidSize;\nthis.uid = new BigInteger(1, reverse(uidBytes)); // sign-bit forced positive\n\nint gidSize = signedByteToUnsignedInt(data[offset++]);\nbyte[] gidBytes = new byte[gidSize];\nSystem.arraycopy(data, offset, gidBytes, 0, gidSize);\nthis.gid = new BigInteger(1, reverse(gidBytes)); // sign-bit forced positive\n}",
+            "method_id": 4,
+            "loc": 16
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.ZipUtil:longToBig(J)Ljava/math/BigInteger;",
+            "method_body": "static BigInteger longToBig(long l) {\nif (l < Integer.MIN_VALUE) {\nthrow new IllegalArgumentException(\"Negative longs < -2^31 not permitted: [\" + l + \"]\");\n} else if (l < 0 && l >= Integer.MIN_VALUE) {\n// If someone passes in a -2, they probably mean 4294967294\n// (For example, Unix UID/GID's are 32 bit unsigned.)\nl = ZipUtil.adjustToLong((int) l);\n}\nreturn BigInteger.valueOf(l);\n}",
+            "method_id": 5,
+            "loc": 10
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.ZipUtil:unsignedIntToSignedByte(I)B",
+            "method_body": "public static byte unsignedIntToSignedByte(int i) {\nif (i > 255 || i < 0) {\nthrow new IllegalArgumentException(\"Can only convert non-negative integers between [0,255] to byte: [\" + i + \"]\");\n}\nif (i < 128) {\nreturn (byte) i;\n} else {\nreturn (byte) (i - 256);\n}\n}",
+            "method_id": 6,
+            "loc": 10
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.ZipUtil:<clinit>()V",
+            "method_body": "private static final byte[] DOS_TIME_MIN = ZipLong.getBytes(0x00002100L);\n\n/**\n* Convert a Date object to a DOS date/time field.\n* @param time the <code>Date</code> to convert\n* @return the date as a <code>ZipLong</code>\n*/\npublic static ZipLong toDosTime(Date time) {\nreturn new ZipLong(toDosTime(time.getTime()));\n}",
+            "method_id": 7,
+            "loc": 10
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.ZipUtil:reverse([B)[B",
+            "method_body": "public static byte[] reverse(final byte[] array) {\nfinal int z = array.length - 1; // position of last element\nfor (int i = 0; i < array.length / 2; i++) {\nbyte x = array[i];\narray[i] = array[z - i];\narray[z - i] = x;\n}\nreturn array;\n}",
+            "method_id": 8,
+            "loc": 9
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.X7875_NewUnix:getLocalFileDataLength()Lorg/apache/commons/compress/archivers/zip/ZipShort;",
+            "method_body": "public ZipShort getLocalFileDataLength() {\nint uidSize = trimLeadingZeroesForceMinLength(uid.toByteArray()).length;\nint gidSize = trimLeadingZeroesForceMinLength(gid.toByteArray()).length;\n\n// The 3 comes from:  version=1 + uidsize=1 + gidsize=1\nreturn new ZipShort(3 + uidSize + gidSize);\n}",
+            "method_id": 9,
+            "loc": 7
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.ZipUtil:bigToLong(Ljava/math/BigInteger;)J",
+            "method_body": "static long bigToLong(BigInteger big) {\nif (big.bitLength() <= 63) { // bitLength() doesn't count the sign bit.\nreturn big.longValue();\n} else {\nthrow new NumberFormatException(\"The BigInteger cannot fit inside a 64 bit java long: [\" + big + \"]\");\n}\n}",
+            "method_id": 10,
+            "loc": 7
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.ZipUtil:signedByteToUnsignedInt(B)I",
+            "method_body": "public static int signedByteToUnsignedInt(byte b) {\nif (b >= 0) {\nreturn b;\n} else {\nreturn 256 + b;\n}\n}",
+            "method_id": 11,
+            "loc": 7
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.ZipLong:putLong(J[BI)V",
+            "method_body": "public static void putLong(long value, byte[] buf, int offset) {\nbuf[offset++] = (byte) ((value & BYTE_MASK));\nbuf[offset++] = (byte) ((value & BYTE_1_MASK) >> BYTE_1_SHIFT);\nbuf[offset++] = (byte) ((value & BYTE_2_MASK) >> BYTE_2_SHIFT);\nbuf[offset] = (byte) ((value & BYTE_3_MASK) >> BYTE_3_SHIFT);\n}",
+            "method_id": 12,
+            "loc": 6
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.ZipLong:getBytes(J)[B",
+            "method_body": "public static byte[] getBytes(long value) {\nbyte[] result = new byte[WORD];\nputLong(value, result, 0);\nreturn result;\n}",
+            "method_id": 13,
+            "loc": 5
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.X7875_NewUnix:reset()V",
+            "method_body": "private void reset() {\n// Typical UID/GID of the first non-root user created on a unix system.\nuid = ONE_THOUSAND;\ngid = ONE_THOUSAND;\n}",
+            "method_id": 14,
+            "loc": 5
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.X7875_NewUnix:getCentralDirectoryLength()Lorg/apache/commons/compress/archivers/zip/ZipShort;",
+            "method_body": "public ZipShort getCentralDirectoryLength() {\nreturn getLocalFileDataLength();\n}",
+            "method_id": 15,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.X7875_NewUnix:setUID(J)V",
+            "method_body": "public void setUID(long l) {\nthis.uid = ZipUtil.longToBig(l);\n}",
+            "method_id": 16,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.X7875_NewUnix:setGID(J)V",
+            "method_body": "public void setGID(long l) {\nthis.gid = ZipUtil.longToBig(l);\n}",
+            "method_id": 17,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.ZipShort:<init>(I)V",
+            "method_body": "public ZipShort (int value) {\nthis.value = value;\n}",
+            "method_id": 18,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.ZipLong:<init>(J)V",
+            "method_body": "public ZipLong(long value) {\nthis.value = value;\n}",
+            "method_id": 19,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.ZipShort:getValue()I",
+            "method_body": "public int getValue() {\nreturn value;\n}",
+            "method_id": 20,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.X7875_NewUnix:<init>()V",
+            "method_body": "public X7875_NewUnix() {\nreset();\n}",
+            "method_id": 21,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.X7875_NewUnix:getUID()J",
+            "method_body": "public long getUID() { return ZipUtil.bigToLong(uid); }\npublic long getUID() { return ZipUtil.bigToLong(uid); }",
+            "method_id": 22,
+            "loc": 2
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.X7875_NewUnix:getGID()J",
+            "method_body": "public long getGID() { return ZipUtil.bigToLong(gid); }\npublic long getGID() { return ZipUtil.bigToLong(gid); }",
+            "method_id": 23,
+            "loc": 2
+        }
+    ]
+}

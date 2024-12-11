@@ -1,0 +1,24 @@
+{
+    "bug_id": 39,
+    "test_id": 0,
+    "test_name": "org.apache.commons.compress.ArchiveUtilsTest.sanitizeShortensString",
+    "test_body": "public void sanitizeShortensString() {\nString input = \"012345678901234567890123456789012345678901234567890123456789\"\n+ \"012345678901234567890123456789012345678901234567890123456789\"\n+ \"012345678901234567890123456789012345678901234567890123456789\"\n+ \"012345678901234567890123456789012345678901234567890123456789\"\n+ \"012345678901234567890123456789012345678901234567890123456789\";\nString expected = \"012345678901234567890123456789012345678901234567890123456789\"\n+ \"012345678901234567890123456789012345678901234567890123456789\"\n+ \"012345678901234567890123456789012345678901234567890123456789\"\n+ \"012345678901234567890123456789012345678901234567890123456789\"\n+ \"012345678901...\";\nassertEquals(expected, ArchiveUtils.sanitize(input));\n}\n",
+    "stack_trace": "",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.compress.utils.ArchiveUtils:sanitize(Ljava/lang/String;)Ljava/lang/String;",
+            "method_body": "public static String sanitize(String s) {\nfinal char[] chars = s.toCharArray();\nfinal int len = chars.length;\nfinal StringBuilder sb = new StringBuilder();\nfor (int i = 0; i < len; i++) {\nfinal char c = chars[i];\nif (!Character.isISOControl(c)) {\nCharacter.UnicodeBlock block = Character.UnicodeBlock.of(c);\nif (block != null && block != Character.UnicodeBlock.SPECIALS) {\nsb.append(c);\ncontinue;\n}\n}\nsb.append('?');\n}\nreturn sb.toString();\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.ArchiveStreamFactory:<init>(Ljava/lang/String;)V",
+            "method_body": "public ArchiveStreamFactory(final String encoding) {\nsuper();\nthis.encoding = encoding;\n// Also set the original field so can continue to use it.\nthis.entryEncoding = encoding;\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.ArchiveStreamFactory:<init>()V",
+            "method_body": "public ArchiveStreamFactory() {\nthis(null);\n}",
+            "method_id": 2
+        }
+    ]
+}

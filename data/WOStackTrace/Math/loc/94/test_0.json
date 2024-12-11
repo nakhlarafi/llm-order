@@ -1,0 +1,15 @@
+{
+    "bug_id": 94,
+    "test_id": 0,
+    "test_name": "org.apache.commons.math.util.MathUtilsTest.testGcd",
+    "test_body": "public void testGcd() {\nint a = 30;\nint b = 50;\nint c = 77;\nassertEquals(0, MathUtils.gcd(0, 0));\nassertEquals(b, MathUtils.gcd(0, b));\nassertEquals(a, MathUtils.gcd(a, 0));\nassertEquals(b, MathUtils.gcd(0, -b));\nassertEquals(a, MathUtils.gcd(-a, 0));\nassertEquals(10, MathUtils.gcd(a, b));\nassertEquals(10, MathUtils.gcd(-a, b));\nassertEquals(10, MathUtils.gcd(a, -b));\nassertEquals(10, MathUtils.gcd(-a, -b));\nassertEquals(1, MathUtils.gcd(a, c));\nassertEquals(1, MathUtils.gcd(-a, c));\nassertEquals(1, MathUtils.gcd(a, -c));\nassertEquals(1, MathUtils.gcd(-a, -c));\nassertEquals(3 * (1<<15), MathUtils.gcd(3 * (1<<20), 9 * (1<<15)));\n}\n",
+    "stack_trace": "junit.framework.AssertionFailedError: expected:<98304> but was:<3440640>\nat junit.framework.Assert.fail(Assert.java:57)\nat junit.framework.Assert.failNotEquals(Assert.java:329)\nat junit.framework.Assert.assertEquals(Assert.java:78)\nat junit.framework.Assert.assertEquals(Assert.java:234)\nat junit.framework.Assert.assertEquals(Assert.java:241)\nat junit.framework.TestCase.assertEquals(TestCase.java:409)\nat org.apache.commons.math.util.MathUtilsTest.testGcd(MathUtilsTest.java:295)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.math.util.MathUtils:gcd(II)I",
+            "method_body": "public static int gcd(int u, int v) {\nif (u * v == 0) {\nreturn (Math.abs(u) + Math.abs(v));\n}\n// keep u and v negative, as negative integers range down to\n// -2^31, while positive numbers can only be as large as 2^31-1\n// (i.e. we can't necessarily negate a negative number without\n// overflow)\n/* assert u!=0 && v!=0; */\nif (u > 0) {\nu = -u;\n} // make u negative\nif (v > 0) {\nv = -v;\n} // make v negative\n// B1. [Find power of 2]\nint k = 0;\nwhile ((u & 1) == 0 && (v & 1) == 0 && k < 31) { // while u and v are\n// both even...\nu /= 2;\nv /= 2;\nk++; // cast out twos.\n}\nif (k == 31) {\nthrow new ArithmeticException(\"overflow: gcd is 2^31\");\n}\n// B2. Initialize: u and v have been divided by 2^k and at least\n// one is odd.\nint t = ((u & 1) == 1) ? v : -(u / 2)/* B3 */;\n// t negative: u was odd, v may be even (t replaces v)\n// t positive: u was even, v is odd (t replaces u)\ndo {\n/* assert u<0 && v<0; */\n// B4/B3: cast out twos from t.\nwhile ((t & 1) == 0) { // while t is even..\nt /= 2; // cast out twos\n}\n// B5 [reset max(u,v)]\nif (t > 0) {\nu = -t;\n} else {\nv = t;\n}\n// B6/B3. at this point both u and v should be odd.\nt = (v - u) / 2;\n// |u| larger: t positive (replace u)\n// |v| larger: t negative (replace v)\n} while (t != 0);\nreturn -u * (1 << k); // gcd is u*2^k\n}",
+            "method_id": 0,
+            "loc": 50
+        }
+    ]
+}

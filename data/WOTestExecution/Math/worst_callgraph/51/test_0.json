@@ -1,0 +1,194 @@
+{
+    "bug_id": 51,
+    "test_id": 0,
+    "test_name": "org.apache.commons.math.analysis.solvers.RegulaFalsiSolverTest.testIssue631",
+    "test_body": "public void testIssue631() {\nfinal UnivariateRealFunction f = new UnivariateRealFunction() {\n@Override\npublic double value(double x) {\nreturn Math.exp(x) - Math.pow(Math.PI, 3.0);\n}\n};\nfinal UnivariateRealSolver solver = new RegulaFalsiSolver();\nfinal double root = solver.solve(3624, f, 1, 10);\nAssert.assertEquals(3.4341896575482003, root, 1e-15);\n}\n",
+    "stack_trace": "org.apache.commons.math.exception.TooManyEvaluationsException: illegal state: maximal count (3,624) exceeded: evaluations\nat org.apache.commons.math.analysis.solvers.BaseAbstractUnivariateRealSolver.incrementEvaluationCount(BaseAbstractUnivariateRealSolver.java:296)\nat org.apache.commons.math.analysis.solvers.BaseAbstractUnivariateRealSolver.computeObjectiveValue(BaseAbstractUnivariateRealSolver.java:153)\nat org.apache.commons.math.analysis.solvers.BaseSecantSolver.doSolve(BaseSecantSolver.java:161)\nat org.apache.commons.math.analysis.solvers.BaseAbstractUnivariateRealSolver.solve(BaseAbstractUnivariateRealSolver.java:190)\nat org.apache.commons.math.analysis.solvers.BaseSecantSolver.solve(BaseSecantSolver.java:117)\nat org.apache.commons.math.analysis.solvers.BaseSecantSolver.solve(BaseSecantSolver.java:124)\nat org.apache.commons.math.analysis.solvers.BaseAbstractUnivariateRealSolver.solve(BaseAbstractUnivariateRealSolver.java:195)\nat org.apache.commons.math.analysis.solvers.RegulaFalsiSolverTest.testIssue631(RegulaFalsiSolverTest.java:53)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.math.exception.util.ArgUtils:flatten([Ljava/lang/Object;)[Ljava/lang/Object;",
+            "method_body": "public static Object[] flatten(Object[] array) {\nfinal List<Object> list = new ArrayList<Object>();\nif (array != null) {\nfor (Object o : array) {\nif (o instanceof Object[]) {\nfor (Object oR : flatten((Object[]) o)) {\nlist.add(oR);\n}\n} else {\nlist.add(o);\n}\n}\n}\nreturn list.toArray();\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.Incrementor:incrementCount()V",
+            "method_body": "public void incrementCount() {\nif (++count > maximalCount) {\nthrow new MaxCountExceededException(maximalCount);\n}\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.BaseAbstractUnivariateRealSolver:solve(ILorg/apache/commons/math/analysis/UnivariateRealFunction;DDD)D",
+            "method_body": "public double solve(int maxEval, FUNC f, double min, double max, double startValue) {\n// Initialization.\nsetup(maxEval, f, min, max, startValue);\n\n// Perform computation.\nreturn doSolve();\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.FastMath:abs(D)D",
+            "method_body": "public static double abs(double x) {\nreturn (x < 0.0) ? -x : (x == 0.0) ? 0.0 : x; // -0.0 => +0.0\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.UnivariateRealSolverUtils:verifyInterval(DD)V",
+            "method_body": "public static void verifyInterval(final double lower,\nfinal double upper) {\nif (lower >= upper) {\nthrow new NumberIsTooLargeException(LocalizedFormats.ENDPOINTS_NOT_AN_INTERVAL,\nlower, upper, false);\n}\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math.exception.MathIllegalStateException:<init>()V",
+            "method_body": "public MathIllegalStateException() {\nthis(LocalizedFormats.ILLEGAL_STATE);\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.FastMath:max(DD)D",
+            "method_body": "public static double max(final double a, final double b) {\nif (a > b) {\nreturn a;\n}\nif (a < b) {\nreturn b;\n}\n/* if either arg is NaN, return NaN */\nif (a != b) {\nreturn Double.NaN;\n}\n/* min(+0.0,-0.0) == -0.0 */\n/* 0x8000000000000000L == Double.doubleToRawLongBits(-0.0d) */\nlong bits = Double.doubleToRawLongBits(a);\nif (bits == 0x8000000000000000L) {\nreturn b;\n}\nreturn a;\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.math.exception.TooManyEvaluationsException:<init>(Ljava/lang/Number;)V",
+            "method_body": "public TooManyEvaluationsException(Number max) {\nsuper(max);\ngetContext().addMessage(LocalizedFormats.EVALUATIONS);\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.BaseAbstractUnivariateRealSolver:solve(ILorg/apache/commons/math/analysis/UnivariateRealFunction;DD)D",
+            "method_body": "public double solve(int maxEval, FUNC f, double min, double max) {\nreturn solve(maxEval, f, min, max, min + 0.5 * (max - min));\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.UnivariateRealSolverUtils:verifyBracketing(Lorg/apache/commons/math/analysis/UnivariateRealFunction;DD)V",
+            "method_body": "public static void verifyBracketing(UnivariateRealFunction function,\nfinal double lower,\nfinal double upper) {\nif (function == null) {\nthrow new NullArgumentException(LocalizedFormats.FUNCTION);\n}\nverifyInterval(lower, upper);\nif (!isBracketing(function, lower, upper)) {\nthrow new NoBracketingException(lower, upper,\nfunction.value(lower),\nfunction.value(upper));\n}\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.BaseAbstractUnivariateRealSolver:computeObjectiveValue(D)D",
+            "method_body": "protected double computeObjectiveValue(double point)\nthrows TooManyEvaluationsException {\nincrementEvaluationCount();\nreturn function.value(point);\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.apache.commons.math.exception.MathIllegalStateException:getContext()Lorg/apache/commons/math/exception/util/ExceptionContext;",
+            "method_body": "public ExceptionContext getContext() {\nreturn context;\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.Incrementor:setMaximalCount(I)V",
+            "method_body": "public void setMaximalCount(int max) {\nmaximalCount = max;\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.UnivariateRealSolverUtils:isBracketing(Lorg/apache/commons/math/analysis/UnivariateRealFunction;DD)Z",
+            "method_body": "public static boolean isBracketing(UnivariateRealFunction function,\nfinal double lower,\nfinal double upper) {\nif (function == null) {\nthrow new NullArgumentException(LocalizedFormats.FUNCTION);\n}\nfinal double fLo = function.value(lower);\nfinal double fHi = function.value(upper);\nreturn (fLo >= 0 && fHi <= 0) || (fLo <= 0 && fHi >= 0);\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.BaseAbstractUnivariateRealSolver:getMax()D",
+            "method_body": "public double getMax() {\nreturn searchMax;\n}",
+            "method_id": 14
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.BaseAbstractUnivariateRealSolver:getAbsoluteAccuracy()D",
+            "method_body": "public double getAbsoluteAccuracy() {\nreturn absoluteAccuracy;\n}",
+            "method_id": 15
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.BaseSecantSolver:solve(ILorg/apache/commons/math/analysis/UnivariateRealFunction;DDD)D",
+            "method_body": "public double solve(final int maxEval, final UnivariateRealFunction f,\nfinal double min, final double max, final double startValue) {\nreturn solve(maxEval, f, min, max, startValue, AllowedSolution.ANY_SIDE);\n}",
+            "method_id": 16
+        },
+        {
+            "method_signature": "org.apache.commons.math.exception.MaxCountExceededException:getMax()Ljava/lang/Number;",
+            "method_body": "public Number getMax() {\nreturn max;\n}",
+            "method_id": 17
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.BaseAbstractUnivariateRealSolver:incrementEvaluationCount()V",
+            "method_body": "protected void incrementEvaluationCount() {\ntry {\nevaluations.incrementCount();\n} catch (MaxCountExceededException e) {\nthrow new TooManyEvaluationsException(e.getMax());\n}\n}",
+            "method_id": 18
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.MathUtils:checkNotNull(Ljava/lang/Object;)V",
+            "method_body": "public static void checkNotNull(Object o)\nthrows NullArgumentException {\nif (o == null) {\nthrow new NullArgumentException();\n}\n}",
+            "method_id": 19
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.BaseAbstractUnivariateRealSolver:setup(ILorg/apache/commons/math/analysis/UnivariateRealFunction;DDD)V",
+            "method_body": "protected void setup(int maxEval,\nFUNC f,\ndouble min, double max,\ndouble startValue) {\n// Checks.\nMathUtils.checkNotNull(f);\n\n// Reset.\nsearchMin = min;\nsearchMax = max;\nsearchStart = startValue;\nfunction = f;\nevaluations.setMaximalCount(maxEval);\nevaluations.resetCount();\n}",
+            "method_id": 20
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.BaseAbstractUnivariateRealSolver:getRelativeAccuracy()D",
+            "method_body": "public double getRelativeAccuracy() {\nreturn relativeAccuracy;\n}",
+            "method_id": 21
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.BaseAbstractUnivariateRealSolver:verifyBracketing(DD)V",
+            "method_body": "protected void verifyBracketing(final double lower,\nfinal double upper) {\nUnivariateRealSolverUtils.verifyBracketing(function, lower, upper);\n}",
+            "method_id": 22
+        },
+        {
+            "method_signature": "org.apache.commons.math.exception.MathIllegalStateException:<init>(Lorg/apache/commons/math/exception/util/Localizable;[Ljava/lang/Object;)V",
+            "method_body": "public MathIllegalStateException(Localizable pattern,\nObject ... args) {\ncontext.addMessage(pattern, args);\n}",
+            "method_id": 23
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.BaseSecantSolver:<init>(DLorg/apache/commons/math/analysis/solvers/BaseSecantSolver$Method;)V",
+            "method_body": "protected BaseSecantSolver(final double absoluteAccuracy, final Method method) {\nsuper(absoluteAccuracy);\nthis.allowed = AllowedSolution.ANY_SIDE;\nthis.method = method;\n}",
+            "method_id": 24
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.Incrementor:resetCount()V",
+            "method_body": "public void resetCount() {\ncount = 0;\n}",
+            "method_id": 25
+        },
+        {
+            "method_signature": "org.apache.commons.math.exception.MaxCountExceededException:<init>(Lorg/apache/commons/math/exception/util/Localizable;Ljava/lang/Number;[Ljava/lang/Object;)V",
+            "method_body": "public MaxCountExceededException(Localizable specific,\nNumber max,\nObject ... args) {\ngetContext().addMessage(specific, max, args);\nthis.max = max;\n}",
+            "method_id": 26
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.BaseAbstractUnivariateRealSolver:getFunctionValueAccuracy()D",
+            "method_body": "public double getFunctionValueAccuracy() {\nreturn functionValueAccuracy;\n}",
+            "method_id": 27
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.BaseSecantSolver:solve(ILorg/apache/commons/math/analysis/UnivariateRealFunction;DDDLorg/apache/commons/math/analysis/solvers/AllowedSolution;)D",
+            "method_body": "public double solve(final int maxEval, final UnivariateRealFunction f,\nfinal double min, final double max, final double startValue,\nfinal AllowedSolution allowedSolution) {\nthis.allowed = allowedSolution;\nreturn super.solve(maxEval, f, min, max, startValue);\n}",
+            "method_id": 28
+        },
+        {
+            "method_signature": "org.apache.commons.math.exception.util.ExceptionContext:addMessage(Lorg/apache/commons/math/exception/util/Localizable;[Ljava/lang/Object;)V",
+            "method_body": "public void addMessage(Localizable pattern,\nObject ... arguments) {\nmsgPatterns.add(pattern);\nmsgArguments.add(ArgUtils.flatten(arguments));\n}",
+            "method_id": 29
+        },
+        {
+            "method_signature": "org.apache.commons.math.exception.MaxCountExceededException:<init>(Ljava/lang/Number;)V",
+            "method_body": "public MaxCountExceededException(Number max) {\nthis(LocalizedFormats.MAX_COUNT_EXCEEDED, max);\n}",
+            "method_id": 30
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.BaseAbstractUnivariateRealSolver:getMin()D",
+            "method_body": "public double getMin() {\nreturn searchMin;\n}",
+            "method_id": 31
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.BaseAbstractUnivariateRealSolver:<init>(DDD)V",
+            "method_body": "protected BaseAbstractUnivariateRealSolver(final double relativeAccuracy,\nfinal double absoluteAccuracy,\nfinal double functionValueAccuracy) {\nthis.absoluteAccuracy = absoluteAccuracy;\nthis.relativeAccuracy = relativeAccuracy;\nthis.functionValueAccuracy = functionValueAccuracy;\n}",
+            "method_id": 32
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.BaseAbstractUnivariateRealSolver:<init>(D)V",
+            "method_body": "protected BaseAbstractUnivariateRealSolver(final double absoluteAccuracy) {\nthis(DEFAULT_RELATIVE_ACCURACY,\nabsoluteAccuracy,\nDEFAULT_FUNCTION_VALUE_ACCURACY);\n}",
+            "method_id": 33
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.AbstractUnivariateRealSolver:<init>(D)V",
+            "method_body": "protected AbstractUnivariateRealSolver(final double absoluteAccuracy) {\nsuper(absoluteAccuracy);\n}",
+            "method_id": 34
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.RegulaFalsiSolver:<init>()V",
+            "method_body": "public RegulaFalsiSolver() {\nsuper(DEFAULT_ABSOLUTE_ACCURACY, Method.REGULA_FALSI);\n}",
+            "method_id": 35
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.solvers.BaseSecantSolver:doSolve()D",
+            "method_body": "protected final double doSolve() {\n// Get initial solution\ndouble x0 = getMin();\ndouble x1 = getMax();\ndouble f0 = computeObjectiveValue(x0);\ndouble f1 = computeObjectiveValue(x1);\n\n// If one of the bounds is the exact root, return it. Since these are\n// not under-approximations or over-approximations, we can return them\n// regardless of the allowed solutions.\nif (f0 == 0.0) {\nreturn x0;\n}\nif (f1 == 0.0) {\nreturn x1;\n}\n\n// Verify bracketing of initial solution.\nverifyBracketing(x0, x1);\n\n// Get accuracies.\nfinal double ftol = getFunctionValueAccuracy();\nfinal double atol = getAbsoluteAccuracy();\nfinal double rtol = getRelativeAccuracy();\n\n// Keep track of inverted intervals, meaning that the left bound is\n// larger than the right bound.\nboolean inverted = false;\n\n// Keep finding better approximations.\nwhile (true) {\n// Calculate the next approximation.\nfinal double x = x1 - ((f1 * (x1 - x0)) / (f1 - f0));\nfinal double fx = computeObjectiveValue(x);\n\n// If the new approximation is the exact root, return it. Since\n// this is not an under-approximation or an over-approximation,\n// we can return it regardless of the allowed solutions.\nif (fx == 0.0) {\nreturn x;\n}\n\n// Update the bounds with the new approximation.\nif (f1 * fx < 0) {\n// The value of x1 has switched to the other bound, thus inverting\n// the interval.\nx0 = x1;\nf0 = f1;\ninverted = !inverted;\n} else {\nswitch (method) {\ncase ILLINOIS:\nf0 *= 0.5;\nbreak;\ncase PEGASUS:\nf0 *= f1 / (f1 + fx);\nbreak;\n// Update formula cannot make any progress: Update the\n// search interval.\ndefault:\n// Should never happen.\n}\n}\n// Update from [x0, x1] to [x0, x].\nx1 = x;\nf1 = fx;\n\n// If the function value of the last approximation is too small,\n// given the function value accuracy, then we can't get closer to\n// the root than we already are.\nif (FastMath.abs(f1) <= ftol) {\nswitch (allowed) {\ncase ANY_SIDE:\nreturn x1;\ncase LEFT_SIDE:\nif (inverted) {\nreturn x1;\n}\nbreak;\ncase RIGHT_SIDE:\nif (!inverted) {\nreturn x1;\n}\nbreak;\ncase BELOW_SIDE:\nif (f1 <= 0) {\nreturn x1;\n}\nbreak;\ncase ABOVE_SIDE:\nif (f1 >= 0) {\nreturn x1;\n}\nbreak;\ndefault:\nthrow new MathInternalError();\n}\n}\n\n// If the current interval is within the given accuracies, we\n// are satisfied with the current approximation.\nif (FastMath.abs(x1 - x0) < FastMath.max(rtol * FastMath.abs(x1),\natol)) {\nswitch (allowed) {\ncase ANY_SIDE:\nreturn x1;\ncase LEFT_SIDE:\nreturn inverted ? x1 : x0;\ncase RIGHT_SIDE:\nreturn inverted ? x0 : x1;\ncase BELOW_SIDE:\nreturn (f1 <= 0) ? x1 : x0;\ncase ABOVE_SIDE:\nreturn (f1 >= 0) ? x1 : x0;\ndefault:\nthrow new MathInternalError();\n}\n}\n}\n}",
+            "method_id": 36
+        }
+    ]
+}

@@ -1,0 +1,75 @@
+{
+    "bug_id": 15,
+    "test_id": 0,
+    "test_name": "com.google.gson.stream.JsonWriterTest.testNonFiniteDoublesWhenLenient",
+    "test_body": "public void testNonFiniteDoublesWhenLenient() throws IOException {\nStringWriter stringWriter = new StringWriter();\nJsonWriter jsonWriter = new JsonWriter(stringWriter);\njsonWriter.setLenient(true);\njsonWriter.beginArray();\njsonWriter.value(Double.NaN);\njsonWriter.value(Double.NEGATIVE_INFINITY);\njsonWriter.value(Double.POSITIVE_INFINITY);\njsonWriter.endArray();\nassertEquals(\"[NaN,-Infinity,Infinity]\", stringWriter.toString());\n}\n",
+    "stack_trace": "java.lang.IllegalArgumentException: Numeric values must be finite, but was NaN\nat com.google.gson.stream.JsonWriter.value(JsonWriter.java:496)\nat com.google.gson.stream.JsonWriterTest.testNonFiniteDoublesWhenLenient(JsonWriterTest.java:222)",
+    "covered_methods": [
+        {
+            "method_signature": "com.google.gson.stream.JsonWriter:beforeValue()V",
+            "method_body": "private void beforeValue() throws IOException {\nswitch (peek()) {\ncase NONEMPTY_DOCUMENT:\nif (!lenient) {\nthrow new IllegalStateException(\n\"JSON must have only one top-level value.\");\n}\n// fall-through\ncase EMPTY_DOCUMENT: // first in document\nreplaceTop(NONEMPTY_DOCUMENT);\nbreak;\n\ncase EMPTY_ARRAY: // first in array\nreplaceTop(NONEMPTY_ARRAY);\nnewline();\nbreak;\n\ncase NONEMPTY_ARRAY: // another in array\nout.append(',');\nnewline();\nbreak;\n\ncase DANGLING_NAME: // value for name\nout.append(separator);\nreplaceTop(NONEMPTY_OBJECT);\nbreak;\n\ndefault:\nthrow new IllegalStateException(\"Nesting problem.\");\n}\n}",
+            "method_id": 0,
+            "loc": 31
+        },
+        {
+            "method_signature": "com.google.gson.stream.JsonWriter:<clinit>()V",
+            "method_body": "private static final String[] REPLACEMENT_CHARS;\nprivate static final String[] HTML_SAFE_REPLACEMENT_CHARS;\nstatic {\nREPLACEMENT_CHARS = new String[128];\nfor (int i = 0; i <= 0x1f; i++) {\nREPLACEMENT_CHARS[i] = String.format(\"\\\\u%04x\", (int) i);\n}\nREPLACEMENT_CHARS['\"'] = \"\\\\\\\"\";\nREPLACEMENT_CHARS['\\\\'] = \"\\\\\\\\\";\nREPLACEMENT_CHARS['\\t'] = \"\\\\t\";\nREPLACEMENT_CHARS['\\b'] = \"\\\\b\";\nREPLACEMENT_CHARS['\\n'] = \"\\\\n\";\nREPLACEMENT_CHARS['\\r'] = \"\\\\r\";\nREPLACEMENT_CHARS['\\f'] = \"\\\\f\";\nHTML_SAFE_REPLACEMENT_CHARS = REPLACEMENT_CHARS.clone();\nHTML_SAFE_REPLACEMENT_CHARS['<'] = \"\\\\u003c\";\nHTML_SAFE_REPLACEMENT_CHARS['>'] = \"\\\\u003e\";\nHTML_SAFE_REPLACEMENT_CHARS['&'] = \"\\\\u0026\";\nHTML_SAFE_REPLACEMENT_CHARS['='] = \"\\\\u003d\";\nHTML_SAFE_REPLACEMENT_CHARS['\\''] = \"\\\\u0027\";\n}",
+            "method_id": 1,
+            "loc": 21
+        },
+        {
+            "method_signature": "com.google.gson.stream.JsonWriter:value(D)Lcom/google/gson/stream/JsonWriter;",
+            "method_body": "public JsonWriter value(double value) throws IOException {\nwriteDeferredName();\nif (Double.isNaN(value) || Double.isInfinite(value)) {\nthrow new IllegalArgumentException(\"Numeric values must be finite, but was \" + value);\n}\nbeforeValue();\nout.append(Double.toString(value));\nreturn this;\n}",
+            "method_id": 2,
+            "loc": 9
+        },
+        {
+            "method_signature": "com.google.gson.stream.JsonWriter:push(I)V",
+            "method_body": "private void push(int newTop) {\nif (stackSize == stack.length) {\nint[] newStack = new int[stackSize * 2];\nSystem.arraycopy(stack, 0, newStack, 0, stackSize);\nstack = newStack;\n}\nstack[stackSize++] = newTop;\n}",
+            "method_id": 3,
+            "loc": 8
+        },
+        {
+            "method_signature": "com.google.gson.stream.JsonWriter:writeDeferredName()V",
+            "method_body": "private void writeDeferredName() throws IOException {\nif (deferredName != null) {\nbeforeName();\nstring(deferredName);\ndeferredName = null;\n}\n}",
+            "method_id": 4,
+            "loc": 7
+        },
+        {
+            "method_signature": "com.google.gson.stream.JsonWriter:peek()I",
+            "method_body": "private int peek() {\nif (stackSize == 0) {\nthrow new IllegalStateException(\"JsonWriter is closed.\");\n}\nreturn stack[stackSize - 1];\n}",
+            "method_id": 5,
+            "loc": 6
+        },
+        {
+            "method_signature": "com.google.gson.stream.JsonWriter:open(ILjava/lang/String;)Lcom/google/gson/stream/JsonWriter;",
+            "method_body": "private JsonWriter open(int empty, String openBracket) throws IOException {\nbeforeValue();\npush(empty);\nout.write(openBracket);\nreturn this;\n}",
+            "method_id": 6,
+            "loc": 6
+        },
+        {
+            "method_signature": "com.google.gson.stream.JsonWriter:<init>(Ljava/io/Writer;)V",
+            "method_body": "public JsonWriter(Writer out) {\nif (out == null) {\nthrow new NullPointerException(\"out == null\");\n}\nthis.out = out;\n}",
+            "method_id": 7,
+            "loc": 6
+        },
+        {
+            "method_signature": "com.google.gson.stream.JsonWriter:beginArray()Lcom/google/gson/stream/JsonWriter;",
+            "method_body": "public JsonWriter beginArray() throws IOException {\nwriteDeferredName();\nreturn open(EMPTY_ARRAY, \"[\");\n}",
+            "method_id": 8,
+            "loc": 4
+        },
+        {
+            "method_signature": "com.google.gson.stream.JsonWriter:setLenient(Z)V",
+            "method_body": "public final void setLenient(boolean lenient) {\nthis.lenient = lenient;\n}",
+            "method_id": 9,
+            "loc": 3
+        },
+        {
+            "method_signature": "com.google.gson.stream.JsonWriter:replaceTop(I)V",
+            "method_body": "private void replaceTop(int topOfStack) {\nstack[stackSize - 1] = topOfStack;\n}",
+            "method_id": 10,
+            "loc": 3
+        }
+    ]
+}

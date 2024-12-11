@@ -1,0 +1,64 @@
+{
+    "bug_id": 63,
+    "test_id": 0,
+    "test_name": "org.apache.commons.lang.time.DurationFormatUtilsTest.testJiraLang281",
+    "test_body": "public void testJiraLang281() {\nCalendar cal = Calendar.getInstance();\ncal.set(Calendar.MONTH, Calendar.DECEMBER);\ncal.set(Calendar.DAY_OF_MONTH, 31);\ncal.set(Calendar.YEAR, 2005);\ncal.set(Calendar.HOUR_OF_DAY, 0);\ncal.set(Calendar.MINUTE, 0);\ncal.set(Calendar.SECOND, 0);\ncal.set(Calendar.MILLISECOND, 0);\nCalendar cal2 = Calendar.getInstance();\ncal2.set(Calendar.MONTH, Calendar.OCTOBER);\ncal2.set(Calendar.DAY_OF_MONTH, 6);\ncal2.set(Calendar.YEAR, 2006);\ncal2.set(Calendar.HOUR_OF_DAY, 0);\ncal2.set(Calendar.MINUTE, 0);\ncal2.set(Calendar.SECOND, 0);\ncal2.set(Calendar.MILLISECOND, 0);\nString result = DurationFormatUtils.formatPeriod(cal.getTime().getTime(), cal2.getTime().getTime(), \"MM\");\nassertEquals(\"09\", result);\n}\n",
+    "stack_trace": "junit.framework.ComparisonFailure: expected:<[09]> but was:<[-2]>\nat junit.framework.Assert.assertEquals(Assert.java:100)\nat junit.framework.Assert.assertEquals(Assert.java:107)\nat junit.framework.TestCase.assertEquals(TestCase.java:269)\nat org.apache.commons.lang.time.DurationFormatUtilsTest.testJiraLang281(DurationFormatUtilsTest.java:436)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.lang.time.DurationFormatUtils:format([Lorg/apache/commons/lang/time/DurationFormatUtils$Token;IIIIIIIZ)Ljava/lang/String;",
+            "method_body": "static String format(Token[] tokens, int years, int months, int days, int hours, int minutes, int seconds,\nint milliseconds, boolean padWithZeros) {\nStringBuffer buffer = new StringBuffer();\nboolean lastOutputSeconds = false;\nint sz = tokens.length;\nfor (int i = 0; i < sz; i++) {\nToken token = tokens[i];\nObject value = token.getValue();\nint count = token.getCount();\nif (value instanceof StringBuffer) {\nbuffer.append(value.toString());\n} else {\nif (value == y) {\nbuffer.append(padWithZeros ? StringUtils.leftPad(Integer.toString(years), count, '0') : Integer\n.toString(years));\nlastOutputSeconds = false;\n} else if (value == M) {\nbuffer.append(padWithZeros ? StringUtils.leftPad(Integer.toString(months), count, '0') : Integer\n.toString(months));\nlastOutputSeconds = false;\n} else if (value == d) {\nbuffer.append(padWithZeros ? StringUtils.leftPad(Integer.toString(days), count, '0') : Integer\n.toString(days));\nlastOutputSeconds = false;\n} else if (value == H) {\nbuffer.append(padWithZeros ? StringUtils.leftPad(Integer.toString(hours), count, '0') : Integer\n.toString(hours));\nlastOutputSeconds = false;\n} else if (value == m) {\nbuffer.append(padWithZeros ? StringUtils.leftPad(Integer.toString(minutes), count, '0') : Integer\n.toString(minutes));\nlastOutputSeconds = false;\n} else if (value == s) {\nbuffer.append(padWithZeros ? StringUtils.leftPad(Integer.toString(seconds), count, '0') : Integer\n.toString(seconds));\nlastOutputSeconds = true;\n} else if (value == S) {\nif (lastOutputSeconds) {\nmilliseconds += 1000;\nString str = padWithZeros\n? StringUtils.leftPad(Integer.toString(milliseconds), count, '0')\n: Integer.toString(milliseconds);\nbuffer.append(str.substring(1));\n} else {\nbuffer.append(padWithZeros\n? StringUtils.leftPad(Integer.toString(milliseconds), count, '0')\n: Integer.toString(milliseconds));\n}\nlastOutputSeconds = false;\n}\n}\n}\nreturn buffer.toString();\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.DurationFormatUtils:lexx(Ljava/lang/String;)[Lorg/apache/commons/lang/time/DurationFormatUtils$Token;",
+            "method_body": "static Token[] lexx(String format) {\nchar[] array = format.toCharArray();\njava.util.ArrayList list = new java.util.ArrayList(array.length);\n\nboolean inLiteral = false;\nStringBuffer buffer = null;\nToken previous = null;\nint sz = array.length;\nfor(int i=0; i<sz; i++) {\nchar ch = array[i];\nif(inLiteral && ch != '\\'') {\nbuffer.append(ch);\ncontinue;\n}\nObject value = null;\nswitch(ch) {\n// TODO: Need to handle escaping of '\ncase '\\'' :\nif(inLiteral) {\nbuffer = null;\ninLiteral = false;\n} else {\nbuffer = new StringBuffer();\nlist.add(new Token(buffer));\ninLiteral = true;\n}\nbreak;\ncase 'y'  : value = y; break;\ncase 'M'  : value = M; break;\ncase 'd'  : value = d; break;\ncase 'H'  : value = H; break;\ncase 'm'  : value = m; break;\ncase 's'  : value = s; break;\ncase 'S'  : value = S; break;\ndefault   :\nif(buffer == null) {\nbuffer = new StringBuffer();\nlist.add(new Token(buffer));\n}\nbuffer.append(ch);\n}\n\nif(value != null) {\nif(previous != null && previous.getValue() == value) {\nprevious.increment();\n} else {\nToken token = new Token(value);\nlist.add(token);\nprevious = token;\n}\nbuffer = null;\n}\n}\nreturn (Token[]) list.toArray( new Token[0] );\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.DurationFormatUtils:reduceAndCorrect(Ljava/util/Calendar;Ljava/util/Calendar;II)I",
+            "method_body": "static int reduceAndCorrect(Calendar start, Calendar end, int field, int difference) {\nend.add( field, -1 * difference );\nint endValue = end.get(field);\nint startValue = start.get(field);\nif (endValue < startValue) {\nint newdiff = startValue - endValue;\nend.add( field, newdiff );\nreturn newdiff;\n} else {\nreturn 0;\n}\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.DurationFormatUtils$Token:getCount()I",
+            "method_body": "int getCount() {\nreturn count;\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.lang.StringUtils:leftPad(Ljava/lang/String;IC)Ljava/lang/String;",
+            "method_body": "public static String leftPad(String str, int size, char padChar) {\nif (str == null) {\nreturn null;\n}\nint pads = size - str.length();\nif (pads <= 0) {\nreturn str; // returns original String when possible\n}\nif (pads > PAD_LIMIT) {\nreturn leftPad(str, size, String.valueOf(padChar));\n}\nreturn padding(pads, padChar).concat(str);\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.DurationFormatUtils$Token:getValue()Ljava/lang/Object;",
+            "method_body": "Object getValue() {\nreturn value;\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.DurationFormatUtils$Token:increment()V",
+            "method_body": "void increment() {\ncount++;\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.DurationFormatUtils$Token:<init>(Ljava/lang/Object;)V",
+            "method_body": "Token(Object value) {\nthis.value = value;\nthis.count = 1;\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.DurationFormatUtils:formatPeriod(JJLjava/lang/String;)Ljava/lang/String;",
+            "method_body": "public static String formatPeriod(long startMillis, long endMillis, String format) {\nreturn formatPeriod(startMillis, endMillis, format, true, TimeZone.getDefault());\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.DurationFormatUtils:formatPeriod(JJLjava/lang/String;ZLjava/util/TimeZone;)Ljava/lang/String;",
+            "method_body": "public static String formatPeriod(long startMillis, long endMillis, String format, boolean padWithZeros,\nTimeZone timezone) {\n\nlong millis = endMillis - startMillis;\nif (millis < 28 * DateUtils.MILLIS_PER_DAY) {\nreturn formatDuration(millis, format, padWithZeros);\n}\n\nToken[] tokens = lexx(format);\n\n// timezones get funky around 0, so normalizing everything to GMT\n// stops the hours being off\nCalendar start = Calendar.getInstance(timezone);\nstart.setTime(new Date(startMillis));\nCalendar end = Calendar.getInstance(timezone);\nend.setTime(new Date(endMillis));\n\n// initial estimates\nint milliseconds = end.get(Calendar.MILLISECOND) - start.get(Calendar.MILLISECOND);\nint seconds = end.get(Calendar.SECOND) - start.get(Calendar.SECOND);\nint minutes = end.get(Calendar.MINUTE) - start.get(Calendar.MINUTE);\nint hours = end.get(Calendar.HOUR_OF_DAY) - start.get(Calendar.HOUR_OF_DAY);\nint days = end.get(Calendar.DAY_OF_MONTH) - start.get(Calendar.DAY_OF_MONTH);\nint months = end.get(Calendar.MONTH) - start.get(Calendar.MONTH);\nint years = end.get(Calendar.YEAR) - start.get(Calendar.YEAR);\n\n// each initial estimate is adjusted in case it is under 0\nwhile (milliseconds < 0) {\nmilliseconds += 1000;\nseconds -= 1;\n}\nwhile (seconds < 0) {\nseconds += 60;\nminutes -= 1;\n}\nwhile (minutes < 0) {\nminutes += 60;\nhours -= 1;\n}\nwhile (hours < 0) {\nhours += 24;\ndays -= 1;\n}\nwhile (days < 0) {\ndays += 31;\n//days += 31; // TODO: Need tests to show this is bad and the new code is good.\n// HEN: It's a tricky subject. Jan 15th to March 10th. If I count days-first it is\n// 1 month and 26 days, but if I count month-first then it is 1 month and 23 days.\n// Also it's contextual - if asked for no M in the format then I should probably\n// be doing no calculating here.\nmonths -= 1;\n}\nwhile (months < 0) {\nmonths += 12;\nyears -= 1;\n}\nmilliseconds -= reduceAndCorrect(start, end, Calendar.MILLISECOND, milliseconds);\nseconds -= reduceAndCorrect(start, end, Calendar.SECOND, seconds);\nminutes -= reduceAndCorrect(start, end, Calendar.MINUTE, minutes);\nhours -= reduceAndCorrect(start, end, Calendar.HOUR_OF_DAY, hours);\ndays -= reduceAndCorrect(start, end, Calendar.DAY_OF_MONTH, days);\nmonths -= reduceAndCorrect(start, end, Calendar.MONTH, months);\nyears -= reduceAndCorrect(start, end, Calendar.YEAR, years);\n\n// This next block of code adds in values that\n// aren't requested. This allows the user to ask for the\n// number of months and get the real count and not just 0->11.\nif (!Token.containsTokenWithValue(tokens, y)) {\nif (Token.containsTokenWithValue(tokens, M)) {\nmonths += 12 * years;\nyears = 0;\n} else {\n// TODO: this is a bit weak, needs work to know about leap years\ndays += 365 * years;\nyears = 0;\n}\n}\nif (!Token.containsTokenWithValue(tokens, M)) {\ndays += end.get(Calendar.DAY_OF_YEAR) - start.get(Calendar.DAY_OF_YEAR);\nmonths = 0;\n}\nif (!Token.containsTokenWithValue(tokens, d)) {\nhours += 24 * days;\ndays = 0;\n}\nif (!Token.containsTokenWithValue(tokens, H)) {\nminutes += 60 * hours;\nhours = 0;\n}\nif (!Token.containsTokenWithValue(tokens, m)) {\nseconds += 60 * minutes;\nminutes = 0;\n}\nif (!Token.containsTokenWithValue(tokens, s)) {\nmilliseconds += 1000 * seconds;\nseconds = 0;\n}\n\nreturn format(tokens, years, months, days, hours, minutes, seconds, milliseconds, padWithZeros);\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.DurationFormatUtils$Token:containsTokenWithValue([Lorg/apache/commons/lang/time/DurationFormatUtils$Token;Ljava/lang/Object;)Z",
+            "method_body": "static boolean containsTokenWithValue(Token[] tokens, Object value) {\nint sz = tokens.length;\nfor (int i = 0; i < sz; i++) {\nif (tokens[i].getValue() == value) {\nreturn true;\n}\n}\nreturn false;\n}",
+            "method_id": 10
+        }
+    ]
+}

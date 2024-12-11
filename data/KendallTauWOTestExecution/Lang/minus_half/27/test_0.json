@@ -1,0 +1,69 @@
+{
+    "bug_id": 27,
+    "test_id": 0,
+    "test_name": "org.apache.commons.lang3.math.NumberUtilsTest.testCreateNumber",
+    "test_body": "public void testCreateNumber() {\n// a lot of things can go wrong\nassertEquals(\"createNumber(String) 1 failed\", new Float(\"1234.5\"), NumberUtils.createNumber(\"1234.5\"));\nassertEquals(\"createNumber(String) 2 failed\", new Integer(\"12345\"), NumberUtils.createNumber(\"12345\"));\nassertEquals(\"createNumber(String) 3 failed\", new Double(\"1234.5\"), NumberUtils.createNumber(\"1234.5D\"));\nassertEquals(\"createNumber(String) 3 failed\", new Double(\"1234.5\"), NumberUtils.createNumber(\"1234.5d\"));\nassertEquals(\"createNumber(String) 4 failed\", new Float(\"1234.5\"), NumberUtils.createNumber(\"1234.5F\"));\nassertEquals(\"createNumber(String) 4 failed\", new Float(\"1234.5\"), NumberUtils.createNumber(\"1234.5f\"));\nassertEquals(\"createNumber(String) 5 failed\", new Long(Integer.MAX_VALUE + 1L), NumberUtils.createNumber(\"\"\n+ (Integer.MAX_VALUE + 1L)));\nassertEquals(\"createNumber(String) 6 failed\", new Long(12345), NumberUtils.createNumber(\"12345L\"));\nassertEquals(\"createNumber(String) 6 failed\", new Long(12345), NumberUtils.createNumber(\"12345l\"));\nassertEquals(\"createNumber(String) 7 failed\", new Float(\"-1234.5\"), NumberUtils.createNumber(\"-1234.5\"));\nassertEquals(\"createNumber(String) 8 failed\", new Integer(\"-12345\"), NumberUtils.createNumber(\"-12345\"));\nassertTrue(\"createNumber(String) 9 failed\", 0xFADE == NumberUtils.createNumber(\"0xFADE\").intValue());\nassertTrue(\"createNumber(String) 10 failed\", -0xFADE == NumberUtils.createNumber(\"-0xFADE\").intValue());\nassertEquals(\"createNumber(String) 11 failed\", new Double(\"1.1E200\"), NumberUtils.createNumber(\"1.1E200\"));\nassertEquals(\"createNumber(String) 12 failed\", new Float(\"1.1E20\"), NumberUtils.createNumber(\"1.1E20\"));\nassertEquals(\"createNumber(String) 13 failed\", new Double(\"-1.1E200\"), NumberUtils.createNumber(\"-1.1E200\"));\nassertEquals(\"createNumber(String) 14 failed\", new Double(\"1.1E-200\"), NumberUtils.createNumber(\"1.1E-200\"));\nassertEquals(\"createNumber(null) failed\", null, NumberUtils.createNumber(null));\nassertEquals(\"createNumber(String) failed\", new BigInteger(\"12345678901234567890\"), NumberUtils\n.createNumber(\"12345678901234567890L\"));\n// jdk 1.2 doesn't support this. unsure about jdk 1.2.2\nif (SystemUtils.isJavaVersionAtLeast(1.3f)) {\nassertEquals(\"createNumber(String) 15 failed\", new BigDecimal(\"1.1E-700\"), NumberUtils\n.createNumber(\"1.1E-700F\"));\n}\nassertEquals(\"createNumber(String) 16 failed\", new Long(\"10\" + Integer.MAX_VALUE), NumberUtils\n.createNumber(\"10\" + Integer.MAX_VALUE + \"L\"));\nassertEquals(\"createNumber(String) 17 failed\", new Long(\"10\" + Integer.MAX_VALUE), NumberUtils\n.createNumber(\"10\" + Integer.MAX_VALUE));\nassertEquals(\"createNumber(String) 18 failed\", new BigInteger(\"10\" + Long.MAX_VALUE), NumberUtils\n.createNumber(\"10\" + Long.MAX_VALUE));\n// LANG-521\nassertEquals(\"createNumber(String) LANG-521 failed\", new Float(\"2.\"), NumberUtils.createNumber(\"2.\"));\n// LANG-638\nassertFalse(\"createNumber(String) succeeded\", checkCreateNumber(\"1eE\"));\n}\n",
+    "stack_trace": "java.lang.StringIndexOutOfBoundsException: String index out of range: 4\nat java.lang.String.substring(String.java:1963)\nat org.apache.commons.lang3.math.NumberUtils.createNumber(NumberUtils.java:489)\nat org.apache.commons.lang3.math.NumberUtilsTest.checkCreateNumber(NumberUtilsTest.java:1146)\nat org.apache.commons.lang3.math.NumberUtilsTest.testCreateNumber(NumberUtilsTest.java:216)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.lang3.math.NumberUtils:createInteger(Ljava/lang/String;)Ljava/lang/Integer;",
+            "method_body": "public static Integer createInteger(String str) {\nif (str == null) {\nreturn null;\n}\n// decode() handles 0xAABD and 0777 (hex and octal) as well.\nreturn Integer.decode(str);\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.math.NumberUtils:isAllZeros(Ljava/lang/String;)Z",
+            "method_body": "private static boolean isAllZeros(String str) {\nif (str == null) {\nreturn true;\n}\nfor (int i = str.length() - 1; i >= 0; i--) {\nif (str.charAt(i) != '0') {\nreturn false;\n}\n}\nreturn str.length() > 0;\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.StringUtils:isBlank(Ljava/lang/CharSequence;)Z",
+            "method_body": "public static boolean isBlank(CharSequence cs) {\nint strLen;\nif (cs == null || (strLen = cs.length()) == 0) {\nreturn true;\n}\nfor (int i = 0; i < strLen; i++) {\nif ((Character.isWhitespace(cs.charAt(i)) == false)) {\nreturn false;\n}\n}\nreturn true;\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.math.NumberUtils:createFloat(Ljava/lang/String;)Ljava/lang/Float;",
+            "method_body": "public static Float createFloat(String str) {\nif (str == null) {\nreturn null;\n}\nreturn Float.valueOf(str);\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.math.NumberUtils:createBigDecimal(Ljava/lang/String;)Ljava/math/BigDecimal;",
+            "method_body": "public static BigDecimal createBigDecimal(String str) {\nif (str == null) {\nreturn null;\n}\n// handle JDK1.3.1 bug where \"\" throws IndexOutOfBoundsException\nif (StringUtils.isBlank(str)) {\nthrow new NumberFormatException(\"A blank string is not a valid number\");\n}\nreturn new BigDecimal(str);\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.math.NumberUtils:createNumber(Ljava/lang/String;)Ljava/lang/Number;",
+            "method_body": "public static Number createNumber(String str) throws NumberFormatException {\nif (str == null) {\nreturn null;\n}\nif (StringUtils.isBlank(str)) {\nthrow new NumberFormatException(\"A blank string is not a valid number\");\n}\nif (str.startsWith(\"--\")) {\n// this is protection for poorness in java.lang.BigDecimal.\n// it accepts this as a legal value, but it does not appear\n// to be in specification of class. OS X Java parses it to\n// a wrong value.\nreturn null;\n}\nif (str.startsWith(\"0x\") || str.startsWith(\"-0x\")) {\nreturn createInteger(str);\n}\nchar lastChar = str.charAt(str.length() - 1);\nString mant;\nString dec;\nString exp;\nint decPos = str.indexOf('.');\nint expPos = str.indexOf('e') + str.indexOf('E') + 1;\n\nif (decPos > -1) {\n\nif (expPos > -1) {\nif (expPos < decPos) {\nthrow new NumberFormatException(str + \" is not a valid number.\");\n}\ndec = str.substring(decPos + 1, expPos);\n} else {\ndec = str.substring(decPos + 1);\n}\nmant = str.substring(0, decPos);\n} else {\nif (expPos > -1) {\nmant = str.substring(0, expPos);\n} else {\nmant = str;\n}\ndec = null;\n}\nif (!Character.isDigit(lastChar) && lastChar != '.') {\nif (expPos > -1 && expPos < str.length() - 1) {\nexp = str.substring(expPos + 1, str.length() - 1);\n} else {\nexp = null;\n}\n//Requesting a specific type..\nString numeric = str.substring(0, str.length() - 1);\nboolean allZeros = isAllZeros(mant) && isAllZeros(exp);\nswitch (lastChar) {\ncase 'l' :\ncase 'L' :\nif (dec == null\n&& exp == null\n&& (numeric.charAt(0) == '-' && isDigits(numeric.substring(1)) || isDigits(numeric))) {\ntry {\nreturn createLong(numeric);\n} catch (NumberFormatException nfe) {\n//Too big for a long\n}\nreturn createBigInteger(numeric);\n\n}\nthrow new NumberFormatException(str + \" is not a valid number.\");\ncase 'f' :\ncase 'F' :\ntry {\nFloat f = NumberUtils.createFloat(numeric);\nif (!(f.isInfinite() || (f.floatValue() == 0.0F && !allZeros))) {\n//If it's too big for a float or the float value = 0 and the string\n//has non-zeros in it, then float does not have the precision we want\nreturn f;\n}\n\n} catch (NumberFormatException nfe) {\n// ignore the bad number\n}\n//$FALL-THROUGH$\ncase 'd' :\ncase 'D' :\ntry {\nDouble d = NumberUtils.createDouble(numeric);\nif (!(d.isInfinite() || (d.floatValue() == 0.0D && !allZeros))) {\nreturn d;\n}\n} catch (NumberFormatException nfe) {\n// ignore the bad number\n}\ntry {\nreturn createBigDecimal(numeric);\n} catch (NumberFormatException e) {\n// ignore the bad number\n}\n//$FALL-THROUGH$\ndefault :\nthrow new NumberFormatException(str + \" is not a valid number.\");\n\n}\n} else {\n//User doesn't have a preference on the return type, so let's start\n//small and go from there...\nif (expPos > -1 && expPos < str.length() - 1) {\nexp = str.substring(expPos + 1, str.length());\n} else {\nexp = null;\n}\nif (dec == null && exp == null) {\n//Must be an int,long,bigint\ntry {\nreturn createInteger(str);\n} catch (NumberFormatException nfe) {\n// ignore the bad number\n}\ntry {\nreturn createLong(str);\n} catch (NumberFormatException nfe) {\n// ignore the bad number\n}\nreturn createBigInteger(str);\n\n} else {\n//Must be a float,double,BigDec\nboolean allZeros = isAllZeros(mant) && isAllZeros(exp);\ntry {\nFloat f = createFloat(str);\nif (!(f.isInfinite() || (f.floatValue() == 0.0F && !allZeros))) {\nreturn f;\n}\n} catch (NumberFormatException nfe) {\n// ignore the bad number\n}\ntry {\nDouble d = createDouble(str);\nif (!(d.isInfinite() || (d.doubleValue() == 0.0D && !allZeros))) {\nreturn d;\n}\n} catch (NumberFormatException nfe) {\n// ignore the bad number\n}\n\nreturn createBigDecimal(str);\n\n}\n}\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.math.NumberUtils:createLong(Ljava/lang/String;)Ljava/lang/Long;",
+            "method_body": "public static Long createLong(String str) {\nif (str == null) {\nreturn null;\n}\nreturn Long.valueOf(str);\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.StringUtils:isEmpty(Ljava/lang/CharSequence;)Z",
+            "method_body": "public static boolean isEmpty(CharSequence cs) {\nreturn cs == null || cs.length() == 0;\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.math.NumberUtils:createBigInteger(Ljava/lang/String;)Ljava/math/BigInteger;",
+            "method_body": "public static BigInteger createBigInteger(String str) {\nif (str == null) {\nreturn null;\n}\nreturn new BigInteger(str);\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.math.NumberUtils:createDouble(Ljava/lang/String;)Ljava/lang/Double;",
+            "method_body": "public static Double createDouble(String str) {\nif (str == null) {\nreturn null;\n}\nreturn Double.valueOf(str);\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.math.NumberUtils:isDigits(Ljava/lang/String;)Z",
+            "method_body": "public static boolean isDigits(String str) {\nif (StringUtils.isEmpty(str)) {\nreturn false;\n}\nfor (int i = 0; i < str.length(); i++) {\nif (!Character.isDigit(str.charAt(i))) {\nreturn false;\n}\n}\nreturn true;\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.SystemUtils:isJavaVersionAtLeast(F)Z",
+            "method_body": "public static boolean isJavaVersionAtLeast(float requiredVersion) {\nreturn JAVA_VERSION_FLOAT >= requiredVersion;\n}",
+            "method_id": 11
+        }
+    ]
+}

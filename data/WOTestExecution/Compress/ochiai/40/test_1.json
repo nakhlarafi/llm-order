@@ -1,0 +1,24 @@
+{
+    "bug_id": 40,
+    "test_id": 1,
+    "test_name": "org.apache.commons.compress.utils.BitInputStreamTest.littleEndianWithOverflow",
+    "test_body": "public void littleEndianWithOverflow() throws Exception {\nByteArrayInputStream in = new ByteArrayInputStream(new byte[] {\n87, // 01010111\n45, // 00101101\n66, // 01000010\n15, // 00001111\n90, // 01011010\n29, // 00011101\n88, // 01011000\n61, // 00111101\n33, // 00100001\n74  // 01001010\n});\nBitInputStream bin = new BitInputStream(in, ByteOrder.LITTLE_ENDIAN);\nassertEquals(23, // 10111\nbin.readBits(5));\nassertEquals(714595605644185962l, // 0001-00111101-01011000-00011101-01011010-00001111-01000010-00101101-010\nbin.readBits(63));\nassertEquals(1186, // 01001010-0010\nbin.readBits(12));\nassertEquals(-1 , bin.readBits(1));\n}\n",
+    "stack_trace": "junit.framework.AssertionFailedError: expected:<1186> but was:<1184>\nat org.junit.Assert.fail(Assert.java:88)\nat org.junit.Assert.failNotEquals(Assert.java:743)\nat org.junit.Assert.assertEquals(Assert.java:118)\nat org.junit.Assert.assertEquals(Assert.java:555)\nat org.junit.Assert.assertEquals(Assert.java:542)\nat org.apache.commons.compress.utils.BitInputStreamTest.littleEndianWithOverflow(BitInputStreamTest.java:143)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.compress.utils.BitInputStream:<init>(Ljava/io/InputStream;Ljava/nio/ByteOrder;)V",
+            "method_body": "public BitInputStream(final InputStream in, final ByteOrder byteOrder) {\nthis.in = in;\nthis.byteOrder = byteOrder;\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.compress.utils.BitInputStream:<clinit>()V",
+            "method_body": "private static final int MAXIMUM_CACHE_SIZE = 63; // bits in long minus sign bit\nprivate static final long[] MASKS = new long[MAXIMUM_CACHE_SIZE + 1];\n\nstatic {\nfor (int i = 1; i <= MAXIMUM_CACHE_SIZE; i++) {\nMASKS[i] = (MASKS[i - 1] << 1) + 1;\n}\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.compress.utils.BitInputStream:readBits(I)J",
+            "method_body": "public long readBits(final int count) throws IOException {\nif (count < 0 || count > MAXIMUM_CACHE_SIZE) {\nthrow new IllegalArgumentException(\"count must not be negative or greater than \" + MAXIMUM_CACHE_SIZE);\n}\nwhile (bitsCachedSize < count) {\nfinal long nextByte = in.read();\nif (nextByte < 0) {\nreturn nextByte;\n}\nif (byteOrder == ByteOrder.LITTLE_ENDIAN) {\nbitsCached |= (nextByte << bitsCachedSize);\n} else {\nbitsCached <<= 8;\nbitsCached |= nextByte;\n}\nbitsCachedSize += 8;\n}\n// bitsCachedSize >= 57 and left-shifting it 8 bits would cause an overflow\n\nfinal long bitsOut;\nif (byteOrder == ByteOrder.LITTLE_ENDIAN) {\nbitsOut = (bitsCached & MASKS[count]);\nbitsCached >>>= count;\n} else {\nbitsOut = (bitsCached >> (bitsCachedSize - count)) & MASKS[count];\n}\nbitsCachedSize -= count;\nreturn bitsOut;\n}",
+            "method_id": 2
+        }
+    ]
+}

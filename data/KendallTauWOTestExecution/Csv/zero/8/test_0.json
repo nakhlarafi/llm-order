@@ -1,0 +1,84 @@
+{
+    "bug_id": 8,
+    "test_id": 0,
+    "test_name": "org.apache.commons.csv.CSVFormatTest.testDuplicateHeaderElements",
+    "test_body": "public void testDuplicateHeaderElements() {\nCSVFormat.DEFAULT.withHeader(\"A\", \"A\").validate();\n}\n",
+    "stack_trace": "java.lang.Exception: Unexpected exception, expected<java.lang.IllegalArgumentException> but was<java.lang.IllegalStateException>\nat org.junit.internal.runners.statements.ExpectException.evaluate(ExpectException.java:28)\nat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)\nat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)\nat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)\nat org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)\nat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)\nat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)\nat org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)\nat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)\nat org.junit.runners.ParentRunner.run(ParentRunner.java:309)\nat junit.framework.JUnit4TestAdapter.run(JUnit4TestAdapter.java:38)\nat org.apache.tools.ant.taskdefs.optional.junit.JUnitTestRunner.run(JUnitTestRunner.java:520)\nat org.apache.tools.ant.taskdefs.optional.junit.JUnitTask.executeInVM(JUnitTask.java:1484)\nat org.apache.tools.ant.taskdefs.optional.junit.JUnitTask.execute(JUnitTask.java:872)\nat org.apache.tools.ant.taskdefs.optional.junit.JUnitTask.executeOrQueue(JUnitTask.java:1972)\nat org.apache.tools.ant.taskdefs.optional.junit.JUnitTask.execute1(JUnitTask.java:824)\nat org.apache.tools.ant.taskdefs.optional.junit.JUnitTask.execute(JUnitTask.java:2277)\nat org.apache.tools.ant.UnknownElement.execute(UnknownElement.java:291)\nat sun.reflect.GeneratedMethodAccessor4.invoke(Unknown Source)\nat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\nat java.lang.reflect.Method.invoke(Method.java:498)\nat org.apache.tools.ant.dispatch.DispatchUtils.execute(DispatchUtils.java:106)\nat org.apache.tools.ant.Task.perform(Task.java:348)\nat org.apache.tools.ant.Target.execute(Target.java:392)\nat org.apache.tools.ant.Target.performTasks(Target.java:413)\nat org.apache.tools.ant.Project.executeSortedTargets(Project.java:1399)\nat org.apache.tools.ant.Project.executeTarget(Project.java:1368)\nat org.apache.tools.ant.helper.DefaultExecutor.executeTargets(DefaultExecutor.java:41)\nat org.apache.tools.ant.Project.executeTargets(Project.java:1251)\nat org.apache.tools.ant.Main.runBuild(Main.java:811)\nat org.apache.tools.ant.Main.startAnt(Main.java:217)\nat org.apache.tools.ant.launch.Launcher.run(Launcher.java:280)\nat org.apache.tools.ant.launch.Launcher.main(Launcher.java:109)\nCaused by: java.lang.IllegalStateException: The header contains duplicate names: [A, A]\nat org.apache.commons.csv.CSVFormat.validate(CSVFormat.java:669)\nat org.apache.commons.csv.CSVFormatTest.testDuplicateHeaderElements(CSVFormatTest.java:66)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withIgnoreSurroundingSpaces(Z)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withIgnoreSurroundingSpaces(final boolean ignoreSurroundingSpaces) {\nreturn new CSVFormat(delimiter, quoteChar, quotePolicy, commentStart, escape,\nignoreSurroundingSpaces, ignoreEmptyLines, recordSeparator, nullString, header, skipHeaderRecord);\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.csv.Constants:<clinit>()V",
+            "method_body": "static final char BACKSPACE = '\\b';\nstatic final char COMMA = ',';\n\n/**\n* Starts a comment, the remainder of the line is the comment.\n*/\nstatic final char COMMENT = '#';\n\nstatic final char CR = '\\r';\nstatic final Character DOUBLE_QUOTE_CHAR = Character.valueOf('\"');\nstatic final char BACKSLASH = '\\\\';\nstatic final char FF = '\\f';\nstatic final char LF = '\\n';\nstatic final char SP = ' ';\nstatic final char TAB = '\\t';\n\n/** ASCII record separator */\nstatic final char RS = 30;\n\n/** ASCII unit separator */\nstatic final char US = 31;\n\nstatic final String EMPTY = \"\";\n\n/** The end of stream symbol */\nstatic final int END_OF_STREAM = -1;\n\n/** Undefined state for the lookahead char */\nstatic final int UNDEFINED = -2;\n\n/** According to RFC 4180, line breaks are delimited by CRLF */\nstatic final String CRLF = \"\\r\\n\";\n\n/**\n* Unicode line separator.\n*/\nstatic final String LINE_SEPARATOR = \"\\u2028\";\n\n/**\n* Unicode paragraph separator.\n*/\nstatic final String PARAGRAPH_SEPARATOR = \"\\u2029\";\n\n/**\n* Unicode next line.\n*/\nstatic final String NEXT_LINE = \"\\u0085\";\n\n}\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withQuoteChar(Ljava/lang/Character;)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withQuoteChar(final Character quoteChar) {\nif (isLineBreak(quoteChar)) {\nthrow new IllegalArgumentException(\"The quoteChar cannot be a line break\");\n}\nreturn new CSVFormat(delimiter, quoteChar, quotePolicy, commentStart, escape,\nignoreSurroundingSpaces, ignoreEmptyLines, recordSeparator, nullString, header, skipHeaderRecord);\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:<init>(CLjava/lang/Character;Lorg/apache/commons/csv/Quote;Ljava/lang/Character;Ljava/lang/Character;ZZLjava/lang/String;Ljava/lang/String;[Ljava/lang/String;Z)V",
+            "method_body": "private CSVFormat(final char delimiter, final Character quoteChar,\nfinal Quote quotePolicy, final Character commentStart,\nfinal Character escape, final boolean ignoreSurroundingSpaces,\nfinal boolean ignoreEmptyLines, final String recordSeparator,\nfinal String nullString, final String[] header, final boolean skipHeaderRecord) {\nif (isLineBreak(delimiter)) {\nthrow new IllegalArgumentException(\"The delimiter cannot be a line break\");\n}\nthis.delimiter = delimiter;\nthis.quoteChar = quoteChar;\nthis.quotePolicy = quotePolicy;\nthis.commentStart = commentStart;\nthis.escape = escape;\nthis.ignoreSurroundingSpaces = ignoreSurroundingSpaces;\nthis.ignoreEmptyLines = ignoreEmptyLines;\nthis.recordSeparator = recordSeparator;\nthis.nullString = nullString;\nif (header == null) {\nthis.header = null;\n} else {\nthis.header = header.clone();\n}\nthis.skipHeaderRecord = skipHeaderRecord;\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withEscape(Ljava/lang/Character;)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withEscape(final Character escape) {\nif (isLineBreak(escape)) {\nthrow new IllegalArgumentException(\"The escape character cannot be a line break\");\n}\nreturn new CSVFormat(delimiter, quoteChar, quotePolicy, commentStart, escape,\nignoreSurroundingSpaces, ignoreEmptyLines, recordSeparator, nullString, header, skipHeaderRecord);\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:<clinit>()V",
+            "method_body": "public static final CSVFormat DEFAULT = new CSVFormat(COMMA, DOUBLE_QUOTE_CHAR, null, null, null,\nfalse, true, CRLF, null, null, false);\n\n/**\n* Comma separated format as defined by <a href=\"http://tools.ietf.org/html/rfc4180\">RFC 4180</a>.\n* <h3>RFC 4180:</h3>\n* <ul>\n* <li>withDelimiter(',')</li>\n* <li>withQuoteChar('\"')</li>\n* <li>withRecordSeparator(CRLF)</li>\n* </ul>\n*/\npublic static final CSVFormat RFC4180 = DEFAULT.withIgnoreEmptyLines(false);\n\n/**\n* Excel file format (using a comma as the value delimiter). Note that the actual value delimiter used by Excel is\n* locale dependent, it might be necessary to customize this format to accommodate to your regional settings.\n*\n* <p>\n* For example for parsing or generating a CSV file on a French system the following format will be used:\n* </p>\n*\n* <pre>\n* CSVFormat fmt = CSVFormat.newBuilder(EXCEL).withDelimiter(';');\n* </pre>\n*\n* <p>\n* Settings are:\n* </p>\n* <ul>\n* <li>withDelimiter(',')</li>\n* <li>withQuoteChar('\"')</li>\n* <li>withRecordSeparator(CRLF)</li>\n* </ul>\n* Note: this is currently the same as RFC4180\n*/\npublic static final CSVFormat EXCEL = DEFAULT.withIgnoreEmptyLines(false);\n\n/** Tab-delimited format, with quote; leading and trailing spaces ignored. */\npublic static final CSVFormat TDF =\nDEFAULT\n.withDelimiter(TAB)\n.withIgnoreSurroundingSpaces(true);\n\n/**\n* Default MySQL format used by the <tt>SELECT INTO OUTFILE</tt> and <tt>LOAD DATA INFILE</tt> operations. This is\n* a tab-delimited format with a LF character as the line separator. Values are not quoted and special characters\n* are escaped with '\\'.\n*\n* @see <a href=\"http://dev.mysql.com/doc/refman/5.1/en/load-data.html\">\n*      http://dev.mysql.com/doc/refman/5.1/en/load-data.html</a>\n*/\npublic static final CSVFormat MYSQL =\nDEFAULT\n.withDelimiter(TAB)\n.withEscape(BACKSLASH)\n.withIgnoreEmptyLines(false)\n.withQuoteChar(null)\n.withRecordSeparator(LF);\n\n/**\n* Returns true if the given character is a line break character.\n*\n* @param c\n*            the character to check\n*\n* @return true if <code>c</code> is a line break character\n*/\nprivate static boolean isLineBreak(final char c) {\nreturn c == LF || c == CR;\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withEscape(C)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withEscape(final char escape) {\nreturn withEscape(Character.valueOf(escape));\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withDelimiter(C)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withDelimiter(final char delimiter) {\nif (isLineBreak(delimiter)) {\nthrow new IllegalArgumentException(\"The delimiter cannot be a line break\");\n}\nreturn new CSVFormat(delimiter, quoteChar, quotePolicy, commentStart, escape,\nignoreSurroundingSpaces, ignoreEmptyLines, recordSeparator, nullString, header, skipHeaderRecord);\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withHeader([Ljava/lang/String;)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withHeader(final String... header) {\nreturn new CSVFormat(delimiter, quoteChar, quotePolicy, commentStart, escape,\nignoreSurroundingSpaces, ignoreEmptyLines, recordSeparator, nullString, header, skipHeaderRecord);\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:validate()V",
+            "method_body": "void validate() throws IllegalStateException {\nif (quoteChar != null && delimiter == quoteChar.charValue()) {\nthrow new IllegalStateException(\n\"The quoteChar character and the delimiter cannot be the same ('\" + quoteChar + \"')\");\n}\n\nif (escape != null && delimiter == escape.charValue()) {\nthrow new IllegalStateException(\n\"The escape character and the delimiter cannot be the same ('\" + escape + \"')\");\n}\n\nif (commentStart != null && delimiter == commentStart.charValue()) {\nthrow new IllegalStateException(\n\"The comment start character and the delimiter cannot be the same ('\" + commentStart + \"')\");\n}\n\nif (quoteChar != null && quoteChar.equals(commentStart)) {\nthrow new IllegalStateException(\n\"The comment start character and the quoteChar cannot be the same ('\" + commentStart + \"')\");\n}\n\nif (escape != null && escape.equals(commentStart)) {\nthrow new IllegalStateException(\n\"The comment start and the escape character cannot be the same ('\" + commentStart + \"')\");\n}\n\nif (escape == null && quotePolicy == Quote.NONE) {\nthrow new IllegalStateException(\"No quotes mode set but no escape character is set\");\n}\n\nif (header != null) {\nfinal Set<String> set = new HashSet<String>(header.length);\nset.addAll(Arrays.asList(header));\nif (set.size() != header.length) {\nthrow new IllegalStateException(\"The header contains duplicate names: \" + Arrays.toString(header));\n}\n}\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:isLineBreak(Ljava/lang/Character;)Z",
+            "method_body": "private static boolean isLineBreak(final Character c) {\nreturn c != null && isLineBreak(c.charValue());\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withRecordSeparator(Ljava/lang/String;)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withRecordSeparator(final String recordSeparator) {\nreturn new CSVFormat(delimiter, quoteChar, quotePolicy, commentStart, escape,\nignoreSurroundingSpaces, ignoreEmptyLines, recordSeparator, nullString, header, skipHeaderRecord);\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withIgnoreEmptyLines(Z)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withIgnoreEmptyLines(final boolean ignoreEmptyLines) {\nreturn new CSVFormat(delimiter, quoteChar, quotePolicy, commentStart, escape,\nignoreSurroundingSpaces, ignoreEmptyLines, recordSeparator, nullString, header, skipHeaderRecord);\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withRecordSeparator(C)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withRecordSeparator(final char recordSeparator) {\nreturn withRecordSeparator(String.valueOf(recordSeparator));\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:isLineBreak(C)Z",
+            "method_body": "private static boolean isLineBreak(final char c) {\nreturn c == LF || c == CR;\n}",
+            "method_id": 14
+        }
+    ]
+}

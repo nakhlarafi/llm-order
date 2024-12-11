@@ -1,0 +1,99 @@
+{
+    "bug_id": 46,
+    "test_id": 1,
+    "test_name": "org.apache.commons.math.complex.ComplexTest.testAtanI",
+    "test_body": "public void testAtanI() {\nAssert.assertTrue(Complex.I.atan().isNaN());\n}\n",
+    "stack_trace": "junit.framework.AssertionFailedError\nat org.junit.Assert.fail(Assert.java:86)\nat org.junit.Assert.assertTrue(Assert.java:41)\nat org.junit.Assert.assertTrue(Assert.java:52)\nat org.apache.commons.math.complex.ComplexTest.testAtanI(ComplexTest.java:577)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.math.complex.Complex:isInfinite()Z",
+            "method_body": "public boolean isInfinite() {\nreturn isInfinite;\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.math.complex.Complex:abs()D",
+            "method_body": "public double abs() {\nif (isNaN) {\nreturn Double.NaN;\n}\nif (isInfinite()) {\nreturn Double.POSITIVE_INFINITY;\n}\nif (FastMath.abs(real) < FastMath.abs(imaginary)) {\nif (imaginary == 0.0) {\nreturn FastMath.abs(real);\n}\ndouble q = real / imaginary;\nreturn FastMath.abs(imaginary) * FastMath.sqrt(1 + q * q);\n} else {\nif (real == 0.0) {\nreturn FastMath.abs(imaginary);\n}\ndouble q = imaginary / real;\nreturn FastMath.abs(real) * FastMath.sqrt(1 + q * q);\n}\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.math.complex.Complex:isNaN()Z",
+            "method_body": "public boolean isNaN() {\nreturn isNaN;\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.FastMath:log(D)D",
+            "method_body": "public static double log(final double x) {\nreturn log(x, null);\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.FastMath:abs(D)D",
+            "method_body": "public static double abs(double x) {\nreturn (x < 0.0) ? -x : (x == 0.0) ? 0.0 : x; // -0.0 => +0.0\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math.complex.Complex:createComplex(DD)Lorg/apache/commons/math/complex/Complex;",
+            "method_body": "protected Complex createComplex(double realPart,\ndouble imaginaryPart) {\nreturn new Complex(realPart, imaginaryPart);\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.MathUtils:checkNotNull(Ljava/lang/Object;)V",
+            "method_body": "public static void checkNotNull(Object o)\nthrows NullArgumentException {\nif (o == null) {\nthrow new NullArgumentException();\n}\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.math.complex.Complex:atan()Lorg/apache/commons/math/complex/Complex;",
+            "method_body": "public Complex atan() {\nif (isNaN) {\nreturn NaN;\n}\n\nreturn this.add(I).divide(I.subtract(this)).log()\n.multiply(I.divide(createComplex(2.0, 0.0)));\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.FastMath:atan2(DD)D",
+            "method_body": "public static double atan2(double y, double x) {\nif (x !=x || y != y) {\nreturn Double.NaN;\n}\n\nif (y == 0.0) {\ndouble result = x*y;\ndouble invx = 1.0/x;\ndouble invy = 1.0/y;\n\nif (invx == 0.0) { // X is infinite\nif (x > 0) {\nreturn y; // return +/- 0.0\n} else {\nreturn copySign(Math.PI, y);\n}\n}\n\nif (x < 0.0 || invx < 0.0) {\nif (y < 0.0 || invy < 0.0) {\nreturn -Math.PI;\n} else {\nreturn Math.PI;\n}\n} else {\nreturn result;\n}\n}\n\n// y cannot now be zero\n\nif (y == Double.POSITIVE_INFINITY) {\nif (x == Double.POSITIVE_INFINITY) {\nreturn Math.PI/4.0;\n}\n\nif (x == Double.NEGATIVE_INFINITY) {\nreturn Math.PI*3.0/4.0;\n}\n\nreturn Math.PI/2.0;\n}\n\nif (y == Double.NEGATIVE_INFINITY) {\nif (x == Double.POSITIVE_INFINITY) {\nreturn -Math.PI/4.0;\n}\n\nif (x == Double.NEGATIVE_INFINITY) {\nreturn -Math.PI*3.0/4.0;\n}\n\nreturn -Math.PI/2.0;\n}\n\nif (x == Double.POSITIVE_INFINITY) {\nif (y > 0.0 || 1/y > 0.0) {\nreturn 0.0;\n}\n\nif (y < 0.0 || 1/y < 0.0) {\nreturn -0.0;\n}\n}\n\nif (x == Double.NEGATIVE_INFINITY)\n{\nif (y > 0.0 || 1/y > 0.0) {\nreturn Math.PI;\n}\n\nif (y < 0.0 || 1/y < 0.0) {\nreturn -Math.PI;\n}\n}\n\n// Neither y nor x can be infinite or NAN here\n\nif (x == 0) {\nif (y > 0.0 || 1/y > 0.0) {\nreturn Math.PI/2.0;\n}\n\nif (y < 0.0 || 1/y < 0.0) {\nreturn -Math.PI/2.0;\n}\n}\n\n// Compute ratio r = y/x\nfinal double r = y/x;\nif (Double.isInfinite(r)) { // bypass calculations that can create NaN\nreturn atan(r, 0, x < 0);\n}\n\ndouble ra = doubleHighPart(r);\ndouble rb = r - ra;\n\n// Split x\nfinal double xa = doubleHighPart(x);\nfinal double xb = x - xa;\n\nrb += (y - ra * xa - ra * xb - rb * xa - rb * xb) / x;\n\ndouble temp = ra + rb;\nrb = -(temp - ra - rb);\nra = temp;\n\nif (ra == 0) { // Fix up the sign so atan works correctly\nra = copySign(0.0, y);\n}\n\n// Call atan\ndouble result = atan(ra, rb, x < 0);\n\nreturn result;\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.math.complex.Complex:log()Lorg/apache/commons/math/complex/Complex;",
+            "method_body": "public Complex log() {\nif (isNaN) {\nreturn NaN;\n}\n\nreturn createComplex(FastMath.log(abs()),\nFastMath.atan2(imaginary, real));\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.math.complex.Complex:getReal()D",
+            "method_body": "public double getReal() {\nreturn real;\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.apache.commons.math.complex.Complex:divide(Lorg/apache/commons/math/complex/Complex;)Lorg/apache/commons/math/complex/Complex;",
+            "method_body": "public Complex divide(Complex divisor)\nthrows NullArgumentException {\nMathUtils.checkNotNull(divisor);\nif (isNaN || divisor.isNaN) {\nreturn NaN;\n}\n\nif (divisor.isZero) {\n// return isZero ? NaN : INF; // See MATH-657\nreturn isZero ? NaN : INF;\n}\n\nif (divisor.isInfinite() && !isInfinite()) {\nreturn ZERO;\n}\n\nfinal double c = divisor.getReal();\nfinal double d = divisor.getImaginary();\n\nif (FastMath.abs(c) < FastMath.abs(d)) {\ndouble q = c / d;\ndouble denominator = c * q + d;\nreturn createComplex((real * q + imaginary) / denominator,\n(imaginary * q - real) / denominator);\n} else {\ndouble q = d / c;\ndouble denominator = d * q + c;\nreturn createComplex((imaginary * q + real) / denominator,\n(imaginary - real * q) / denominator);\n}\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.FastMath:log(D[D)D",
+            "method_body": "private static double log(final double x, final double[] hiPrec) {\nif (x==0) { // Handle special case of +0/-0\nreturn Double.NEGATIVE_INFINITY;\n}\nlong bits = Double.doubleToLongBits(x);\n\n/* Handle special cases of negative input, and NaN */\nif ((bits & 0x8000000000000000L) != 0 || x != x) {\nif (x != 0.0) {\nif (hiPrec != null) {\nhiPrec[0] = Double.NaN;\n}\n\nreturn Double.NaN;\n}\n}\n\n/* Handle special cases of Positive infinity. */\nif (x == Double.POSITIVE_INFINITY) {\nif (hiPrec != null) {\nhiPrec[0] = Double.POSITIVE_INFINITY;\n}\n\nreturn Double.POSITIVE_INFINITY;\n}\n\n/* Extract the exponent */\nint exp = (int)(bits >> 52)-1023;\n\nif ((bits & 0x7ff0000000000000L) == 0) {\n// Subnormal!\nif (x == 0) {\n// Zero\nif (hiPrec != null) {\nhiPrec[0] = Double.NEGATIVE_INFINITY;\n}\n\nreturn Double.NEGATIVE_INFINITY;\n}\n\n/* Normalize the subnormal number. */\nbits <<= 1;\nwhile ( (bits & 0x0010000000000000L) == 0) {\nexp--;\nbits <<= 1;\n}\n}\n\n\nif (exp == -1 || exp == 0) {\nif (x < 1.01 && x > 0.99 && hiPrec == null) {\n/* The normal method doesn't work well in the range [0.99, 1.01], so call do a straight\npolynomial expansion in higer precision. */\n\n/* Compute x - 1.0 and split it */\ndouble xa = x - 1.0;\ndouble xb = xa - x + 1.0;\ndouble tmp = xa * HEX_40000000;\ndouble aa = xa + tmp - tmp;\ndouble ab = xa - aa;\nxa = aa;\nxb = ab;\n\ndouble ya = LN_QUICK_COEF[LN_QUICK_COEF.length-1][0];\ndouble yb = LN_QUICK_COEF[LN_QUICK_COEF.length-1][1];\n\nfor (int i = LN_QUICK_COEF.length - 2; i >= 0; i--) {\n/* Multiply a = y * x */\naa = ya * xa;\nab = ya * xb + yb * xa + yb * xb;\n/* split, so now y = a */\ntmp = aa * HEX_40000000;\nya = aa + tmp - tmp;\nyb = aa - ya + ab;\n\n/* Add  a = y + lnQuickCoef */\naa = ya + LN_QUICK_COEF[i][0];\nab = yb + LN_QUICK_COEF[i][1];\n/* Split y = a */\ntmp = aa * HEX_40000000;\nya = aa + tmp - tmp;\nyb = aa - ya + ab;\n}\n\n/* Multiply a = y * x */\naa = ya * xa;\nab = ya * xb + yb * xa + yb * xb;\n/* split, so now y = a */\ntmp = aa * HEX_40000000;\nya = aa + tmp - tmp;\nyb = aa - ya + ab;\n\nreturn ya + yb;\n}\n}\n\n// lnm is a log of a number in the range of 1.0 - 2.0, so 0 <= lnm < ln(2)\ndouble lnm[] = LN_MANT[(int)((bits & 0x000ffc0000000000L) >> 42)];\n\n/*\ndouble epsilon = x / Double.longBitsToDouble(bits & 0xfffffc0000000000L);\n\nepsilon -= 1.0;\n*/\n\n// y is the most significant 10 bits of the mantissa\n//double y = Double.longBitsToDouble(bits & 0xfffffc0000000000L);\n//double epsilon = (x - y) / y;\ndouble epsilon = (bits & 0x3ffffffffffL) / (TWO_POWER_52 + (bits & 0x000ffc0000000000L));\n\ndouble lnza = 0.0;\ndouble lnzb = 0.0;\n\nif (hiPrec != null) {\n/* split epsilon -> x */\ndouble tmp = epsilon * HEX_40000000;\ndouble aa = epsilon + tmp - tmp;\ndouble ab = epsilon - aa;\ndouble xa = aa;\ndouble xb = ab;\n\n/* Need a more accurate epsilon, so adjust the division. */\ndouble numer = bits & 0x3ffffffffffL;\ndouble denom = TWO_POWER_52 + (bits & 0x000ffc0000000000L);\naa = numer - xa*denom - xb * denom;\nxb += aa / denom;\n\n/* Remez polynomial evaluation */\ndouble ya = LN_HI_PREC_COEF[LN_HI_PREC_COEF.length-1][0];\ndouble yb = LN_HI_PREC_COEF[LN_HI_PREC_COEF.length-1][1];\n\nfor (int i = LN_HI_PREC_COEF.length - 2; i >= 0; i--) {\n/* Multiply a = y * x */\naa = ya * xa;\nab = ya * xb + yb * xa + yb * xb;\n/* split, so now y = a */\ntmp = aa * HEX_40000000;\nya = aa + tmp - tmp;\nyb = aa - ya + ab;\n\n/* Add  a = y + lnHiPrecCoef */\naa = ya + LN_HI_PREC_COEF[i][0];\nab = yb + LN_HI_PREC_COEF[i][1];\n/* Split y = a */\ntmp = aa * HEX_40000000;\nya = aa + tmp - tmp;\nyb = aa - ya + ab;\n}\n\n/* Multiply a = y * x */\naa = ya * xa;\nab = ya * xb + yb * xa + yb * xb;\n\n/* split, so now lnz = a */\n/*\ntmp = aa * 1073741824.0;\nlnza = aa + tmp - tmp;\nlnzb = aa - lnza + ab;\n*/\nlnza = aa + ab;\nlnzb = -(lnza - aa - ab);\n} else {\n/* High precision not required.  Eval Remez polynomial\nusing standard double precision */\nlnza = -0.16624882440418567;\nlnza = lnza * epsilon + 0.19999954120254515;\nlnza = lnza * epsilon + -0.2499999997677497;\nlnza = lnza * epsilon + 0.3333333333332802;\nlnza = lnza * epsilon + -0.5;\nlnza = lnza * epsilon + 1.0;\nlnza = lnza * epsilon;\n}\n\n/* Relative sizes:\n* lnzb     [0, 2.33E-10]\n* lnm[1]   [0, 1.17E-7]\n* ln2B*exp [0, 1.12E-4]\n* lnza      [0, 9.7E-4]\n* lnm[0]   [0, 0.692]\n* ln2A*exp [0, 709]\n*/\n\n/* Compute the following sum:\n* lnzb + lnm[1] + ln2B*exp + lnza + lnm[0] + ln2A*exp;\n*/\n\n//return lnzb + lnm[1] + ln2B*exp + lnza + lnm[0] + ln2A*exp;\ndouble a = LN_2_A*exp;\ndouble b = 0.0;\ndouble c = a+lnm[0];\ndouble d = -(c-a-lnm[0]);\na = c;\nb = b + d;\n\nc = a + lnza;\nd = -(c - a - lnza);\na = c;\nb = b + d;\n\nc = a + LN_2_B*exp;\nd = -(c - a - LN_2_B*exp);\na = c;\nb = b + d;\n\nc = a + lnm[1];\nd = -(c - a - lnm[1]);\na = c;\nb = b + d;\n\nc = a + lnzb;\nd = -(c - a - lnzb);\na = c;\nb = b + d;\n\nif (hiPrec != null) {\nhiPrec[0] = a;\nhiPrec[1] = b;\n}\n\nreturn a + b;\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.apache.commons.math.complex.Complex:subtract(Lorg/apache/commons/math/complex/Complex;)Lorg/apache/commons/math/complex/Complex;",
+            "method_body": "public Complex subtract(Complex subtrahend)\nthrows NullArgumentException {\nMathUtils.checkNotNull(subtrahend);\nif (isNaN || subtrahend.isNaN) {\nreturn NaN;\n}\n\nreturn createComplex(real - subtrahend.getReal(),\nimaginary - subtrahend.getImaginary());\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "org.apache.commons.math.complex.Complex:getImaginary()D",
+            "method_body": "public double getImaginary() {\nreturn imaginary;\n}",
+            "method_id": 14
+        },
+        {
+            "method_signature": "org.apache.commons.math.complex.Complex:add(Lorg/apache/commons/math/complex/Complex;)Lorg/apache/commons/math/complex/Complex;",
+            "method_body": "public Complex add(Complex addend) throws NullArgumentException {\nMathUtils.checkNotNull(addend);\nif (isNaN || addend.isNaN) {\nreturn NaN;\n}\n\nreturn createComplex(real + addend.getReal(),\nimaginary + addend.getImaginary());\n}",
+            "method_id": 15
+        },
+        {
+            "method_signature": "org.apache.commons.math.complex.Complex:multiply(Lorg/apache/commons/math/complex/Complex;)Lorg/apache/commons/math/complex/Complex;",
+            "method_body": "public Complex multiply(Complex factor)\nthrows NullArgumentException {\nMathUtils.checkNotNull(factor);\nif (isNaN || factor.isNaN) {\nreturn NaN;\n}\nif (Double.isInfinite(real) ||\nDouble.isInfinite(imaginary) ||\nDouble.isInfinite(factor.real) ||\nDouble.isInfinite(factor.imaginary)) {\n// we don't use isInfinite() to avoid testing for NaN again\nreturn INF;\n}\nreturn createComplex(real * factor.real - imaginary * factor.imaginary,\nreal * factor.imaginary + imaginary * factor.real);\n}",
+            "method_id": 16
+        },
+        {
+            "method_signature": "org.apache.commons.math.complex.Complex:<init>(DD)V",
+            "method_body": "public Complex(double real, double imaginary) {\nthis.real = real;\nthis.imaginary = imaginary;\n\nisNaN = Double.isNaN(real) || Double.isNaN(imaginary);\nisInfinite = !isNaN &&\n(Double.isInfinite(real) || Double.isInfinite(imaginary));\nisZero = real == 0 && imaginary == 0;\n}",
+            "method_id": 17
+        }
+    ]
+}

@@ -1,0 +1,144 @@
+{
+    "bug_id": 2,
+    "test_id": 0,
+    "test_name": "org.apache.commons.math3.distribution.HypergeometricDistributionTest.testMath1021",
+    "test_body": "public void testMath1021() {\nfinal int N = 43130568;\nfinal int m = 42976365;\nfinal int n = 50;\nfinal HypergeometricDistribution dist = new HypergeometricDistribution(N, m, n);\nfor (int i = 0; i < 100; i++) {\nfinal int sample = dist.sample();\nAssert.assertTrue(\"sample=\" + sample, 0 <= sample);\nAssert.assertTrue(\"sample=\" + sample, sample <= n);\n}\n}\n",
+    "stack_trace": "junit.framework.AssertionFailedError: sample=-50\nat org.junit.Assert.fail(Assert.java:88)\nat org.junit.Assert.assertTrue(Assert.java:41)\nat org.apache.commons.math3.distribution.HypergeometricDistributionTest.testMath1021(HypergeometricDistributionTest.java:297)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.math3.distribution.AbstractIntegerDistribution:sample()I",
+            "method_body": "public int sample() {\nreturn inverseCumulativeProbability(random.nextDouble());\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.math3.distribution.HypergeometricDistribution:calculateNumericalVariance()D",
+            "method_body": "protected double calculateNumericalVariance() {\nfinal double N = getPopulationSize();\nfinal double m = getNumberOfSuccesses();\nfinal double n = getSampleSize();\nreturn (n * m * (N - n) * (N - m)) / (N * N * (N - 1));\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.math3.distribution.HypergeometricDistribution:getNumberOfSuccesses()I",
+            "method_body": "public int getNumberOfSuccesses() {\nreturn numberOfSuccesses;\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.math3.distribution.HypergeometricDistribution:getSupportLowerBound()I",
+            "method_body": "public int getSupportLowerBound() {\nreturn FastMath.max(0,\ngetSampleSize() + getNumberOfSuccesses() - getPopulationSize());\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math3.distribution.HypergeometricDistribution:getSampleSize()I",
+            "method_body": "public int getSampleSize() {\nreturn sampleSize;\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math3.util.FastMath:max(II)I",
+            "method_body": "public static int max(final int a, final int b) {\nreturn (a <= b) ? b : a;\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.math3.random.AbstractWell:<init>(IIII[I)V",
+            "method_body": "protected AbstractWell(final int k, final int m1, final int m2, final int m3, final int[] seed) {\n\n// the bits pool contains k bits, k = r w - p where r is the number\n// of w bits blocks, w is the block size (always 32 in the original paper)\n// and p is the number of unused bits in the last block\nfinal int w = 32;\nfinal int r = (k + w - 1) / w;\nthis.v      = new int[r];\nthis.index  = 0;\n\n// precompute indirection index tables. These tables are used for optimizing access\n// they allow saving computations like \"(j + r - 2) % r\" with costly modulo operations\niRm1 = new int[r];\niRm2 = new int[r];\ni1   = new int[r];\ni2   = new int[r];\ni3   = new int[r];\nfor (int j = 0; j < r; ++j) {\niRm1[j] = (j + r - 1) % r;\niRm2[j] = (j + r - 2) % r;\ni1[j]   = (j + m1)    % r;\ni2[j]   = (j + m2)    % r;\ni3[j]   = (j + m3)    % r;\n}\n\n// initialize the pool content\nsetSeed(seed);\n\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.math3.random.AbstractWell:setSeed(J)V",
+            "method_body": "public void setSeed(final long seed) {\nsetSeed(new int[] { (int) (seed >>> 32), (int) (seed & 0xffffffffl) });\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.math3.random.AbstractWell:<init>(IIII)V",
+            "method_body": "protected AbstractWell(final int k, final int m1, final int m2, final int m3) {\nthis(k, m1, m2, m3, null);\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.math3.distribution.HypergeometricDistribution:<init>(III)V",
+            "method_body": "public HypergeometricDistribution(int populationSize, int numberOfSuccesses, int sampleSize)\nthrows NotPositiveException, NotStrictlyPositiveException, NumberIsTooLargeException {\nthis(new Well19937c(), populationSize, numberOfSuccesses, sampleSize);\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.math3.distribution.AbstractIntegerDistribution:solveInverseCumulativeProbability(DII)I",
+            "method_body": "protected int solveInverseCumulativeProbability(final double p, int lower, int upper) {\nwhile (lower + 1 < upper) {\nint xm = (lower + upper) / 2;\nif (xm < lower || xm > upper) {\n/*\n* Overflow.\n* There will never be an overflow in both calculation methods\n* for xm at the same time\n*/\nxm = lower + (upper - lower) / 2;\n}\n\ndouble pm = checkedCumulativeProbability(xm);\nif (pm >= p) {\nupper = xm;\n} else {\nlower = xm;\n}\n}\nreturn upper;\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.apache.commons.math3.distribution.HypergeometricDistribution:getSupportUpperBound()I",
+            "method_body": "public int getSupportUpperBound() {\nreturn FastMath.min(getNumberOfSuccesses(), getSampleSize());\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.apache.commons.math3.distribution.HypergeometricDistribution:getNumericalVariance()D",
+            "method_body": "public double getNumericalVariance() {\nif (!numericalVarianceIsCalculated) {\nnumericalVariance = calculateNumericalVariance();\nnumericalVarianceIsCalculated = true;\n}\nreturn numericalVariance;\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.apache.commons.math3.random.Well19937c:<init>()V",
+            "method_body": "public Well19937c() {\nsuper(K, M1, M2, M3);\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "org.apache.commons.math3.distribution.HypergeometricDistribution:getNumericalMean()D",
+            "method_body": "public double getNumericalMean() {\nreturn (double) (getSampleSize() * getNumberOfSuccesses()) / (double) getPopulationSize();\n}",
+            "method_id": 14
+        },
+        {
+            "method_signature": "org.apache.commons.math3.random.BitsStreamGenerator:nextDouble()D",
+            "method_body": "public double nextDouble() {\nfinal long high = ((long) next(26)) << 26;\nfinal int  low  = next(26);\nreturn (high | low) * 0x1.0p-52d;\n}",
+            "method_id": 15
+        },
+        {
+            "method_signature": "org.apache.commons.math3.util.FastMath:min(II)I",
+            "method_body": "public static int min(final int a, final int b) {\nreturn (a <= b) ? a : b;\n}",
+            "method_id": 16
+        },
+        {
+            "method_signature": "org.apache.commons.math3.util.FastMath:sqrt(D)D",
+            "method_body": "public static double sqrt(final double a) {\nreturn Math.sqrt(a);\n}",
+            "method_id": 17
+        },
+        {
+            "method_signature": "org.apache.commons.math3.random.BitsStreamGenerator:<init>()V",
+            "method_body": "public BitsStreamGenerator() {\nnextGaussian = Double.NaN;\n}",
+            "method_id": 18
+        },
+        {
+            "method_signature": "org.apache.commons.math3.distribution.AbstractIntegerDistribution:inverseCumulativeProbability(D)I",
+            "method_body": "public int inverseCumulativeProbability(final double p) throws OutOfRangeException {\nif (p < 0.0 || p > 1.0) {\nthrow new OutOfRangeException(p, 0, 1);\n}\n\nint lower = getSupportLowerBound();\nif (p == 0.0) {\nreturn lower;\n}\nif (lower == Integer.MIN_VALUE) {\nif (checkedCumulativeProbability(lower) >= p) {\nreturn lower;\n}\n} else {\nlower -= 1; // this ensures cumulativeProbability(lower) < p, which\n// is important for the solving step\n}\n\nint upper = getSupportUpperBound();\nif (p == 1.0) {\nreturn upper;\n}\n\n// use the one-sided Chebyshev inequality to narrow the bracket\n// cf. AbstractRealDistribution.inverseCumulativeProbability(double)\nfinal double mu = getNumericalMean();\nfinal double sigma = FastMath.sqrt(getNumericalVariance());\nfinal boolean chebyshevApplies = !(Double.isInfinite(mu) || Double.isNaN(mu) ||\nDouble.isInfinite(sigma) || Double.isNaN(sigma) || sigma == 0.0);\nif (chebyshevApplies) {\ndouble k = FastMath.sqrt((1.0 - p) / p);\ndouble tmp = mu - k * sigma;\nif (tmp > lower) {\nlower = ((int) Math.ceil(tmp)) - 1;\n}\nk = 1.0 / k;\ntmp = mu + k * sigma;\nif (tmp < upper) {\nupper = ((int) Math.ceil(tmp)) - 1;\n}\n}\n\nreturn solveInverseCumulativeProbability(p, lower, upper);\n}",
+            "method_id": 19
+        },
+        {
+            "method_signature": "org.apache.commons.math3.random.RandomDataImpl:<init>()V",
+            "method_body": "public RandomDataImpl() {\ndelegate = new RandomDataGenerator();\n}",
+            "method_id": 20
+        },
+        {
+            "method_signature": "org.apache.commons.math3.random.AbstractWell:setSeed([I)V",
+            "method_body": "public void setSeed(final int[] seed) {\nif (seed == null) {\nsetSeed(System.currentTimeMillis() + System.identityHashCode(this));\nreturn;\n}\n\nSystem.arraycopy(seed, 0, v, 0, Math.min(seed.length, v.length));\n\nif (seed.length < v.length) {\nfor (int i = seed.length; i < v.length; ++i) {\nfinal long l = v[i - seed.length];\nv[i] = (int) ((1812433253l * (l ^ (l >> 30)) + i) & 0xffffffffL);\n}\n}\n\nindex = 0;\nclear();  // Clear normal deviate cache\n}",
+            "method_id": 21
+        },
+        {
+            "method_signature": "org.apache.commons.math3.distribution.AbstractIntegerDistribution:<init>(Lorg/apache/commons/math3/random/RandomGenerator;)V",
+            "method_body": "protected AbstractIntegerDistribution(RandomGenerator rng) {\nrandom = rng;\n}",
+            "method_id": 22
+        },
+        {
+            "method_signature": "org.apache.commons.math3.distribution.HypergeometricDistribution:getPopulationSize()I",
+            "method_body": "public int getPopulationSize() {\nreturn populationSize;\n}",
+            "method_id": 23
+        },
+        {
+            "method_signature": "org.apache.commons.math3.distribution.HypergeometricDistribution:<init>(Lorg/apache/commons/math3/random/RandomGenerator;III)V",
+            "method_body": "public HypergeometricDistribution(RandomGenerator rng,\nint populationSize,\nint numberOfSuccesses,\nint sampleSize)\nthrows NotPositiveException, NotStrictlyPositiveException, NumberIsTooLargeException {\nsuper(rng);\n\nif (populationSize <= 0) {\nthrow new NotStrictlyPositiveException(LocalizedFormats.POPULATION_SIZE,\npopulationSize);\n}\nif (numberOfSuccesses < 0) {\nthrow new NotPositiveException(LocalizedFormats.NUMBER_OF_SUCCESSES,\nnumberOfSuccesses);\n}\nif (sampleSize < 0) {\nthrow new NotPositiveException(LocalizedFormats.NUMBER_OF_SAMPLES,\nsampleSize);\n}\n\nif (numberOfSuccesses > populationSize) {\nthrow new NumberIsTooLargeException(LocalizedFormats.NUMBER_OF_SUCCESS_LARGER_THAN_POPULATION_SIZE,\nnumberOfSuccesses, populationSize, true);\n}\nif (sampleSize > populationSize) {\nthrow new NumberIsTooLargeException(LocalizedFormats.SAMPLE_SIZE_LARGER_THAN_POPULATION_SIZE,\nsampleSize, populationSize, true);\n}\n\nthis.numberOfSuccesses = numberOfSuccesses;\nthis.populationSize = populationSize;\nthis.sampleSize = sampleSize;\n}",
+            "method_id": 24
+        },
+        {
+            "method_signature": "org.apache.commons.math3.random.Well19937c:next(I)I",
+            "method_body": "protected int next(final int bits) {\n\nfinal int indexRm1 = iRm1[index];\nfinal int indexRm2 = iRm2[index];\n\nfinal int v0       = v[index];\nfinal int vM1      = v[i1[index]];\nfinal int vM2      = v[i2[index]];\nfinal int vM3      = v[i3[index]];\n\nfinal int z0 = (0x80000000 & v[indexRm1]) ^ (0x7FFFFFFF & v[indexRm2]);\nfinal int z1 = (v0 ^ (v0 << 25))  ^ (vM1 ^ (vM1 >>> 27));\nfinal int z2 = (vM2 >>> 9) ^ (vM3 ^ (vM3 >>> 1));\nfinal int z3 = z1      ^ z2;\nint z4 = z0 ^ (z1 ^ (z1 << 9)) ^ (z2 ^ (z2 << 21)) ^ (z3 ^ (z3 >>> 21));\n\nv[index]     = z3;\nv[indexRm1]  = z4;\nv[indexRm2] &= 0x80000000;\nindex        = indexRm1;\n\n\n// add Matsumoto-Kurita tempering\n// to get a maximally-equidistributed generator\nz4 = z4 ^ ((z4 <<  7) & 0xe46e1700);\nz4 = z4 ^ ((z4 << 15) & 0x9b868000);\n\nreturn z4 >>> (32 - bits);\n\n}",
+            "method_id": 25
+        },
+        {
+            "method_signature": "org.apache.commons.math3.random.BitsStreamGenerator:clear()V",
+            "method_body": "public void clear() {\nnextGaussian = Double.NaN;\n}",
+            "method_id": 26
+        }
+    ]
+}

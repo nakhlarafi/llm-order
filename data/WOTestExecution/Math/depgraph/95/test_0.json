@@ -1,0 +1,129 @@
+{
+    "bug_id": 95,
+    "test_id": 0,
+    "test_name": "org.apache.commons.math.distribution.FDistributionTest.testSmallDegreesOfFreedom",
+    "test_body": "public void testSmallDegreesOfFreedom() throws Exception {\norg.apache.commons.math.distribution.FDistributionImpl fd =\nnew org.apache.commons.math.distribution.FDistributionImpl(\n1.0, 1.0);\ndouble p = fd.cumulativeProbability(0.975);\ndouble x = fd.inverseCumulativeProbability(p);\nassertEquals(0.975, x, 1.0e-5);\nfd.setDenominatorDegreesOfFreedom(2.0);\np = fd.cumulativeProbability(0.975);\nx = fd.inverseCumulativeProbability(p);\nassertEquals(0.975, x, 1.0e-5);\n}\n",
+    "stack_trace": "java.lang.IllegalArgumentException: Invalid endpoint parameters:  lowerBound=0.0 initial=-1.0 upperBound=1.7976931348623157E308\nat org.apache.commons.math.analysis.UnivariateRealSolverUtils.bracket(UnivariateRealSolverUtils.java:179)\nat org.apache.commons.math.analysis.UnivariateRealSolverUtils.bracket(UnivariateRealSolverUtils.java:128)\nat org.apache.commons.math.distribution.AbstractContinuousDistribution.inverseCumulativeProbability(AbstractContinuousDistribution.java:84)\nat org.apache.commons.math.distribution.FDistributionImpl.inverseCumulativeProbability(FDistributionImpl.java:106)\nat org.apache.commons.math.distribution.FDistributionTest.testSmallDegreesOfFreedom(FDistributionTest.java:114)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.math.util.ContinuedFraction:evaluate(DDI)D",
+            "method_body": "public double evaluate(double x, double epsilon, int maxIterations)\nthrows MathException\n{\ndouble p0 = 1.0;\ndouble p1 = getA(0, x);\ndouble q0 = 0.0;\ndouble q1 = 1.0;\ndouble c = p1 / q1;\nint n = 0;\ndouble relativeError = Double.MAX_VALUE;\nwhile (n < maxIterations && relativeError > epsilon) {\n++n;\ndouble a = getA(n, x);\ndouble b = getB(n, x);\ndouble p2 = a * p1 + b * p0;\ndouble q2 = a * q1 + b * q0;\nif (Double.isInfinite(p2) || Double.isInfinite(q2)) {\n// need to scale\nif (a != 0.0) {\np2 = p1 + (b / a * p0);\nq2 = q1 + (b / a * q0);\n} else if (b != 0) {\np2 = (a / b * p1) + p0;\nq2 = (a / b * q1) + q0;\n} else {\n// can not scale an convergent is unbounded.\nthrow new ConvergenceException(\n\"Continued fraction convergents diverged to +/- infinity for value {0}\",\nnew Object[] { Double.valueOf(x) });\n}\n}\ndouble r = p2 / q2;\nrelativeError = Math.abs(r / c - 1.0);\n\n// prepare for next iteration\nc = p2 / q2;\np0 = p1;\np1 = p2;\nq0 = q1;\nq1 = q2;\n}\n\nif (n >= maxIterations) {\nthrow new MaxIterationsExceededException(maxIterations,\n\"Continued fraction convergents failed to converge for value {0}\",\nnew Object[] { Double.valueOf(x) });\n}\n\nreturn c;\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.AbstractContinuousDistribution:inverseCumulativeProbability(D)D",
+            "method_body": "public double inverseCumulativeProbability(final double p)\nthrows MathException {\nif (p < 0.0 || p > 1.0) {\nthrow new IllegalArgumentException(\"p must be between 0.0 and 1.0, inclusive.\");\n}\n\n// by default, do simple root finding using bracketing and default solver.\n// subclasses can overide if there is a better method.\nUnivariateRealFunction rootFindingFunction =\nnew UnivariateRealFunction() {\n\npublic double value(double x) throws FunctionEvaluationException {\ntry {\nreturn cumulativeProbability(x) - p;\n} catch (MathException ex) {\nthrow new FunctionEvaluationException(x, ex.getPattern(), ex.getArguments(), ex);\n}\n}\n};\n\n// Try to bracket root, test domain endoints if this fails\ndouble lowerBound = getDomainLowerBound(p);\ndouble upperBound = getDomainUpperBound(p);\ndouble[] bracket = null;\ntry {\nbracket = UnivariateRealSolverUtils.bracket(\nrootFindingFunction, getInitialDomain(p),\nlowerBound, upperBound);\n}  catch (ConvergenceException ex) {\n/*\n* Check domain endpoints to see if one gives value that is within\n* the default solver's defaultAbsoluteAccuracy of 0 (will be the\n* case if density has bounded support and p is 0 or 1).\n*\n* TODO: expose the default solver, defaultAbsoluteAccuracy as\n* a constant.\n*/\nif (Math.abs(rootFindingFunction.value(lowerBound)) < 1E-6) {\nreturn lowerBound;\n}\nif (Math.abs(rootFindingFunction.value(upperBound)) < 1E-6) {\nreturn upperBound;\n}\n// Failed bracket convergence was not because of corner solution\nthrow new MathException(ex);\n}\n\n// find root\ndouble root = UnivariateRealSolverUtils.solve(rootFindingFunction,\nbracket[0],bracket[1]);\nreturn root;\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.FDistributionImpl:inverseCumulativeProbability(D)D",
+            "method_body": "public double inverseCumulativeProbability(final double p)\nthrows MathException {\nif (p == 0) {\nreturn 0d;\n}\nif (p == 1) {\nreturn Double.POSITIVE_INFINITY;\n}\nreturn super.inverseCumulativeProbability(p);\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.FDistributionImpl:getInitialDomain(D)D",
+            "method_body": "protected double getInitialDomain(double p) {\ndouble ret;\ndouble d = getDenominatorDegreesOfFreedom();\n// use mean\nret = d / (d - 2.0);\nreturn ret;\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.FDistributionImpl:cumulativeProbability(D)D",
+            "method_body": "public double cumulativeProbability(double x) throws MathException {\ndouble ret;\nif (x <= 0.0) {\nret = 0.0;\n} else {\ndouble n = getNumeratorDegreesOfFreedom();\ndouble m = getDenominatorDegreesOfFreedom();\n\nret = Beta.regularizedBeta((n * x) / (m + n * x),\n0.5 * n,\n0.5 * m);\n}\nreturn ret;\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.UnivariateRealSolverUtils:bracket(Lorg/apache/commons/math/analysis/UnivariateRealFunction;DDDI)[D",
+            "method_body": "public static double[] bracket(UnivariateRealFunction function,\ndouble initial, double lowerBound, double upperBound,\nint maximumIterations) throws ConvergenceException,\nFunctionEvaluationException {\n\nif (function == null) {\nthrow new IllegalArgumentException (\"function is null.\");\n}\nif (maximumIterations <= 0)  {\nthrow new IllegalArgumentException\n(\"bad value for maximumIterations: \" + maximumIterations);\n}\nif (initial < lowerBound || initial > upperBound || lowerBound >= upperBound) {\nthrow new IllegalArgumentException\n(\"Invalid endpoint parameters:  lowerBound=\" + lowerBound +\n\" initial=\" + initial + \" upperBound=\" + upperBound);\n}\ndouble a = initial;\ndouble b = initial;\ndouble fa;\ndouble fb;\nint numIterations = 0 ;\n\ndo {\na = Math.max(a - 1.0, lowerBound);\nb = Math.min(b + 1.0, upperBound);\nfa = function.value(a);\n\nfb = function.value(b);\nnumIterations++ ;\n} while ((fa * fb > 0.0) && (numIterations < maximumIterations) &&\n((a > lowerBound) || (b < upperBound)));\n\nif (fa * fb >= 0.0 ) {\nthrow new ConvergenceException\n(\"Number of iterations={0}, maximum iterations={1}, initial={2}, lower bound={3}, upper bound={4}, final a value={5}, final b value={6}, f(a)={7}, f(b)={8}\",\nnew Object[] { Integer.valueOf(numIterations), Integer.valueOf(maximumIterations),\nDouble.valueOf(initial), Double.valueOf(lowerBound), Double.valueOf(upperBound),\nDouble.valueOf(a), Double.valueOf(b), Double.valueOf(fa), Double.valueOf(fb) });\n}\n\nreturn new double[]{a, b};\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.math.special.Beta:regularizedBeta(DDDDI)D",
+            "method_body": "public static double regularizedBeta(double x, final double a,\nfinal double b, double epsilon, int maxIterations) throws MathException\n{\ndouble ret;\n\nif (Double.isNaN(x) || Double.isNaN(a) || Double.isNaN(b) || (x < 0) ||\n(x > 1) || (a <= 0.0) || (b <= 0.0))\n{\nret = Double.NaN;\n} else if (x > (a + 1.0) / (a + b + 2.0)) {\nret = 1.0 - regularizedBeta(1.0 - x, b, a, epsilon, maxIterations);\n} else {\nContinuedFraction fraction = new ContinuedFraction() {\n\nprivate static final long serialVersionUID = -7658917278956100597L;\n\nprotected double getB(int n, double x) {\ndouble ret;\ndouble m;\nif (n % 2 == 0) { // even\nm = n / 2.0;\nret = (m * (b - m) * x) /\n((a + (2 * m) - 1) * (a + (2 * m)));\n} else {\nm = (n - 1.0) / 2.0;\nret = -((a + m) * (a + b + m) * x) /\n((a + (2 * m)) * (a + (2 * m) + 1.0));\n}\nreturn ret;\n}\n\nprotected double getA(int n, double x) {\nreturn 1.0;\n}\n};\nret = Math.exp((a * Math.log(x)) + (b * Math.log(1.0 - x)) -\nMath.log(a) - logBeta(a, b, epsilon, maxIterations)) *\n1.0 / fraction.evaluate(x, epsilon, maxIterations);\n}\n\nreturn ret;\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.math.special.Gamma:logGamma(D)D",
+            "method_body": "public static double logGamma(double x) {\ndouble ret;\n\nif (Double.isNaN(x) || (x <= 0.0)) {\nret = Double.NaN;\n} else {\ndouble g = 607.0 / 128.0;\n\ndouble sum = 0.0;\nfor (int i = lanczos.length - 1; i > 0; --i) {\nsum = sum + (lanczos[i] / (x + i));\n}\nsum = sum + lanczos[0];\n\ndouble tmp = x + g + .5;\nret = ((x + .5) * Math.log(tmp)) - tmp +\nHALF_LOG_2_PI + Math.log(sum / x);\n}\n\nreturn ret;\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.FDistributionImpl:getDomainLowerBound(D)D",
+            "method_body": "protected double getDomainLowerBound(double p) {\nreturn 0.0;\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.FDistributionImpl:getDomainUpperBound(D)D",
+            "method_body": "protected double getDomainUpperBound(double p) {\nreturn Double.MAX_VALUE;\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.FDistributionImpl:getNumeratorDegreesOfFreedom()D",
+            "method_body": "public double getNumeratorDegreesOfFreedom() {\nreturn numeratorDegreesOfFreedom;\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.FDistributionImpl:getDenominatorDegreesOfFreedom()D",
+            "method_body": "public double getDenominatorDegreesOfFreedom() {\nreturn denominatorDegreesOfFreedom;\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.apache.commons.math.special.Beta:logBeta(DDDI)D",
+            "method_body": "public static double logBeta(double a, double b, double epsilon,\nint maxIterations) {\n\ndouble ret;\n\nif (Double.isNaN(a) || Double.isNaN(b) || (a <= 0.0) || (b <= 0.0)) {\nret = Double.NaN;\n} else {\nret = Gamma.logGamma(a) + Gamma.logGamma(b) -\nGamma.logGamma(a + b);\n}\n\nreturn ret;\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.apache.commons.math.analysis.UnivariateRealSolverUtils:bracket(Lorg/apache/commons/math/analysis/UnivariateRealFunction;DDD)[D",
+            "method_body": "public static double[] bracket(UnivariateRealFunction function,\ndouble initial, double lowerBound, double upperBound)\nthrows ConvergenceException, FunctionEvaluationException {\nreturn bracket( function, initial, lowerBound, upperBound,\nInteger.MAX_VALUE ) ;\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "org.apache.commons.math.special.Beta:regularizedBeta(DDD)D",
+            "method_body": "public static double regularizedBeta(double x, double a, double b)\nthrows MathException\n{\nreturn regularizedBeta(x, a, b, DEFAULT_EPSILON, Integer.MAX_VALUE);\n}",
+            "method_id": 14
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.FDistributionImpl:setNumeratorDegreesOfFreedom(D)V",
+            "method_body": "public void setNumeratorDegreesOfFreedom(double degreesOfFreedom) {\nif (degreesOfFreedom <= 0.0) {\nthrow new IllegalArgumentException(\n\"degrees of freedom must be positive.\");\n}\nthis.numeratorDegreesOfFreedom = degreesOfFreedom;\n}",
+            "method_id": 15
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.FDistributionImpl:setDenominatorDegreesOfFreedom(D)V",
+            "method_body": "public void setDenominatorDegreesOfFreedom(double degreesOfFreedom) {\nif (degreesOfFreedom <= 0.0) {\nthrow new IllegalArgumentException(\n\"degrees of freedom must be positive.\");\n}\nthis.denominatorDegreesOfFreedom = degreesOfFreedom;\n}",
+            "method_id": 16
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.FDistributionImpl:<init>(DD)V",
+            "method_body": "public FDistributionImpl(double numeratorDegreesOfFreedom,\ndouble denominatorDegreesOfFreedom) {\nsuper();\nsetNumeratorDegreesOfFreedom(numeratorDegreesOfFreedom);\nsetDenominatorDegreesOfFreedom(denominatorDegreesOfFreedom);\n}",
+            "method_id": 17
+        },
+        {
+            "method_signature": "org.apache.commons.math.special.Beta$1:getB(ID)D",
+            "method_body": "public static double regularizedBeta(double x, final double a,\nfinal double b, double epsilon, int maxIterations) throws MathException\n{\ndouble ret;\n\nif (Double.isNaN(x) || Double.isNaN(a) || Double.isNaN(b) || (x < 0) ||\n(x > 1) || (a <= 0.0) || (b <= 0.0))\n{\nret = Double.NaN;\n} else if (x > (a + 1.0) / (a + b + 2.0)) {\nret = 1.0 - regularizedBeta(1.0 - x, b, a, epsilon, maxIterations);\n} else {\nContinuedFraction fraction = new ContinuedFraction() {\n\nprivate static final long serialVersionUID = -7658917278956100597L;\n\nprotected double getB(int n, double x) {\ndouble ret;\ndouble m;\nif (n % 2 == 0) { // even\nm = n / 2.0;\nret = (m * (b - m) * x) /\n((a + (2 * m) - 1) * (a + (2 * m)));\n} else {\nm = (n - 1.0) / 2.0;\nret = -((a + m) * (a + b + m) * x) /\n((a + (2 * m)) * (a + (2 * m) + 1.0));\n}\nreturn ret;\n}\n\nprotected double getA(int n, double x) {\nreturn 1.0;\n}\n};\nret = Math.exp((a * Math.log(x)) + (b * Math.log(1.0 - x)) -\nMath.log(a) - logBeta(a, b, epsilon, maxIterations)) *\n1.0 / fraction.evaluate(x, epsilon, maxIterations);\n}\n\nreturn ret;\n}",
+            "method_id": 18
+        },
+        {
+            "method_signature": "org.apache.commons.math.special.Beta$1:getA(ID)D",
+            "method_body": "public static double regularizedBeta(double x, final double a,\nfinal double b, double epsilon, int maxIterations) throws MathException\n{\ndouble ret;\n\nif (Double.isNaN(x) || Double.isNaN(a) || Double.isNaN(b) || (x < 0) ||\n(x > 1) || (a <= 0.0) || (b <= 0.0))\n{\nret = Double.NaN;\n} else if (x > (a + 1.0) / (a + b + 2.0)) {\nret = 1.0 - regularizedBeta(1.0 - x, b, a, epsilon, maxIterations);\n} else {\nContinuedFraction fraction = new ContinuedFraction() {\n\nprivate static final long serialVersionUID = -7658917278956100597L;\n\nprotected double getB(int n, double x) {\ndouble ret;\ndouble m;\nif (n % 2 == 0) { // even\nm = n / 2.0;\nret = (m * (b - m) * x) /\n((a + (2 * m) - 1) * (a + (2 * m)));\n} else {\nm = (n - 1.0) / 2.0;\nret = -((a + m) * (a + b + m) * x) /\n((a + (2 * m)) * (a + (2 * m) + 1.0));\n}\nreturn ret;\n}\n\nprotected double getA(int n, double x) {\nreturn 1.0;\n}\n};\nret = Math.exp((a * Math.log(x)) + (b * Math.log(1.0 - x)) -\nMath.log(a) - logBeta(a, b, epsilon, maxIterations)) *\n1.0 / fraction.evaluate(x, epsilon, maxIterations);\n}\n\nreturn ret;\n}",
+            "method_id": 19
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.ContinuedFraction:<init>()V",
+            "method_body": "protected ContinuedFraction() {\nsuper();\n}",
+            "method_id": 20
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.AbstractContinuousDistribution:<init>()V",
+            "method_body": "protected AbstractContinuousDistribution() {\nsuper();\n}",
+            "method_id": 21
+        },
+        {
+            "method_signature": "org.apache.commons.math.distribution.AbstractDistribution:<init>()V",
+            "method_body": "protected AbstractDistribution() {\nsuper();\n}",
+            "method_id": 22
+        },
+        {
+            "method_signature": "org.apache.commons.math.special.Beta$1:<init>(DD)V",
+            "method_body": "public static double regularizedBeta(double x, final double a,\nif (Double.isNaN(x) || Double.isNaN(a) || Double.isNaN(b) || (x < 0) ||\n} else if (x > (a + 1.0) / (a + b + 2.0)) {\nContinuedFraction fraction = new ContinuedFraction() {\nif (n % 2 == 0) { // even\nm = n / 2.0;\nret = (m * (b - m) * x) /\nm = (n - 1.0) / 2.0;\nret = -((a + m) * (a + b + m) * x) /\nreturn ret;\nreturn 1.0;\nret = Math.exp((a * Math.log(x)) + (b * Math.log(1.0 - x)) -\nreturn ret;\n}",
+            "method_id": 23
+        }
+    ]
+}

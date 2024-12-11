@@ -1,0 +1,139 @@
+{
+    "bug_id": 11,
+    "test_id": 0,
+    "test_name": "org.apache.commons.cli.HelpFormatterTest.testPrintOptionWithEmptyArgNameUsage",
+    "test_body": "public void testPrintOptionWithEmptyArgNameUsage() {\nOption option = new Option(\"f\", true, null);\noption.setArgName(\"\");\noption.setRequired(true);\nOptions options = new Options();\noptions.addOption(option);\nStringWriter out = new StringWriter();\nHelpFormatter formatter = new HelpFormatter();\nformatter.printUsage(new PrintWriter(out), 80, \"app\", options);\nassertEquals(\"usage: app -f\" + EOL, out.toString());\n}\n",
+    "stack_trace": "junit.framework.ComparisonFailure: expected:<usage: app -f[]\n> but was:<usage: app -f[ <>]\n>\nat junit.framework.Assert.assertEquals(Assert.java:100)\nat junit.framework.Assert.assertEquals(Assert.java:107)\nat junit.framework.TestCase.assertEquals(TestCase.java:269)\nat org.apache.commons.cli.HelpFormatterTest.testPrintOptionWithEmptyArgNameUsage(HelpFormatterTest.java:273)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.cli.Option:hasLongOpt()Z",
+            "method_body": "public boolean hasLongOpt()\n{\nreturn (this.longOpt != null);\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.cli.HelpFormatter:rtrim(Ljava/lang/String;)Ljava/lang/String;",
+            "method_body": "protected String rtrim(String s)\n{\nif ((s == null) || (s.length() == 0))\n{\nreturn s;\n}\n\nint pos = s.length();\n\nwhile ((pos > 0) && Character.isWhitespace(s.charAt(pos - 1)))\n{\n--pos;\n}\n\nreturn s.substring(0, pos);\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.cli.HelpFormatter:printWrapped(Ljava/io/PrintWriter;IILjava/lang/String;)V",
+            "method_body": "public void printWrapped(PrintWriter pw, int width, int nextLineTabStop,\nString text)\n{\nStringBuffer sb = new StringBuffer(text.length());\n\nrenderWrappedText(sb, width, nextLineTabStop, text);\npw.println(sb.toString());\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.cli.Options:addOption(Lorg/apache/commons/cli/Option;)Lorg/apache/commons/cli/Options;",
+            "method_body": "public Options addOption(Option opt)\n{\nString key = opt.getKey();\n\n// add it to the long option list\nif (opt.hasLongOpt())\n{\nlongOpts.put(opt.getLongOpt(), opt);\n}\n\n// if the option is required add it to the required list\nif (opt.isRequired() )\n{\nif( requiredOpts.contains(key) ) {\nrequiredOpts.remove( requiredOpts.indexOf(key) );\n}\nrequiredOpts.add(key);\n}\n\nshortOpts.put(key, opt);\n\nreturn this;\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.cli.Option:getOpt()Ljava/lang/String;",
+            "method_body": "public String getOpt()\n{\nreturn this.opt;\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.cli.Option:isRequired()Z",
+            "method_body": "public boolean isRequired()\n{\nreturn this.required;\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.cli.OptionValidator:validateOption(Ljava/lang/String;)V",
+            "method_body": "static void validateOption(String opt)\nthrows IllegalArgumentException\n{\n// check that opt is not NULL\nif (opt == null)\n{\nreturn;\n}\n\n// handle the single character opt\nelse if (opt.length() == 1)\n{\nchar ch = opt.charAt(0);\n\nif (!isValidOpt(ch))\n{\nthrow new IllegalArgumentException(\"illegal option value '\" + ch\n+ \"'\");\n}\n}\n\n// handle the multi character opt\nelse\n{\nchar[] chars = opt.toCharArray();\n\nfor (int i = 0; i < chars.length; i++)\n{\nif (!isValidChar(chars[i]))\n{\nthrow new IllegalArgumentException(\n\"opt contains illegal character value '\" + chars[i]\n+ \"'\");\n}\n}\n}\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.cli.HelpFormatter:getOptionComparator()Ljava/util/Comparator;",
+            "method_body": "public Comparator getOptionComparator()\n{\nreturn this.optionComparator;\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.cli.HelpFormatter:renderWrappedText(Ljava/lang/StringBuffer;IILjava/lang/String;)Ljava/lang/StringBuffer;",
+            "method_body": "protected StringBuffer renderWrappedText(StringBuffer sb, int width,\nint nextLineTabStop, String text)\n{\nint pos = findWrapPos(text, width, 0);\n\nif (pos == -1)\n{\nsb.append(rtrim(text));\n\nreturn sb;\n}\nsb.append(rtrim(text.substring(0, pos))).append(defaultNewLine);\n\n// all following lines must be padded with nextLineTabStop space\n// characters\nfinal String padding = createPadding(nextLineTabStop);\n\nwhile (true)\n{\ntext = padding + text.substring(pos).trim();\npos = findWrapPos(text, width, 0);\n\nif (pos == -1)\n{\nsb.append(text);\n\nreturn sb;\n}\n\nsb.append(rtrim(text.substring(0, pos))).append(defaultNewLine);\n}\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.cli.Options:getOptions()Ljava/util/Collection;",
+            "method_body": "public Collection getOptions()\n{\nreturn Collections.unmodifiableCollection(helpOptions());\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.cli.Option:hasArg()Z",
+            "method_body": "public boolean hasArg()\n{\nreturn (this.numberOfArgs > 0) || (numberOfArgs == UNLIMITED_VALUES);\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.apache.commons.cli.Option:setRequired(Z)V",
+            "method_body": "public void setRequired(boolean required)\n{\nthis.required = required;\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.apache.commons.cli.HelpFormatter:findWrapPos(Ljava/lang/String;II)I",
+            "method_body": "protected int findWrapPos(String text, int width, int startPos)\n{\nint pos = -1;\n\n// the line ends before the max wrap pos or a new line char found\nif (((pos = text.indexOf('\\n', startPos)) != -1 && pos <= width)\n|| ((pos = text.indexOf('\\t', startPos)) != -1 && pos <= width))\n{\nreturn pos+1;\n}\nelse if ((startPos + width) >= text.length())\n{\nreturn -1;\n}\n\n\n// look for the last whitespace character before startPos+width\npos = startPos + width;\n\nchar c;\n\nwhile ((pos >= startPos) && ((c = text.charAt(pos)) != ' ')\n&& (c != '\\n') && (c != '\\r'))\n{\n--pos;\n}\n\n// if we found it - just return\nif (pos > startPos)\n{\nreturn pos;\n}\n\n// must look for the first whitespace chearacter after startPos\n// + width\npos = startPos + width;\n\nwhile ((pos <= text.length()) && ((c = text.charAt(pos)) != ' ')\n&& (c != '\\n') && (c != '\\r'))\n{\n++pos;\n}\n\nreturn (pos == text.length())        ? (-1) : pos;\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.apache.commons.cli.Option:getArgName()Ljava/lang/String;",
+            "method_body": "public String getArgName()\n{\nreturn this.argName;\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "org.apache.commons.cli.Option:<init>(Ljava/lang/String;ZLjava/lang/String;)V",
+            "method_body": "public Option(String opt, boolean hasArg, String description)\nthrows IllegalArgumentException\n{\nthis(opt, null, hasArg, description);\n}",
+            "method_id": 14
+        },
+        {
+            "method_signature": "org.apache.commons.cli.Option:getKey()Ljava/lang/String;",
+            "method_body": "String getKey()\n{\n// if 'opt' is null, then it is a 'long' option\nif (opt == null)\n{\nreturn this.longOpt;\n}\n\nreturn this.opt;\n}",
+            "method_id": 15
+        },
+        {
+            "method_signature": "org.apache.commons.cli.Options:helpOptions()Ljava/util/List;",
+            "method_body": "List helpOptions()\n{\nList opts = new ArrayList(shortOpts.values());\n\n// now look through the long opts to see if there are any Long-opt\n// only options\nIterator iter = longOpts.values().iterator();\n\nwhile (iter.hasNext())\n{\nObject item = iter.next();\n\nif (!opts.contains(item))\n{\nopts.add(item);\n}\n}\n\nreturn new ArrayList(opts);\n}",
+            "method_id": 16
+        },
+        {
+            "method_signature": "org.apache.commons.cli.Option:setArgName(Ljava/lang/String;)V",
+            "method_body": "public void setArgName(String argName)\n{\nthis.argName = argName;\n}",
+            "method_id": 17
+        },
+        {
+            "method_signature": "org.apache.commons.cli.HelpFormatter:<init>()V",
+            "method_body": "public static final int DEFAULT_WIDTH = 74;\npublic int defaultWidth = DEFAULT_WIDTH;\npublic int defaultLeftPad = DEFAULT_LEFT_PAD;\npublic int defaultDescPad = DEFAULT_DESC_PAD;\npublic String defaultSyntaxPrefix = DEFAULT_SYNTAX_PREFIX;\npublic String defaultNewLine = System.getProperty(\"line.separator\");\npublic String defaultOptPrefix = DEFAULT_OPT_PREFIX;\npublic String defaultLongOptPrefix = DEFAULT_LONG_OPT_PREFIX;\npublic String defaultArgName = DEFAULT_ARG_NAME;\nprotected Comparator optionComparator = new OptionComparator();\n}",
+            "method_id": 18
+        },
+        {
+            "method_signature": "org.apache.commons.cli.HelpFormatter:printUsage(Ljava/io/PrintWriter;ILjava/lang/String;Lorg/apache/commons/cli/Options;)V",
+            "method_body": "public void printUsage(PrintWriter pw, int width, String app,\nOptions options)\n{\n// initialise the string buffer\nStringBuffer buff = new StringBuffer(defaultSyntaxPrefix).append(app)\n.append(\" \");\n\n// create a list for processed option groups\nfinal Collection processedGroups = new ArrayList();\n\n// temp variable\nOption option;\n\nList optList = new ArrayList(options.getOptions());\nCollections.sort(optList, getOptionComparator() );\n// iterate over the options\nfor (Iterator i = optList.iterator(); i.hasNext();)\n{\n// get the next Option\noption = (Option) i.next();\n\n// check if the option is part of an OptionGroup\nOptionGroup group = options.getOptionGroup(option);\n\n// if the option is part of a group\nif (group != null)\n{\n// and if the group has not already been processed\nif (!processedGroups.contains(group))\n{\n// add the group to the processed list\nprocessedGroups.add(group);\n\n\n// add the usage clause\nappendOptionGroup(buff, group);\n}\n\n// otherwise the option was displayed in the group\n// previously so ignore it.\n}\n\n// if the Option is not part of an OptionGroup\nelse\n{\nappendOption(buff, option, option.isRequired());\n}\n\nif (i.hasNext())\n{\nbuff.append(\" \");\n}\n}\n\n\n// call printWrapped\nprintWrapped(pw, width, buff.toString().indexOf(' ') + 1,\nbuff.toString());\n}",
+            "method_id": 19
+        },
+        {
+            "method_signature": "org.apache.commons.cli.HelpFormatter:appendOption(Ljava/lang/StringBuffer;Lorg/apache/commons/cli/Option;Z)V",
+            "method_body": "private static void appendOption(final StringBuffer buff,\nfinal Option option,\nfinal boolean required)\n{\nif (!required)\n{\nbuff.append(\"[\");\n}\n\nif (option.getOpt() != null)\n{\nbuff.append(\"-\").append(option.getOpt());\n}\nelse\n{\nbuff.append(\"--\").append(option.getLongOpt());\n}\n\n// if the Option has a value\nif (option.hasArg() && (option.getArgName() != null))\n{\nbuff.append(\" <\").append(option.getArgName()).append(\">\");\n}\n\n// if the Option is not a required option\nif (!required)\n{\nbuff.append(\"]\");\n}\n}",
+            "method_id": 20
+        },
+        {
+            "method_signature": "org.apache.commons.cli.OptionValidator:isValidOpt(C)Z",
+            "method_body": "private static boolean isValidOpt(char c)\n{\nreturn (isValidChar(c) || (c == ' ') || (c == '?') || c == '@');\n}",
+            "method_id": 21
+        },
+        {
+            "method_signature": "org.apache.commons.cli.Options:<init>()V",
+            "method_body": "public Options()\n{\n// nothing to do\n}",
+            "method_id": 22
+        },
+        {
+            "method_signature": "org.apache.commons.cli.Option:<init>(Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;)V",
+            "method_body": "public Option(String opt, String longOpt, boolean hasArg,\nString description)\nthrows IllegalArgumentException\n{\n// ensure that the option is valid\nOptionValidator.validateOption(opt);\n\nthis.opt = opt;\nthis.longOpt = longOpt;\n\n// if hasArg is set then the number of arguments is 1\nif (hasArg)\n{\nthis.numberOfArgs = 1;\n}\n\nthis.description = description;\n}",
+            "method_id": 23
+        },
+        {
+            "method_signature": "org.apache.commons.cli.OptionValidator:isValidChar(C)Z",
+            "method_body": "private static boolean isValidChar(char c)\n{\nreturn Character.isJavaIdentifierPart(c);\n}",
+            "method_id": 24
+        },
+        {
+            "method_signature": "org.apache.commons.cli.Options:getOptionGroup(Lorg/apache/commons/cli/Option;)Lorg/apache/commons/cli/OptionGroup;",
+            "method_body": "public OptionGroup getOptionGroup(Option opt)\n{\nreturn (OptionGroup) optionGroups.get(opt.getKey());\n}",
+            "method_id": 25
+        }
+    ]
+}

@@ -1,0 +1,289 @@
+{
+    "bug_id": 54,
+    "test_id": 0,
+    "test_name": "org.apache.commons.math.dfp.DfpTest.testIssue567",
+    "test_body": "public void testIssue567() {\nDfpField field = new DfpField(100);\nAssert.assertEquals(0.0, field.getZero().toDouble(), MathUtils.SAFE_MIN);\nAssert.assertEquals(0.0, field.newDfp(0.0).toDouble(), MathUtils.SAFE_MIN);\nAssert.assertEquals(-1, FastMath.copySign(1, field.newDfp(-0.0).toDouble()), MathUtils.EPSILON);\nAssert.assertEquals(+1, FastMath.copySign(1, field.newDfp(+0.0).toDouble()), MathUtils.EPSILON);\n}\n",
+    "stack_trace": "junit.framework.AssertionFailedError: expected:<0.0> but was:<-Infinity>\nat org.junit.Assert.fail(Assert.java:88)\nat org.junit.Assert.failNotEquals(Assert.java:743)\nat org.junit.Assert.assertEquals(Assert.java:494)\nat org.junit.Assert.assertEquals(Assert.java:592)\nat org.apache.commons.math.dfp.DfpTest.testIssue567(DfpTest.java:1512)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:newInstance(J)Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "public Dfp newInstance(final long x) {\nreturn new Dfp(getField(), x);\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:isInfinite()Z",
+            "method_body": "public boolean isInfinite() {\nreturn nans == INFINITE;\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:toDouble()D",
+            "method_body": "public double toDouble() {\n\nif (isInfinite()) {\nif (lessThan(getZero())) {\nreturn Double.NEGATIVE_INFINITY;\n} else {\nreturn Double.POSITIVE_INFINITY;\n}\n}\n\nif (isNaN()) {\nreturn Double.NaN;\n}\n\nDfp y = this;\nboolean negate = false;\nif (lessThan(getZero())) {\ny = negate();\nnegate = true;\n}\n\n/* Find the exponent, first estimate by integer log10, then adjust.\nShould be faster than doing a natural logarithm.  */\nint exponent = (int)(y.log10() * 3.32);\nif (exponent < 0) {\nexponent--;\n}\n\nDfp tempDfp = DfpMath.pow(getTwo(), exponent);\nwhile (tempDfp.lessThan(y) || tempDfp.equals(y)) {\ntempDfp = tempDfp.multiply(2);\nexponent++;\n}\nexponent--;\n\n/* We have the exponent, now work on the mantissa */\n\ny = y.divide(DfpMath.pow(getTwo(), exponent));\nif (exponent > -1023) {\ny = y.subtract(getOne());\n}\n\nif (exponent < -1074) {\nreturn 0;\n}\n\nif (exponent > 1023) {\nreturn negate ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;\n}\n\n\ny = y.multiply(newInstance(4503599627370496l)).rint();\nString str = y.toString();\nstr = str.substring(0, str.length()-1);\nlong mantissa = Long.parseLong(str);\n\nif (mantissa == 4503599627370496L) {\n// Handle special case where we round up to next power of two\nmantissa = 0;\nexponent++;\n}\n\n/* Its going to be subnormal, so make adjustments */\nif (exponent <= -1023) {\nexponent--;\n}\n\nwhile (exponent < -1023) {\nexponent++;\nmantissa >>>= 1;\n}\n\nlong bits = mantissa | ((exponent + 1023L) << 52);\ndouble x = Double.longBitsToDouble(bits);\n\nif (negate) {\nx = -x;\n}\n\nreturn x;\n\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.DfpField:getTwo()Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "public Dfp getTwo() {\nreturn two;\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:getTwo()Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "public Dfp getTwo() {\nreturn field.getTwo();\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.DfpMath:pow(Lorg/apache/commons/math/dfp/Dfp;I)Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "public static Dfp pow(Dfp base, int a)\n{\nboolean invert = false;\n\nDfp result = base.getOne();\n\nif (a == 0) {\n// Special case\nreturn result;\n}\n\nif (a < 0) {\ninvert = true;\na = -a;\n}\n\n// Exponentiate by successive squaring\ndo {\nDfp r = new Dfp(base);\nDfp prevr;\nint trial = 1;\nint prevtrial;\n\ndo {\nprevr = new Dfp(r);\nprevtrial = trial;\nr = r.multiply(r);\ntrial = trial * 2;\n} while (a>trial);\n\nr = prevr;\ntrial = prevtrial;\n\na = a - trial;\nresult = result.multiply(r);\n\n} while (a >= 1);\n\nif (invert) {\nresult = base.getOne().divide(result);\n}\n\nreturn base.newInstance(result);\n\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:log10()I",
+            "method_body": "public int log10()  {\nif (mant[mant.length-1] > 1000) {\nreturn exp * 4 - 1;\n}\nif (mant[mant.length-1] > 100) {\nreturn exp * 4 - 2;\n}\nif (mant[mant.length-1] > 10) {\nreturn exp * 4 - 3;\n}\nreturn exp * 4 - 4;\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.DfpField:newDfp(BB)Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "public Dfp newDfp(final byte sign, final byte nans) {\nreturn new Dfp(this, sign, nans);\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:<init>(Lorg/apache/commons/math/dfp/DfpField;BB)V",
+            "method_body": "protected Dfp(final DfpField field, final byte sign, final byte nans) {\nthis.field = field;\nthis.mant    = new int[field.getRadixDigits()];\nthis.sign    = sign;\nthis.exp     = 0;\nthis.nans    = nans;\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:rint()Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "public Dfp rint() {\nreturn trunc(DfpField.RoundingMode.ROUND_HALF_EVEN);\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.DfpField:newDfp(Ljava/lang/String;)Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "public Dfp newDfp(final String s) {\nreturn new Dfp(this, s);\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:trunc(Lorg/apache/commons/math/dfp/DfpField$RoundingMode;)Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "protected Dfp trunc(final DfpField.RoundingMode rmode) {\nboolean changed = false;\n\nif (isNaN()) {\nreturn newInstance(this);\n}\n\nif (nans == INFINITE) {\nreturn newInstance(this);\n}\n\nif (mant[mant.length-1] == 0) {\n// a is zero\nreturn newInstance(this);\n}\n\n/* If the exponent is less than zero then we can certainly\n* return zero */\nif (exp < 0) {\nfield.setIEEEFlagsBits(DfpField.FLAG_INEXACT);\nDfp result = newInstance(getZero());\nresult = dotrap(DfpField.FLAG_INEXACT, TRUNC_TRAP, this, result);\nreturn result;\n}\n\n/* If the exponent is greater than or equal to digits, then it\n* must already be an integer since there is no precision left\n* for any fractional part */\n\nif (exp >= mant.length) {\nreturn newInstance(this);\n}\n\n/* General case:  create another dfp, result, that contains the\n* a with the fractional part lopped off.  */\n\nDfp result = newInstance(this);\nfor (int i = 0; i < mant.length-result.exp; i++) {\nchanged |= result.mant[i] != 0;\nresult.mant[i] = 0;\n}\n\nif (changed) {\nswitch (rmode) {\ncase ROUND_FLOOR:\nif (result.sign == -1) {\n// then we must increment the mantissa by one\nresult = result.add(newInstance(-1));\n}\nbreak;\n\ncase ROUND_CEIL:\nif (result.sign == 1) {\n// then we must increment the mantissa by one\nresult = result.add(getOne());\n}\nbreak;\n\ncase ROUND_HALF_EVEN:\ndefault:\nfinal Dfp half = newInstance(\"0.5\");\nDfp a = subtract(result);  // difference between this and result\na.sign = 1;            // force positive (take abs)\nif (a.greaterThan(half)) {\na = newInstance(getOne());\na.sign = sign;\nresult = result.add(a);\n}\n\n/** If exactly equal to 1/2 and odd then increment */\nif (a.equals(half) && result.exp > 0 && (result.mant[mant.length-result.exp]&1) != 0) {\na = newInstance(getOne());\na.sign = sign;\nresult = result.add(a);\n}\nbreak;\n}\n\nfield.setIEEEFlagsBits(DfpField.FLAG_INEXACT);  // signal inexact\nresult = dotrap(DfpField.FLAG_INEXACT, TRUNC_TRAP, this, result);\nreturn result;\n}\n\nreturn result;\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.DfpField:clearIEEEFlags()V",
+            "method_body": "public void clearIEEEFlags() {\nieeeFlags = 0;\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.DfpField:getOne()Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "public Dfp getOne() {\nreturn one;\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:getOne()Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "public Dfp getOne() {\nreturn field.getOne();\n}",
+            "method_id": 14
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.DfpField:<init>(I)V",
+            "method_body": "public DfpField(final int decimalDigits) {\nthis(decimalDigits, true);\n}",
+            "method_id": 15
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.DfpField:<init>(IZ)V",
+            "method_body": "private DfpField(final int decimalDigits, final boolean computeConstants) {\n\nthis.radixDigits = (decimalDigits < 13) ? 4 : (decimalDigits + 3) / 4;\nthis.rMode       = RoundingMode.ROUND_HALF_EVEN;\nthis.ieeeFlags   = 0;\nthis.zero        = new Dfp(this, 0);\nthis.one         = new Dfp(this, 1);\nthis.two         = new Dfp(this, 2);\n\nif (computeConstants) {\n// set up transcendental constants\nsynchronized (DfpField.class) {\n\n// as a heuristic to circumvent Table-Maker's Dilemma, we set the string\n// representation of the constants to be at least 3 times larger than the\n// number of decimal digits, also as an attempt to really compute these\n// constants only once, we set a minimum number of digits\ncomputeStringConstants((decimalDigits < 67) ? 200 : (3 * decimalDigits));\n\n// set up the constants at current field accuracy\nsqr2           = new Dfp(this, sqr2String);\nsqr2Split      = split(sqr2String);\nsqr2Reciprocal = new Dfp(this, sqr2ReciprocalString);\nsqr3           = new Dfp(this, sqr3String);\nsqr3Reciprocal = new Dfp(this, sqr3ReciprocalString);\npi             = new Dfp(this, piString);\npiSplit        = split(piString);\ne              = new Dfp(this, eString);\neSplit         = split(eString);\nln2            = new Dfp(this, ln2String);\nln2Split       = split(ln2String);\nln5            = new Dfp(this, ln5String);\nln5Split       = split(ln5String);\nln10           = new Dfp(this, ln10String);\n\n}\n} else {\n// dummy settings for unused constants\nsqr2           = null;\nsqr2Split      = null;\nsqr2Reciprocal = null;\nsqr3           = null;\nsqr3Reciprocal = null;\npi             = null;\npiSplit        = null;\ne              = null;\neSplit         = null;\nln2            = null;\nln2Split       = null;\nln5            = null;\nln5Split       = null;\nln10           = null;\n}\n\n}",
+            "method_id": 16
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.DfpField:getRadixDigits()I",
+            "method_body": "public int getRadixDigits() {\nreturn radixDigits;\n}",
+            "method_id": 17
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.DfpField:getRoundingMode()Lorg/apache/commons/math/dfp/DfpField$RoundingMode;",
+            "method_body": "public RoundingMode getRoundingMode() {\nreturn rMode;\n}",
+            "method_id": 18
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.DfpField:setIEEEFlagsBits(I)V",
+            "method_body": "public void setIEEEFlagsBits(final int bits) {\nieeeFlags |= bits & (FLAG_INVALID | FLAG_DIV_ZERO | FLAG_OVERFLOW | FLAG_UNDERFLOW | FLAG_INEXACT);\n}",
+            "method_id": 19
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.DfpField:getZero()Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "public Dfp getZero() {\nreturn zero;\n}",
+            "method_id": 20
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.DfpField:split(Ljava/lang/String;)[Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "private Dfp[] split(final String a) {\nDfp result[] = new Dfp[2];\nboolean leading = true;\nint sp = 0;\nint sig = 0;\n\nchar[] buf = new char[a.length()];\n\nfor (int i = 0; i < buf.length; i++) {\nbuf[i] = a.charAt(i);\n\nif (buf[i] >= '1' && buf[i] <= '9') {\nleading = false;\n}\n\nif (buf[i] == '.') {\nsig += (400 - sig) % 4;\nleading = false;\n}\n\nif (sig == (radixDigits / 2) * 4) {\nsp = i;\nbreak;\n}\n\nif (buf[i] >= '0' && buf[i] <= '9' && !leading) {\nsig ++;\n}\n}\n\nresult[0] = new Dfp(this, new String(buf, 0, sp));\n\nfor (int i = 0; i < buf.length; i++) {\nbuf[i] = a.charAt(i);\nif (buf[i] >= '0' && buf[i] <= '9' && i < sp) {\nbuf[i] = '0';\n}\n}\n\nresult[1] = new Dfp(this, new String(buf));\n\nreturn result;\n\n}",
+            "method_id": 21
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.DfpField:computeStringConstants(I)V",
+            "method_body": "private static void computeStringConstants(final int highPrecisionDecimalDigits) {\nif (sqr2String == null || sqr2String.length() < highPrecisionDecimalDigits - 3) {\n\n// recompute the string representation of the transcendental constants\nfinal DfpField highPrecisionField = new DfpField(highPrecisionDecimalDigits, false);\nfinal Dfp highPrecisionOne        = new Dfp(highPrecisionField, 1);\nfinal Dfp highPrecisionTwo        = new Dfp(highPrecisionField, 2);\nfinal Dfp highPrecisionThree      = new Dfp(highPrecisionField, 3);\n\nfinal Dfp highPrecisionSqr2 = highPrecisionTwo.sqrt();\nsqr2String           = highPrecisionSqr2.toString();\nsqr2ReciprocalString = highPrecisionOne.divide(highPrecisionSqr2).toString();\n\nfinal Dfp highPrecisionSqr3 = highPrecisionThree.sqrt();\nsqr3String           = highPrecisionSqr3.toString();\nsqr3ReciprocalString = highPrecisionOne.divide(highPrecisionSqr3).toString();\n\npiString   = computePi(highPrecisionOne, highPrecisionTwo, highPrecisionThree).toString();\neString    = computeExp(highPrecisionOne, highPrecisionOne).toString();\nln2String  = computeLn(highPrecisionTwo, highPrecisionOne, highPrecisionTwo).toString();\nln5String  = computeLn(new Dfp(highPrecisionField, 5),  highPrecisionOne, highPrecisionTwo).toString();\nln10String = computeLn(new Dfp(highPrecisionField, 10), highPrecisionOne, highPrecisionTwo).toString();\n\n}\n}",
+            "method_id": 22
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.DfpField:computePi(Lorg/apache/commons/math/dfp/Dfp;Lorg/apache/commons/math/dfp/Dfp;Lorg/apache/commons/math/dfp/Dfp;)Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "private static Dfp computePi(final Dfp one, final Dfp two, final Dfp three) {\n\nDfp sqrt2   = two.sqrt();\nDfp yk      = sqrt2.subtract(one);\nDfp four    = two.add(two);\nDfp two2kp3 = two;\nDfp ak      = two.multiply(three.subtract(two.multiply(sqrt2)));\n\n// The formula converges quartically. This means the number of correct\n// digits is multiplied by 4 at each iteration! Five iterations are\n// sufficient for about 160 digits, eight iterations give about\n// 10000 digits (this has been checked) and 20 iterations more than\n// 160 billions of digits (this has NOT been checked).\n// So the limit here is considered sufficient for most purposes ...\nfor (int i = 1; i < 20; i++) {\nfinal Dfp ykM1 = yk;\n\nfinal Dfp y2         = yk.multiply(yk);\nfinal Dfp oneMinusY4 = one.subtract(y2.multiply(y2));\nfinal Dfp s          = oneMinusY4.sqrt().sqrt();\nyk = one.subtract(s).divide(one.add(s));\n\ntwo2kp3 = two2kp3.multiply(four);\n\nfinal Dfp p = one.add(yk);\nfinal Dfp p2 = p.multiply(p);\nak = ak.multiply(p2.multiply(p2)).subtract(two2kp3.multiply(yk).multiply(one.add(yk).add(yk.multiply(yk))));\n\nif (yk.equals(ykM1)) {\nbreak;\n}\n}\n\nreturn one.divide(ak);\n\n}",
+            "method_id": 23
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.DfpField:computeExp(Lorg/apache/commons/math/dfp/Dfp;Lorg/apache/commons/math/dfp/Dfp;)Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "public static Dfp computeExp(final Dfp a, final Dfp one) {\n\nDfp y  = new Dfp(one);\nDfp py = new Dfp(one);\nDfp f  = new Dfp(one);\nDfp fi = new Dfp(one);\nDfp x  = new Dfp(one);\n\nfor (int i = 0; i < 10000; i++) {\nx = x.multiply(a);\ny = y.add(x.divide(f));\nfi = fi.add(one);\nf = f.multiply(fi);\nif (y.equals(py)) {\nbreak;\n}\npy = new Dfp(y);\n}\n\nreturn y;\n\n}",
+            "method_id": 24
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.DfpField:computeLn(Lorg/apache/commons/math/dfp/Dfp;Lorg/apache/commons/math/dfp/Dfp;Lorg/apache/commons/math/dfp/Dfp;)Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "public static Dfp computeLn(final Dfp a, final Dfp one, final Dfp two) {\n\nint den = 1;\nDfp x = a.add(new Dfp(a.getField(), -1)).divide(a.add(one));\n\nDfp y = new Dfp(x);\nDfp num = new Dfp(x);\nDfp py = new Dfp(y);\nfor (int i = 0; i < 10000; i++) {\nnum = num.multiply(x);\nnum = num.multiply(x);\nden = den + 2;\nDfp t = num.divide(den);\ny = y.add(t);\nif (y.equals(py)) {\nbreak;\n}\npy = new Dfp(y);\n}\n\nreturn y.multiply(two);\n\n}",
+            "method_id": 25
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:<init>(Lorg/apache/commons/math/dfp/DfpField;I)V",
+            "method_body": "protected Dfp(final DfpField field, int x) {\nthis(field, (long) x);\n}",
+            "method_id": 26
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:<init>(Lorg/apache/commons/math/dfp/DfpField;J)V",
+            "method_body": "protected Dfp(final DfpField field, long x) {\n\n// initialize as if 0\nmant = new int[field.getRadixDigits()];\nnans = FINITE;\nthis.field = field;\n\nboolean isLongMin = false;\nif (x == Long.MIN_VALUE) {\n// special case for Long.MIN_VALUE (-9223372036854775808)\n// we must shift it before taking its absolute value\nisLongMin = true;\n++x;\n}\n\n// set the sign\nif (x < 0) {\nsign = -1;\nx = -x;\n} else {\nsign = 1;\n}\n\nexp = 0;\nwhile (x != 0) {\nSystem.arraycopy(mant, mant.length - exp, mant, mant.length - 1 - exp, exp);\nmant[mant.length - 1] = (int) (x % RADIX);\nx /= RADIX;\nexp++;\n}\n\nif (isLongMin) {\n// remove the shift added for Long.MIN_VALUE\n// we know in this case that fixing the last digit is sufficient\nfor (int i = 0; i < mant.length - 1; i++) {\nif (mant[i] != 0) {\nmant[i]++;\nbreak;\n}\n}\n}\n}",
+            "method_id": 27
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:<init>(Lorg/apache/commons/math/dfp/Dfp;)V",
+            "method_body": "public Dfp(final Dfp d) {\nmant  = d.mant.clone();\nsign  = d.sign;\nexp   = d.exp;\nnans  = d.nans;\nfield = d.field;\n}",
+            "method_id": 28
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:<init>(Lorg/apache/commons/math/dfp/DfpField;Ljava/lang/String;)V",
+            "method_body": "protected Dfp(final DfpField field, final String s) {\n\n// initialize as if 0\nmant = new int[field.getRadixDigits()];\nsign = 1;\nexp = 0;\nnans = FINITE;\nthis.field = field;\n\nboolean decimalFound = false;\nfinal int rsize = 4;   // size of radix in decimal digits\nfinal int offset = 4;  // Starting offset into Striped\nfinal char[] striped = new char[getRadixDigits() * rsize + offset * 2];\n\n// Check some special cases\nif (s.equals(POS_INFINITY_STRING)) {\nsign = (byte) 1;\nnans = INFINITE;\nreturn;\n}\n\nif (s.equals(NEG_INFINITY_STRING)) {\nsign = (byte) -1;\nnans = INFINITE;\nreturn;\n}\n\nif (s.equals(NAN_STRING)) {\nsign = (byte) 1;\nnans = QNAN;\nreturn;\n}\n\n// Check for scientific notation\nint p = s.indexOf(\"e\");\nif (p == -1) { // try upper case?\np = s.indexOf(\"E\");\n}\n\nfinal String fpdecimal;\nint sciexp = 0;\nif (p != -1) {\n// scientific notation\nfpdecimal = s.substring(0, p);\nString fpexp = s.substring(p+1);\nboolean negative = false;\n\nfor (int i=0; i<fpexp.length(); i++)\n{\nif (fpexp.charAt(i) == '-')\n{\nnegative = true;\ncontinue;\n}\nif (fpexp.charAt(i) >= '0' && fpexp.charAt(i) <= '9')\nsciexp = sciexp * 10 + fpexp.charAt(i) - '0';\n}\n\nif (negative) {\nsciexp = -sciexp;\n}\n} else {\n// normal case\nfpdecimal = s;\n}\n\n// If there is a minus sign in the number then it is negative\nif (fpdecimal.indexOf(\"-\") !=  -1) {\nsign = -1;\n}\n\n// First off, find all of the leading zeros, trailing zeros, and significant digits\np = 0;\n\n// Move p to first significant digit\nint decimalPos = 0;\nfor (;;) {\nif (fpdecimal.charAt(p) >= '1' && fpdecimal.charAt(p) <= '9') {\nbreak;\n}\n\nif (decimalFound && fpdecimal.charAt(p) == '0') {\ndecimalPos--;\n}\n\nif (fpdecimal.charAt(p) == '.') {\ndecimalFound = true;\n}\n\np++;\n\nif (p == fpdecimal.length()) {\nbreak;\n}\n}\n\n// Copy the string onto Stripped\nint q = offset;\nstriped[0] = '0';\nstriped[1] = '0';\nstriped[2] = '0';\nstriped[3] = '0';\nint significantDigits=0;\nfor(;;) {\nif (p == (fpdecimal.length())) {\nbreak;\n}\n\n// Don't want to run pass the end of the array\nif (q == mant.length*rsize+offset+1) {\nbreak;\n}\n\nif (fpdecimal.charAt(p) == '.') {\ndecimalFound = true;\ndecimalPos = significantDigits;\np++;\ncontinue;\n}\n\nif (fpdecimal.charAt(p) < '0' || fpdecimal.charAt(p) > '9') {\np++;\ncontinue;\n}\n\nstriped[q] = fpdecimal.charAt(p);\nq++;\np++;\nsignificantDigits++;\n}\n\n\n// If the decimal point has been found then get rid of trailing zeros.\nif (decimalFound && q != offset) {\nfor (;;) {\nq--;\nif (q == offset) {\nbreak;\n}\nif (striped[q] == '0') {\nsignificantDigits--;\n} else {\nbreak;\n}\n}\n}\n\n// special case of numbers like \"0.00000\"\nif (decimalFound && significantDigits == 0) {\ndecimalPos = 0;\n}\n\n// Implicit decimal point at end of number if not present\nif (!decimalFound) {\ndecimalPos = q-offset;\n}\n\n// Find the number of significant trailing zeros\nq = offset;  // set q to point to first sig digit\np = significantDigits-1+offset;\n\nint trailingZeros = 0;\nwhile (p > q) {\nif (striped[p] != '0') {\nbreak;\n}\ntrailingZeros++;\np--;\n}\n\n// Make sure the decimal is on a mod 10000 boundary\nint i = ((rsize * 100) - decimalPos - sciexp % rsize) % rsize;\nq -= i;\ndecimalPos += i;\n\n// Make the mantissa length right by adding zeros at the end if necessary\nwhile ((p - q) < (mant.length * rsize)) {\nfor (i = 0; i < rsize; i++) {\nstriped[++p] = '0';\n}\n}\n\n// Ok, now we know how many trailing zeros there are,\n// and where the least significant digit is\nfor (i = mant.length - 1; i >= 0; i--) {\nmant[i] = (striped[q]   - '0') * 1000 +\n(striped[q+1] - '0') * 100  +\n(striped[q+2] - '0') * 10   +\n(striped[q+3] - '0');\nq += 4;\n}\n\n\nexp = (decimalPos+sciexp) / rsize;\n\nif (q < striped.length) {\n// Is there possible another digit?\nround((striped[q] - '0')*1000);\n}\n\n}",
+            "method_id": 29
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:newInstance(Lorg/apache/commons/math/dfp/Dfp;)Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "public Dfp newInstance(final Dfp d) {\n\n// make sure we don't mix number with different precision\nif (field.getRadixDigits() != d.field.getRadixDigits()) {\nfield.setIEEEFlagsBits(DfpField.FLAG_INVALID);\nfinal Dfp result = newInstance(getZero());\nresult.nans = QNAN;\nreturn dotrap(DfpField.FLAG_INVALID, NEW_INSTANCE_TRAP, d, result);\n}\n\nreturn new Dfp(d);\n\n}",
+            "method_id": 30
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:getField()Lorg/apache/commons/math/dfp/DfpField;",
+            "method_body": "public DfpField getField() {\nreturn field;\n}",
+            "method_id": 31
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:getRadixDigits()I",
+            "method_body": "public int getRadixDigits() {\nreturn field.getRadixDigits();\n}",
+            "method_id": 32
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:getZero()Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "public Dfp getZero() {\nreturn field.getZero();\n}",
+            "method_id": 33
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:shiftLeft()V",
+            "method_body": "protected void shiftLeft() {\nfor (int i = mant.length - 1; i > 0; i--) {\nmant[i] = mant[i-1];\n}\nmant[0] = 0;\nexp--;\n}",
+            "method_id": 34
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:shiftRight()V",
+            "method_body": "protected void shiftRight() {\nfor (int i = 0; i < mant.length - 1; i++) {\nmant[i] = mant[i+1];\n}\nmant[mant.length - 1] = 0;\nexp++;\n}",
+            "method_id": 35
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:align(I)I",
+            "method_body": "protected int align(int e) {\nint lostdigit = 0;\nboolean inexact = false;\n\nint diff = exp - e;\n\nint adiff = diff;\nif (adiff < 0) {\nadiff = -adiff;\n}\n\nif (diff == 0) {\nreturn 0;\n}\n\nif (adiff > (mant.length + 1)) {\n// Special case\nArrays.fill(mant, 0);\nexp = e;\n\nfield.setIEEEFlagsBits(DfpField.FLAG_INEXACT);\ndotrap(DfpField.FLAG_INEXACT, ALIGN_TRAP, this, this);\n\nreturn 0;\n}\n\nfor (int i = 0; i < adiff; i++) {\nif (diff < 0) {\n/* Keep track of loss -- only signal inexact after losing 2 digits.\n* the first lost digit is returned to add() and may be incorporated\n* into the result.\n*/\nif (lostdigit != 0) {\ninexact = true;\n}\n\nlostdigit = mant[0];\n\nshiftRight();\n} else {\nshiftLeft();\n}\n}\n\nif (inexact) {\nfield.setIEEEFlagsBits(DfpField.FLAG_INEXACT);\ndotrap(DfpField.FLAG_INEXACT, ALIGN_TRAP, this, this);\n}\n\nreturn lostdigit;\n\n}",
+            "method_id": 36
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:lessThan(Lorg/apache/commons/math/dfp/Dfp;)Z",
+            "method_body": "public boolean lessThan(final Dfp x) {\n\n// make sure we don't mix number with different precision\nif (field.getRadixDigits() != x.field.getRadixDigits()) {\nfield.setIEEEFlagsBits(DfpField.FLAG_INVALID);\nfinal Dfp result = newInstance(getZero());\nresult.nans = QNAN;\ndotrap(DfpField.FLAG_INVALID, LESS_THAN_TRAP, x, result);\nreturn false;\n}\n\n/* if a nan is involved, signal invalid and return false */\nif (isNaN() || x.isNaN()) {\nfield.setIEEEFlagsBits(DfpField.FLAG_INVALID);\ndotrap(DfpField.FLAG_INVALID, LESS_THAN_TRAP, x, newInstance(getZero()));\nreturn false;\n}\n\nreturn compare(this, x) < 0;\n}",
+            "method_id": 37
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:greaterThan(Lorg/apache/commons/math/dfp/Dfp;)Z",
+            "method_body": "public boolean greaterThan(final Dfp x) {\n\n// make sure we don't mix number with different precision\nif (field.getRadixDigits() != x.field.getRadixDigits()) {\nfield.setIEEEFlagsBits(DfpField.FLAG_INVALID);\nfinal Dfp result = newInstance(getZero());\nresult.nans = QNAN;\ndotrap(DfpField.FLAG_INVALID, GREATER_THAN_TRAP, x, result);\nreturn false;\n}\n\n/* if a nan is involved, signal invalid and return false */\nif (isNaN() || x.isNaN()) {\nfield.setIEEEFlagsBits(DfpField.FLAG_INVALID);\ndotrap(DfpField.FLAG_INVALID, GREATER_THAN_TRAP, x, newInstance(getZero()));\nreturn false;\n}\n\nreturn compare(this, x) > 0;\n}",
+            "method_id": 38
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:isNaN()Z",
+            "method_body": "public boolean isNaN() {\nreturn (nans == QNAN) || (nans == SNAN);\n}",
+            "method_id": 39
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:equals(Ljava/lang/Object;)Z",
+            "method_body": "public boolean equals(final Object other) {\n\nif (other instanceof Dfp) {\nfinal Dfp x = (Dfp) other;\nif (isNaN() || x.isNaN() || field.getRadixDigits() != x.field.getRadixDigits()) {\nreturn false;\n}\n\nreturn compare(this, x) == 0;\n}\n\nreturn false;\n\n}",
+            "method_id": 40
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:unequal(Lorg/apache/commons/math/dfp/Dfp;)Z",
+            "method_body": "public boolean unequal(final Dfp x) {\nif (isNaN() || x.isNaN() || field.getRadixDigits() != x.field.getRadixDigits()) {\nreturn false;\n}\n\nreturn greaterThan(x) || lessThan(x);\n}",
+            "method_id": 41
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:compare(Lorg/apache/commons/math/dfp/Dfp;Lorg/apache/commons/math/dfp/Dfp;)I",
+            "method_body": "private static int compare(final Dfp a, final Dfp b) {\n// Ignore the sign of zero\nif (a.mant[a.mant.length - 1] == 0 && b.mant[b.mant.length - 1] == 0 &&\na.nans == FINITE && b.nans == FINITE) {\nreturn 0;\n}\n\nif (a.sign != b.sign) {\nif (a.sign == -1) {\nreturn -1;\n} else {\nreturn 1;\n}\n}\n\n// deal with the infinities\nif (a.nans == INFINITE && b.nans == FINITE) {\nreturn a.sign;\n}\n\nif (a.nans == FINITE && b.nans == INFINITE) {\nreturn -b.sign;\n}\n\nif (a.nans == INFINITE && b.nans == INFINITE) {\nreturn 0;\n}\n\n// Handle special case when a or b is zero, by ignoring the exponents\nif (b.mant[b.mant.length-1] != 0 && a.mant[b.mant.length-1] != 0) {\nif (a.exp < b.exp) {\nreturn -a.sign;\n}\n\nif (a.exp > b.exp) {\nreturn a.sign;\n}\n}\n\n// compare the mantissas\nfor (int i = a.mant.length - 1; i >= 0; i--) {\nif (a.mant[i] > b.mant[i]) {\nreturn a.sign;\n}\n\nif (a.mant[i] < b.mant[i]) {\nreturn -a.sign;\n}\n}\n\nreturn 0;\n\n}",
+            "method_id": 42
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:complement(I)I",
+            "method_body": "protected int complement(int extra) {\n\nextra = RADIX-extra;\nfor (int i = 0; i < mant.length; i++) {\nmant[i] = RADIX-mant[i]-1;\n}\n\nint rh = extra / RADIX;\nextra = extra - rh * RADIX;\nfor (int i = 0; i < mant.length; i++) {\nfinal int r = mant[i] + rh;\nrh = r / RADIX;\nmant[i] = r - rh * RADIX;\n}\n\nreturn extra;\n}",
+            "method_id": 43
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:add(Lorg/apache/commons/math/dfp/Dfp;)Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "public Dfp add(final Dfp x) {\n\n// make sure we don't mix number with different precision\nif (field.getRadixDigits() != x.field.getRadixDigits()) {\nfield.setIEEEFlagsBits(DfpField.FLAG_INVALID);\nfinal Dfp result = newInstance(getZero());\nresult.nans = QNAN;\nreturn dotrap(DfpField.FLAG_INVALID, ADD_TRAP, x, result);\n}\n\n/* handle special cases */\nif (nans != FINITE || x.nans != FINITE) {\nif (isNaN()) {\nreturn this;\n}\n\nif (x.isNaN()) {\nreturn x;\n}\n\nif (nans == INFINITE && x.nans == FINITE) {\nreturn this;\n}\n\nif (x.nans == INFINITE && nans == FINITE) {\nreturn x;\n}\n\nif (x.nans == INFINITE && nans == INFINITE && sign == x.sign) {\nreturn x;\n}\n\nif (x.nans == INFINITE && nans == INFINITE && sign != x.sign) {\nfield.setIEEEFlagsBits(DfpField.FLAG_INVALID);\nDfp result = newInstance(getZero());\nresult.nans = QNAN;\nresult = dotrap(DfpField.FLAG_INVALID, ADD_TRAP, x, result);\nreturn result;\n}\n}\n\n/* copy this and the arg */\nDfp a = newInstance(this);\nDfp b = newInstance(x);\n\n/* initialize the result object */\nDfp result = newInstance(getZero());\n\n/* Make all numbers positive, but remember their sign */\nfinal byte asign = a.sign;\nfinal byte bsign = b.sign;\n\na.sign = 1;\nb.sign = 1;\n\n/* The result will be signed like the arg with greatest magnitude */\nbyte rsign = bsign;\nif (compare(a, b) > 0) {\nrsign = asign;\n}\n\n/* Handle special case when a or b is zero, by setting the exponent\nof the zero number equal to the other one.  This avoids an alignment\nwhich would cause catastropic loss of precision */\nif (b.mant[mant.length-1] == 0) {\nb.exp = a.exp;\n}\n\nif (a.mant[mant.length-1] == 0) {\na.exp = b.exp;\n}\n\n/* align number with the smaller exponent */\nint aextradigit = 0;\nint bextradigit = 0;\nif (a.exp < b.exp) {\naextradigit = a.align(b.exp);\n} else {\nbextradigit = b.align(a.exp);\n}\n\n/* complement the smaller of the two if the signs are different */\nif (asign != bsign) {\nif (asign == rsign) {\nbextradigit = b.complement(bextradigit);\n} else {\naextradigit = a.complement(aextradigit);\n}\n}\n\n/* add the mantissas */\nint rh = 0; /* acts as a carry */\nfor (int i = 0; i < mant.length; i++) {\nfinal int r = a.mant[i]+b.mant[i]+rh;\nrh = r / RADIX;\nresult.mant[i] = r - rh * RADIX;\n}\nresult.exp = a.exp;\nresult.sign = rsign;\n\n/* handle overflow -- note, when asign!=bsign an overflow is\n* normal and should be ignored.  */\n\nif (rh != 0 && (asign == bsign)) {\nfinal int lostdigit = result.mant[0];\nresult.shiftRight();\nresult.mant[mant.length-1] = rh;\nfinal int excp = result.round(lostdigit);\nif (excp != 0) {\nresult = dotrap(excp, ADD_TRAP, x, result);\n}\n}\n\n/* normalize the result */\nfor (int i = 0; i < mant.length; i++) {\nif (result.mant[mant.length-1] != 0) {\nbreak;\n}\nresult.shiftLeft();\nif (i == 0) {\nresult.mant[0] = aextradigit+bextradigit;\naextradigit = 0;\nbextradigit = 0;\n}\n}\n\n/* result is zero if after normalization the most sig. digit is zero */\nif (result.mant[mant.length-1] == 0) {\nresult.exp = 0;\n\nif (asign != bsign) {\n// Unless adding 2 negative zeros, sign is positive\nresult.sign = 1;  // Per IEEE 854-1987 Section 6.3\n}\n}\n\n/* Call round to test for over/under flows */\nfinal int excp = result.round(aextradigit + bextradigit);\nif (excp != 0) {\nresult = dotrap(excp, ADD_TRAP, x, result);\n}\n\nreturn result;\n}",
+            "method_id": 44
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:negate()Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "public Dfp negate() {\nDfp result = newInstance(this);\nresult.sign = (byte) - result.sign;\nreturn result;\n}",
+            "method_id": 45
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:subtract(Lorg/apache/commons/math/dfp/Dfp;)Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "public Dfp subtract(final Dfp x) {\nreturn add(x.negate());\n}",
+            "method_id": 46
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:round(I)I",
+            "method_body": "protected int round(int n) {\nboolean inc = false;\nswitch (field.getRoundingMode()) {\ncase ROUND_DOWN:\ninc = false;\nbreak;\n\ncase ROUND_UP:\ninc = n != 0;       // round up if n!=0\nbreak;\n\ncase ROUND_HALF_UP:\ninc = n >= 5000;  // round half up\nbreak;\n\ncase ROUND_HALF_DOWN:\ninc = n > 5000;  // round half down\nbreak;\n\ncase ROUND_HALF_EVEN:\ninc = n > 5000 || (n == 5000 && (mant[0] & 1) == 1);  // round half-even\nbreak;\n\ncase ROUND_HALF_ODD:\ninc = n > 5000 || (n == 5000 && (mant[0] & 1) == 0);  // round half-odd\nbreak;\n\ncase ROUND_CEIL:\ninc = sign == 1 && n != 0;  // round ceil\nbreak;\n\ncase ROUND_FLOOR:\ndefault:\ninc = sign == -1 && n != 0;  // round floor\nbreak;\n}\n\nif (inc) {\n// increment if necessary\nint rh = 1;\nfor (int i = 0; i < mant.length; i++) {\nfinal int r = mant[i] + rh;\nrh = r / RADIX;\nmant[i] = r - rh * RADIX;\n}\n\nif (rh != 0) {\nshiftRight();\nmant[mant.length-1] = rh;\n}\n}\n\n// check for exceptional cases and raise signals if necessary\nif (exp < MIN_EXP) {\n// Gradual Underflow\nfield.setIEEEFlagsBits(DfpField.FLAG_UNDERFLOW);\nreturn DfpField.FLAG_UNDERFLOW;\n}\n\nif (exp > MAX_EXP) {\n// Overflow\nfield.setIEEEFlagsBits(DfpField.FLAG_OVERFLOW);\nreturn DfpField.FLAG_OVERFLOW;\n}\n\nif (n != 0) {\n// Inexact\nfield.setIEEEFlagsBits(DfpField.FLAG_INEXACT);\nreturn DfpField.FLAG_INEXACT;\n}\n\nreturn 0;\n\n}",
+            "method_id": 47
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:multiply(Lorg/apache/commons/math/dfp/Dfp;)Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "public Dfp multiply(final Dfp x) {\n\n// make sure we don't mix number with different precision\nif (field.getRadixDigits() != x.field.getRadixDigits()) {\nfield.setIEEEFlagsBits(DfpField.FLAG_INVALID);\nfinal Dfp result = newInstance(getZero());\nresult.nans = QNAN;\nreturn dotrap(DfpField.FLAG_INVALID, MULTIPLY_TRAP, x, result);\n}\n\nDfp result = newInstance(getZero());\n\n/* handle special cases */\nif (nans != FINITE || x.nans != FINITE) {\nif (isNaN()) {\nreturn this;\n}\n\nif (x.isNaN()) {\nreturn x;\n}\n\nif (nans == INFINITE && x.nans == FINITE && x.mant[mant.length-1] != 0) {\nresult = newInstance(this);\nresult.sign = (byte) (sign * x.sign);\nreturn result;\n}\n\nif (x.nans == INFINITE && nans == FINITE && mant[mant.length-1] != 0) {\nresult = newInstance(x);\nresult.sign = (byte) (sign * x.sign);\nreturn result;\n}\n\nif (x.nans == INFINITE && nans == INFINITE) {\nresult = newInstance(this);\nresult.sign = (byte) (sign * x.sign);\nreturn result;\n}\n\nif ( (x.nans == INFINITE && nans == FINITE && mant[mant.length-1] == 0) ||\n(nans == INFINITE && x.nans == FINITE && x.mant[mant.length-1] == 0) ) {\nfield.setIEEEFlagsBits(DfpField.FLAG_INVALID);\nresult = newInstance(getZero());\nresult.nans = QNAN;\nresult = dotrap(DfpField.FLAG_INVALID, MULTIPLY_TRAP, x, result);\nreturn result;\n}\n}\n\nint[] product = new int[mant.length*2];  // Big enough to hold even the largest result\n\nfor (int i = 0; i < mant.length; i++) {\nint rh = 0;  // acts as a carry\nfor (int j=0; j<mant.length; j++) {\nint r = mant[i] * x.mant[j];    // multiply the 2 digits\nr = r + product[i+j] + rh;  // add to the product digit with carry in\n\nrh = r / RADIX;\nproduct[i+j] = r - rh * RADIX;\n}\nproduct[i+mant.length] = rh;\n}\n\n// Find the most sig digit\nint md = mant.length * 2 - 1;  // default, in case result is zero\nfor (int i = mant.length * 2 - 1; i >= 0; i--) {\nif (product[i] != 0) {\nmd = i;\nbreak;\n}\n}\n\n// Copy the digits into the result\nfor (int i = 0; i < mant.length; i++) {\nresult.mant[mant.length - i - 1] = product[md - i];\n}\n\n// Fixup the exponent.\nresult.exp = exp + x.exp + md - 2 * mant.length + 1;\nresult.sign = (byte)((sign == x.sign)?1:-1);\n\nif (result.mant[mant.length-1] == 0) {\n// if result is zero, set exp to zero\nresult.exp = 0;\n}\n\nfinal int excp;\nif (md > (mant.length-1)) {\nexcp = result.round(product[md-mant.length]);\n} else {\nexcp = result.round(0); // has no effect except to check status\n}\n\nif (excp != 0) {\nresult = dotrap(excp, MULTIPLY_TRAP, x, result);\n}\n\nreturn result;\n\n}",
+            "method_id": 48
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:divide(Lorg/apache/commons/math/dfp/Dfp;)Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "public Dfp divide(Dfp divisor) {\nint dividend[]; // current status of the dividend\nint quotient[]; // quotient\nint remainder[];// remainder\nint qd;         // current quotient digit we're working with\nint nsqd;       // number of significant quotient digits we have\nint trial=0;    // trial quotient digit\nint minadj;     // minimum adjustment\nboolean trialgood; // Flag to indicate a good trail digit\nint md=0;       // most sig digit in result\nint excp;       // exceptions\n\n// make sure we don't mix number with different precision\nif (field.getRadixDigits() != divisor.field.getRadixDigits()) {\nfield.setIEEEFlagsBits(DfpField.FLAG_INVALID);\nfinal Dfp result = newInstance(getZero());\nresult.nans = QNAN;\nreturn dotrap(DfpField.FLAG_INVALID, DIVIDE_TRAP, divisor, result);\n}\n\nDfp result = newInstance(getZero());\n\n/* handle special cases */\nif (nans != FINITE || divisor.nans != FINITE) {\nif (isNaN()) {\nreturn this;\n}\n\nif (divisor.isNaN()) {\nreturn divisor;\n}\n\nif (nans == INFINITE && divisor.nans == FINITE) {\nresult = newInstance(this);\nresult.sign = (byte) (sign * divisor.sign);\nreturn result;\n}\n\nif (divisor.nans == INFINITE && nans == FINITE) {\nresult = newInstance(getZero());\nresult.sign = (byte) (sign * divisor.sign);\nreturn result;\n}\n\nif (divisor.nans == INFINITE && nans == INFINITE) {\nfield.setIEEEFlagsBits(DfpField.FLAG_INVALID);\nresult = newInstance(getZero());\nresult.nans = QNAN;\nresult = dotrap(DfpField.FLAG_INVALID, DIVIDE_TRAP, divisor, result);\nreturn result;\n}\n}\n\n/* Test for divide by zero */\nif (divisor.mant[mant.length-1] == 0) {\nfield.setIEEEFlagsBits(DfpField.FLAG_DIV_ZERO);\nresult = newInstance(getZero());\nresult.sign = (byte) (sign * divisor.sign);\nresult.nans = INFINITE;\nresult = dotrap(DfpField.FLAG_DIV_ZERO, DIVIDE_TRAP, divisor, result);\nreturn result;\n}\n\ndividend = new int[mant.length+1];  // one extra digit needed\nquotient = new int[mant.length+2];  // two extra digits needed 1 for overflow, 1 for rounding\nremainder = new int[mant.length+1]; // one extra digit needed\n\n/* Initialize our most significant digits to zero */\n\ndividend[mant.length] = 0;\nquotient[mant.length] = 0;\nquotient[mant.length+1] = 0;\nremainder[mant.length] = 0;\n\n/* copy our mantissa into the dividend, initialize the\nquotient while we are at it */\n\nfor (int i = 0; i < mant.length; i++) {\ndividend[i] = mant[i];\nquotient[i] = 0;\nremainder[i] = 0;\n}\n\n/* outer loop.  Once per quotient digit */\nnsqd = 0;\nfor (qd = mant.length+1; qd >= 0; qd--) {\n/* Determine outer limits of our quotient digit */\n\n// r =  most sig 2 digits of dividend\nfinal int divMsb = dividend[mant.length]*RADIX+dividend[mant.length-1];\nint min = divMsb       / (divisor.mant[mant.length-1]+1);\nint max = (divMsb + 1) / divisor.mant[mant.length-1];\n\ntrialgood = false;\nwhile (!trialgood) {\n// try the mean\ntrial = (min+max)/2;\n\n/* Multiply by divisor and store as remainder */\nint rh = 0;\nfor (int i = 0; i < mant.length + 1; i++) {\nint dm = (i<mant.length)?divisor.mant[i]:0;\nfinal int r = (dm * trial) + rh;\nrh = r / RADIX;\nremainder[i] = r - rh * RADIX;\n}\n\n/* subtract the remainder from the dividend */\nrh = 1;  // carry in to aid the subtraction\nfor (int i = 0; i < mant.length + 1; i++) {\nfinal int r = ((RADIX-1) - remainder[i]) + dividend[i] + rh;\nrh = r / RADIX;\nremainder[i] = r - rh * RADIX;\n}\n\n/* Lets analyze what we have here */\nif (rh == 0) {\n// trial is too big -- negative remainder\nmax = trial-1;\ncontinue;\n}\n\n/* find out how far off the remainder is telling us we are */\nminadj = (remainder[mant.length] * RADIX)+remainder[mant.length-1];\nminadj = minadj / (divisor.mant[mant.length-1]+1);\n\nif (minadj >= 2) {\nmin = trial+minadj;  // update the minimum\ncontinue;\n}\n\n/* May have a good one here, check more thoroughly.  Basically\nits a good one if it is less than the divisor */\ntrialgood = false;  // assume false\nfor (int i = mant.length - 1; i >= 0; i--) {\nif (divisor.mant[i] > remainder[i]) {\ntrialgood = true;\n}\nif (divisor.mant[i] < remainder[i]) {\nbreak;\n}\n}\n\nif (remainder[mant.length] != 0) {\ntrialgood = false;\n}\n\nif (trialgood == false) {\nmin = trial+1;\n}\n}\n\n/* Great we have a digit! */\nquotient[qd] = trial;\nif (trial != 0 || nsqd != 0) {\nnsqd++;\n}\n\nif (field.getRoundingMode() == DfpField.RoundingMode.ROUND_DOWN && nsqd == mant.length) {\n// We have enough for this mode\nbreak;\n}\n\nif (nsqd > mant.length) {\n// We have enough digits\nbreak;\n}\n\n/* move the remainder into the dividend while left shifting */\ndividend[0] = 0;\nfor (int i = 0; i < mant.length; i++) {\ndividend[i + 1] = remainder[i];\n}\n}\n\n/* Find the most sig digit */\nmd = mant.length;  // default\nfor (int i = mant.length + 1; i >= 0; i--) {\nif (quotient[i] != 0) {\nmd = i;\nbreak;\n}\n}\n\n/* Copy the digits into the result */\nfor (int i=0; i<mant.length; i++) {\nresult.mant[mant.length-i-1] = quotient[md-i];\n}\n\n/* Fixup the exponent. */\nresult.exp = exp - divisor.exp + md - mant.length;\nresult.sign = (byte) ((sign == divisor.sign) ? 1 : -1);\n\nif (result.mant[mant.length-1] == 0) { // if result is zero, set exp to zero\nresult.exp = 0;\n}\n\nif (md > (mant.length-1)) {\nexcp = result.round(quotient[md-mant.length]);\n} else {\nexcp = result.round(0);\n}\n\nif (excp != 0) {\nresult = dotrap(excp, DIVIDE_TRAP, divisor, result);\n}\n\nreturn result;\n}",
+            "method_id": 49
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:divide(I)Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "public Dfp divide(int divisor) {\n\n// Handle special cases\nif (nans != FINITE) {\nif (isNaN()) {\nreturn this;\n}\n\nif (nans == INFINITE) {\nreturn newInstance(this);\n}\n}\n\n// Test for divide by zero\nif (divisor == 0) {\nfield.setIEEEFlagsBits(DfpField.FLAG_DIV_ZERO);\nDfp result = newInstance(getZero());\nresult.sign = sign;\nresult.nans = INFINITE;\nresult = dotrap(DfpField.FLAG_DIV_ZERO, DIVIDE_TRAP, getZero(), result);\nreturn result;\n}\n\n// range check divisor\nif (divisor < 0 || divisor >= RADIX) {\nfield.setIEEEFlagsBits(DfpField.FLAG_INVALID);\nDfp result = newInstance(getZero());\nresult.nans = QNAN;\nresult = dotrap(DfpField.FLAG_INVALID, DIVIDE_TRAP, result, result);\nreturn result;\n}\n\nDfp result = newInstance(this);\n\nint rl = 0;\nfor (int i = mant.length-1; i >= 0; i--) {\nfinal int r = rl*RADIX + result.mant[i];\nfinal int rh = r / divisor;\nrl = r - rh * divisor;\nresult.mant[i] = rh;\n}\n\nif (result.mant[mant.length-1] == 0) {\n// normalize\nresult.shiftLeft();\nfinal int r = rl * RADIX;        // compute the next digit and put it in\nfinal int rh = r / divisor;\nrl = r - rh * divisor;\nresult.mant[0] = rh;\n}\n\nfinal int excp = result.round(rl * RADIX / divisor);  // do the rounding\nif (excp != 0) {\nresult = dotrap(excp, DIVIDE_TRAP, result, result);\n}\n\nreturn result;\n\n}",
+            "method_id": 50
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:sqrt()Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "public Dfp sqrt() {\n\n// check for unusual cases\nif (nans == FINITE && mant[mant.length-1] == 0) {\n// if zero\nreturn newInstance(this);\n}\n\nif (nans != FINITE) {\nif (nans == INFINITE && sign == 1) {\n// if positive infinity\nreturn newInstance(this);\n}\n\nif (nans == QNAN) {\nreturn newInstance(this);\n}\n\nif (nans == SNAN) {\nDfp result;\n\nfield.setIEEEFlagsBits(DfpField.FLAG_INVALID);\nresult = newInstance(this);\nresult = dotrap(DfpField.FLAG_INVALID, SQRT_TRAP, null, result);\nreturn result;\n}\n}\n\nif (sign == -1) {\n// if negative\nDfp result;\n\nfield.setIEEEFlagsBits(DfpField.FLAG_INVALID);\nresult = newInstance(this);\nresult.nans = QNAN;\nresult = dotrap(DfpField.FLAG_INVALID, SQRT_TRAP, null, result);\nreturn result;\n}\n\nDfp x = newInstance(this);\n\n/* Lets make a reasonable guess as to the size of the square root */\nif (x.exp < -1 || x.exp > 1) {\nx.exp = this.exp / 2;\n}\n\n/* Coarsely estimate the mantissa */\nswitch (x.mant[mant.length-1] / 2000) {\ncase 0:\nx.mant[mant.length-1] = x.mant[mant.length-1]/2+1;\nbreak;\ncase 2:\nx.mant[mant.length-1] = 1500;\nbreak;\ncase 3:\nx.mant[mant.length-1] = 2200;\nbreak;\ndefault:\nx.mant[mant.length-1] = 3000;\n}\n\nDfp dx = newInstance(x);\n\n/* Now that we have the first pass estimate, compute the rest\nby the formula dx = (y - x*x) / (2x); */\n\nDfp px  = getZero();\nDfp ppx = getZero();\nwhile (x.unequal(px)) {\ndx = newInstance(x);\ndx.sign = -1;\ndx = dx.add(this.divide(x));\ndx = dx.divide(2);\nppx = px;\npx = x;\nx = x.add(dx);\n\nif (x.equals(ppx)) {\n// alternating between two values\nbreak;\n}\n\n// if dx is zero, break.  Note testing the most sig digit\n// is a sufficient test since dx is normalized\nif (dx.mant[mant.length-1] == 0) {\nbreak;\n}\n}\n\nreturn x;\n\n}",
+            "method_id": 51
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:toString()Ljava/lang/String;",
+            "method_body": "public String toString() {\nif (nans != FINITE) {\n// if non-finite exceptional cases\nif (nans == INFINITE) {\nreturn (sign < 0) ? NEG_INFINITY_STRING : POS_INFINITY_STRING;\n} else {\nreturn NAN_STRING;\n}\n}\n\nif (exp > mant.length || exp < -1) {\nreturn dfp2sci();\n}\n\nreturn dfp2string();\n\n}",
+            "method_id": 52
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:dfp2string()Ljava/lang/String;",
+            "method_body": "protected String dfp2string() {\nchar buffer[] = new char[mant.length*4 + 20];\nint p = 1;\nint q;\nint e = exp;\nboolean pointInserted = false;\n\nbuffer[0] = ' ';\n\nif (e <= 0) {\nbuffer[p++] = '0';\nbuffer[p++] = '.';\npointInserted = true;\n}\n\nwhile (e < 0) {\nbuffer[p++] = '0';\nbuffer[p++] = '0';\nbuffer[p++] = '0';\nbuffer[p++] = '0';\ne++;\n}\n\nfor (int i = mant.length - 1; i >= 0; i--) {\nbuffer[p++] = (char) ((mant[i] / 1000) + '0');\nbuffer[p++] = (char) (((mant[i] / 100) % 10) + '0');\nbuffer[p++] = (char) (((mant[i] / 10) % 10) + '0');\nbuffer[p++] = (char) (((mant[i]) % 10) + '0');\nif (--e == 0) {\nbuffer[p++] = '.';\npointInserted = true;\n}\n}\n\nwhile (e > 0) {\nbuffer[p++] = '0';\nbuffer[p++] = '0';\nbuffer[p++] = '0';\nbuffer[p++] = '0';\ne--;\n}\n\nif (!pointInserted) {\n// Ensure we have a radix point!\nbuffer[p++] = '.';\n}\n\n// Suppress leading zeros\nq = 1;\nwhile (buffer[q] == '0') {\nq++;\n}\nif (buffer[q] == '.') {\nq--;\n}\n\n// Suppress trailing zeros\nwhile (buffer[p-1] == '0') {\np--;\n}\n\n// Insert sign\nif (sign < 0) {\nbuffer[--q] = '-';\n}\n\nreturn new String(buffer, q, p - q);\n\n}",
+            "method_id": 53
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:dotrap(ILjava/lang/String;Lorg/apache/commons/math/dfp/Dfp;Lorg/apache/commons/math/dfp/Dfp;)Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "public Dfp dotrap(int type, String what, Dfp oper, Dfp result) {\nDfp def = result;\n\nswitch (type) {\ncase DfpField.FLAG_INVALID:\ndef = newInstance(getZero());\ndef.sign = result.sign;\ndef.nans = QNAN;\nbreak;\n\ncase DfpField.FLAG_DIV_ZERO:\nif (nans == FINITE && mant[mant.length-1] != 0) {\n// normal case, we are finite, non-zero\ndef = newInstance(getZero());\ndef.sign = (byte)(sign*oper.sign);\ndef.nans = INFINITE;\n}\n\nif (nans == FINITE && mant[mant.length-1] == 0) {\n//  0/0\ndef = newInstance(getZero());\ndef.nans = QNAN;\n}\n\nif (nans == INFINITE || nans == QNAN) {\ndef = newInstance(getZero());\ndef.nans = QNAN;\n}\n\nif (nans == INFINITE || nans == SNAN) {\ndef = newInstance(getZero());\ndef.nans = QNAN;\n}\nbreak;\n\ncase DfpField.FLAG_UNDERFLOW:\nif ( (result.exp+mant.length) < MIN_EXP) {\ndef = newInstance(getZero());\ndef.sign = result.sign;\n} else {\ndef = newInstance(result);  // gradual underflow\n}\nresult.exp = result.exp + ERR_SCALE;\nbreak;\n\ncase DfpField.FLAG_OVERFLOW:\nresult.exp = result.exp - ERR_SCALE;\ndef = newInstance(getZero());\ndef.sign = result.sign;\ndef.nans = INFINITE;\nbreak;\n\ndefault: def = result; break;\n}\n\nreturn trap(type, what, oper, def, result);\n\n}",
+            "method_id": 54
+        },
+        {
+            "method_signature": "org.apache.commons.math.dfp.Dfp:trap(ILjava/lang/String;Lorg/apache/commons/math/dfp/Dfp;Lorg/apache/commons/math/dfp/Dfp;Lorg/apache/commons/math/dfp/Dfp;)Lorg/apache/commons/math/dfp/Dfp;",
+            "method_body": "protected Dfp trap(int type, String what, Dfp oper, Dfp def, Dfp result) {\nreturn def;\n}",
+            "method_id": 55
+        }
+    ]
+}

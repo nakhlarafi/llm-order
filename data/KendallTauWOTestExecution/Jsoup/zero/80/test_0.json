@@ -1,0 +1,544 @@
+{
+    "bug_id": 80,
+    "test_id": 0,
+    "test_name": "org.jsoup.parser.XmlTreeBuilderTest.handlesDodgyXmlDecl",
+    "test_body": "public void handlesDodgyXmlDecl() {\nString xml = \"<?xml version='1.0'><val>One</val>\";\nDocument doc = Jsoup.parse(xml, \"\", Parser.xmlParser());\nassertEquals(\"One\", doc.select(\"val\").text());\n}\n",
+    "stack_trace": "",
+    "covered_methods": [
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:advance()V",
+            "method_body": "public void advance() {\nbufPos++;\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Document$OutputSettings:charset(Ljava/nio/charset/Charset;)Lorg/jsoup/nodes/Document$OutputSettings;",
+            "method_body": "public OutputSettings charset(Charset charset) {\nthis.charset = charset;\nreturn this;\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:<init>(Ljava/io/Reader;I)V",
+            "method_body": "public CharacterReader(Reader input, int sz) {\nValidate.notNull(input);\nValidate.isTrue(input.markSupported());\nreader = input;\ncharBuf = new char[sz > maxBufferLen ? maxBufferLen : sz];\nbufferUp();\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.jsoup.parser.Token:asComment()Lorg/jsoup/parser/Token$Comment;",
+            "method_body": "final Comment asComment() {\nreturn (Comment) this;\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.jsoup.parser.Token:<init>()V",
+            "method_body": "private Token() {\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Element:child(I)Lorg/jsoup/nodes/Element;",
+            "method_body": "public Element child(int index) {\nreturn childElementsList().get(index);\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Document$OutputSettings:<init>()V",
+            "method_body": "public OutputSettings() {\ncharset(Charset.forName(\"UTF8\"));\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Document$OutputSettings:syntax(Lorg/jsoup/nodes/Document$OutputSettings$Syntax;)Lorg/jsoup/nodes/Document$OutputSettings;",
+            "method_body": "public OutputSettings syntax(Syntax syntax) {\nthis.syntax = syntax;\nreturn this;\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.jsoup.nodes.LeafNode:hasAttributes()Z",
+            "method_body": "protected final boolean hasAttributes() {\nreturn value instanceof Attributes;\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.jsoup.parser.Token$Tag:newAttribute()V",
+            "method_body": "final void newAttribute() {\nif (attributes == null)\nattributes = new Attributes();\n\nif (pendingAttributeName != null) {\n// the tokeniser has skipped whitespace control chars, but trimming could collapse to empty for other control codes, so verify here\npendingAttributeName = pendingAttributeName.trim();\nif (pendingAttributeName.length() > 0) {\nString value;\nif (hasPendingAttributeValue)\nvalue = pendingAttributeValue.length() > 0 ? pendingAttributeValue.toString() : pendingAttributeValueS;\nelse if (hasEmptyAttributeValue)\nvalue = \"\";\nelse\nvalue = null;\nattributes.put(pendingAttributeName, value);\n}\n}\npendingAttributeName = null;\nhasEmptyAttributeValue = false;\nhasPendingAttributeValue = false;\nreset(pendingAttributeValue);\npendingAttributeValueS = null;\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.jsoup.parser.Tokeniser:<clinit>()V",
+            "method_body": "static final char replacementChar = '\\uFFFD'; // replaces null character\nprivate static final char[] notCharRefCharsSorted = new char[]{'\\t', '\\n', '\\r', '\\f', ' ', '<', '&'};",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.jsoup.parser.Token$EndTag:<init>()V",
+            "method_body": "EndTag() {\nsuper();\ntype = TokenType.EndTag;\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.jsoup.parser.Token:reset(Ljava/lang/StringBuilder;)V",
+            "method_body": "abstract Token reset();\n\nstatic void reset(StringBuilder sb) {\nif (sb != null) {\nsb.delete(0, sb.length());\n}\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.jsoup.internal.Normalizer:lowerCase(Ljava/lang/String;)Ljava/lang/String;",
+            "method_body": "public static String lowerCase(final String input) {\nreturn input != null ? input.toLowerCase(Locale.ENGLISH) : \"\";\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:unconsume()V",
+            "method_body": "void unconsume() {\nbufPos--;\n}",
+            "method_id": 14
+        },
+        {
+            "method_signature": "org.jsoup.parser.Token$Comment:getData()Ljava/lang/String;",
+            "method_body": "String getData() {\nreturn data.toString();\n}",
+            "method_id": 15
+        },
+        {
+            "method_signature": "org.jsoup.parser.TreeBuilder:initialiseParse(Ljava/io/Reader;Ljava/lang/String;Lorg/jsoup/parser/ParseErrorList;Lorg/jsoup/parser/ParseSettings;)V",
+            "method_body": "abstract ParseSettings defaultSettings();\n\nprotected void initialiseParse(Reader input, String baseUri, ParseErrorList errors, ParseSettings settings) {\nValidate.notNull(input, \"String input must not be null\");\nValidate.notNull(baseUri, \"BaseURI must not be null\");\n\ndoc = new Document(baseUri);\nthis.settings = settings;\nreader = new CharacterReader(input);\nthis.errors = errors;\ncurrentToken = null;\ntokeniser = new Tokeniser(reader, errors);\nstack = new ArrayList<>(32);\nthis.baseUri = baseUri;\n}",
+            "method_id": 16
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:isEmptyNoBufferUp()Z",
+            "method_body": "private boolean isEmptyNoBufferUp() {\nreturn bufPos >= bufLength;\n}",
+            "method_id": 17
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:consumeTagName()Ljava/lang/String;",
+            "method_body": "String consumeTagName() {\n// '\\t', '\\n', '\\r', '\\f', ' ', '/', '>', nullChar\nbufferUp();\nfinal int start = bufPos;\nfinal int remaining = bufLength;\nfinal char[] val = charBuf;\n\nwhile (bufPos < remaining) {\nfinal char c = val[bufPos];\nif (c == '\\t'|| c ==  '\\n'|| c ==  '\\r'|| c ==  '\\f'|| c ==  ' '|| c ==  '/'|| c ==  '>'|| c ==  TokeniserState.nullChar)\nbreak;\nbufPos++;\n}\n\nreturn bufPos > start ? cacheString(charBuf, stringCache, start, bufPos -start) : \"\";\n}",
+            "method_id": 18
+        },
+        {
+            "method_signature": "org.jsoup.parser.TokeniserState$37:read(Lorg/jsoup/parser/Tokeniser;Lorg/jsoup/parser/CharacterReader;)V",
+            "method_body": "void read(Tokeniser t, CharacterReader r) {\nchar c = r.consume();\nswitch (c) {\ncase '\\t':\ncase '\\n':\ncase '\\r':\ncase '\\f':\ncase ' ':\n// ignore\nbreak;\ncase '\"':\nt.transition(AttributeValue_doubleQuoted);\nbreak;\ncase '&':\nr.unconsume();\nt.transition(AttributeValue_unquoted);\nbreak;\ncase '\\'':\nt.transition(AttributeValue_singleQuoted);\nbreak;\ncase nullChar:\nt.error(this);\nt.tagPending.appendAttributeValue(replacementChar);\nt.transition(AttributeValue_unquoted);\nbreak;\ncase eof:\nt.eofError(this);\nt.emitTagPending();\nt.transition(Data);\nbreak;\ncase '>':\nt.error(this);\nt.emitTagPending();\nt.transition(Data);\nbreak;\ncase '<':\ncase '=':\ncase '`':\nt.error(this);\nt.tagPending.appendAttributeValue(c);\nt.transition(AttributeValue_unquoted);\nbreak;\ndefault:\nr.unconsume();\nt.transition(AttributeValue_unquoted);\n}\n}",
+            "method_id": 19
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Entities:load(Lorg/jsoup/nodes/Entities$EscapeMode;Ljava/lang/String;I)V",
+            "method_body": "private static void load(EscapeMode e, String pointsData, int size) {\ne.nameKeys = new String[size];\ne.codeVals = new int[size];\ne.codeKeys = new int[size];\ne.nameVals = new String[size];\n\nint i = 0;\nCharacterReader reader = new CharacterReader(pointsData);\n\nwhile (!reader.isEmpty()) {\n// NotNestedLessLess=10913,824;1887&\n\nfinal String name = reader.consumeTo('=');\nreader.advance();\nfinal int cp1 = Integer.parseInt(reader.consumeToAny(codeDelims), codepointRadix);\nfinal char codeDelim = reader.current();\nreader.advance();\nfinal int cp2;\nif (codeDelim == ',') {\ncp2 = Integer.parseInt(reader.consumeTo(';'), codepointRadix);\nreader.advance();\n} else {\ncp2 = empty;\n}\nfinal String indexS = reader.consumeTo('&');\nfinal int index = Integer.parseInt(indexS, codepointRadix);\nreader.advance();\n\ne.nameKeys[i] = name;\ne.codeVals[i] = cp1;\ne.codeKeys[index] = cp1;\ne.nameVals[index] = name;\n\nif (cp2 != empty) {\nmultipoints.put(name, new String(new int[]{cp1, cp2}, 0, 2));\n}\ni++;\n}\n\nValidate.isTrue(i == size, \"Unexpected count of entities loaded\");\n}",
+            "method_id": 20
+        },
+        {
+            "method_signature": "org.jsoup.parser.Token$Tag:appendAttributeValue(Ljava/lang/String;)V",
+            "method_body": "final void appendAttributeValue(String append) {\nensureAttributeValue();\nif (pendingAttributeValue.length() == 0) {\npendingAttributeValueS = append;\n} else {\npendingAttributeValue.append(append);\n}\n}",
+            "method_id": 21
+        },
+        {
+            "method_signature": "org.jsoup.parser.Tag:<clinit>()V",
+            "method_body": "private static final String[] inlineTags = {\n\"object\", \"base\", \"font\", \"tt\", \"i\", \"b\", \"u\", \"big\", \"small\", \"em\", \"strong\", \"dfn\", \"code\", \"samp\", \"kbd\",\n\"var\", \"cite\", \"abbr\", \"time\", \"acronym\", \"mark\", \"ruby\", \"rt\", \"rp\", \"a\", \"img\", \"br\", \"wbr\", \"map\", \"q\",\n\"sub\", \"sup\", \"bdo\", \"iframe\", \"embed\", \"span\", \"input\", \"select\", \"textarea\", \"label\", \"button\", \"optgroup\",\n\"option\", \"legend\", \"datalist\", \"keygen\", \"output\", \"progress\", \"meter\", \"area\", \"param\", \"source\", \"track\",\n\"summary\", \"command\", \"device\", \"area\", \"basefont\", \"bgsound\", \"menuitem\", \"param\", \"source\", \"track\",\n\"data\", \"bdi\", \"s\"\n};",
+            "method_id": 22
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:cacheString([C[Ljava/lang/String;II)Ljava/lang/String;",
+            "method_body": "private static String cacheString(final char[] charBuf, final String[] stringCache, final int start, final int count) {\n// limit (no cache):\nif (count > maxStringCacheLen)\nreturn new String(charBuf, start, count);\nif (count < 1)\nreturn \"\";\n\n// calculate hash:\nint hash = 0;\nint offset = start;\nfor (int i = 0; i < count; i++) {\nhash = 31 * hash + charBuf[offset++];\n}\n\n// get from cache\nfinal int index = hash & stringCache.length - 1;\nString cached = stringCache[index];\n\nif (cached == null) { // miss, add\ncached = new String(charBuf, start, count);\nstringCache[index] = cached;\n} else { // hashcode hit, check equality\nif (rangeEquals(charBuf, start, count, cached)) { // hit\nreturn cached;\n} else { // hashcode conflict\ncached = new String(charBuf, start, count);\nstringCache[index] = cached; // update the cache, as recently used strings are more likely to show up again\n}\n}\nreturn cached;\n}",
+            "method_id": 23
+        },
+        {
+            "method_signature": "org.jsoup.parser.Parser:<init>(Lorg/jsoup/parser/TreeBuilder;)V",
+            "method_body": "public Parser(TreeBuilder treeBuilder) {\nthis.treeBuilder = treeBuilder;\nsettings = treeBuilder.defaultSettings();\n}",
+            "method_id": 24
+        },
+        {
+            "method_signature": "org.jsoup.parser.Tokeniser:emit(Lorg/jsoup/parser/Token;)V",
+            "method_body": "void emit(Token token) {\nValidate.isFalse(isEmitPending, \"There is an unread token pending!\");\n\nemitPending = token;\nisEmitPending = true;\n\nif (token.type == Token.TokenType.StartTag) {\nToken.StartTag startTag = (Token.StartTag) token;\nlastStartTag = startTag.tagName;\n} else if (token.type == Token.TokenType.EndTag) {\nToken.EndTag endTag = (Token.EndTag) token;\nif (endTag.attributes != null)\nerror(\"Attributes incorrectly present on end tag\");\n}\n}",
+            "method_id": 25
+        },
+        {
+            "method_signature": "org.jsoup.parser.Parser:isTrackErrors()Z",
+            "method_body": "public boolean isTrackErrors() {\nreturn maxErrors > 0;\n}",
+            "method_id": 26
+        },
+        {
+            "method_signature": "org.jsoup.parser.XmlTreeBuilder:defaultSettings()Lorg/jsoup/parser/ParseSettings;",
+            "method_body": "ParseSettings defaultSettings() {\nreturn ParseSettings.preserveCase;\n}",
+            "method_id": 27
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Attributes:<clinit>()V",
+            "method_body": "protected static final String dataPrefix = \"data-\";\nprivate static final int InitialCapacity = 4; // todo - analyze Alexa 1MM sites, determine best setting\n\n// manages the key/val arrays\nprivate static final int GrowthFactor = 2;\nprivate static final String[] Empty = {};",
+            "method_id": 28
+        },
+        {
+            "method_signature": "org.jsoup.nodes.LeafNode:coreValue()Ljava/lang/String;",
+            "method_body": "String coreValue() {\nreturn attr(nodeName());\n}",
+            "method_id": 29
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:consumeToAnySorted([C)Ljava/lang/String;",
+            "method_body": "String consumeToAnySorted(final char... chars) {\nbufferUp();\nfinal int start = bufPos;\nfinal int remaining = bufLength;\nfinal char[] val = charBuf;\n\nwhile (bufPos < remaining) {\nif (Arrays.binarySearch(chars, val[bufPos]) >= 0)\nbreak;\nbufPos++;\n}\n\nreturn bufPos > start ? cacheString(charBuf, stringCache, start, bufPos -start) : \"\";\n}",
+            "method_id": 30
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:consumeToAny([C)Ljava/lang/String;",
+            "method_body": "public String consumeToAny(final char... chars) {\nbufferUp();\nfinal int start = bufPos;\nfinal int remaining = bufLength;\nfinal char[] val = charBuf;\n\nOUTER: while (bufPos < remaining) {\nfor (char c : chars) {\nif (val[bufPos] == c)\nbreak OUTER;\n}\nbufPos++;\n}\n\nreturn bufPos > start ? cacheString(charBuf, stringCache, start, bufPos -start) : \"\";\n}",
+            "method_id": 31
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Element:childElementsList()Ljava/util/List;",
+            "method_body": "private List<Element> childElementsList() {\nList<Element> children;\nif (shadowChildrenRef == null || (children = shadowChildrenRef.get()) == null) {\nfinal int size = childNodes.size();\nchildren = new ArrayList<>(size);\n//noinspection ForLoopReplaceableByForEach (beacause it allocates an Iterator which is wasteful here)\nfor (int i = 0; i < size; i++) {\nfinal Node node = childNodes.get(i);\nif (node instanceof Element)\nchildren.add((Element) node);\n}\nshadowChildrenRef = new WeakReference<>(children);\n}\nreturn children;\n}",
+            "method_id": 32
+        },
+        {
+            "method_signature": "org.jsoup.parser.TreeBuilder:runParser()V",
+            "method_body": "protected void runParser() {\nwhile (true) {\nToken token = tokeniser.read();\nprocess(token);\ntoken.reset();\n\nif (token.type == Token.TokenType.EOF)\nbreak;\n}\n}",
+            "method_id": 33
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Comment:<init>(Ljava/lang/String;)V",
+            "method_body": "public Comment(String data) {\nvalue = data;\n}",
+            "method_id": 34
+        },
+        {
+            "method_signature": "org.jsoup.parser.Token$Comment:<init>()V",
+            "method_body": "Comment() {\ntype = TokenType.Comment;\n}",
+            "method_id": 35
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Element:<init>(Lorg/jsoup/parser/Tag;Ljava/lang/String;)V",
+            "method_body": "public Element(Tag tag, String baseUri) {\nthis(tag, baseUri, null);\n}",
+            "method_id": 36
+        },
+        {
+            "method_signature": "org.jsoup.parser.XmlTreeBuilder:insert(Lorg/jsoup/parser/Token$Comment;)V",
+            "method_body": "void insert(Token.Comment commentToken) {\nComment comment = new Comment(commentToken.getData());\nNode insert = comment;\nif (commentToken.bogus) { // xml declarations are emitted as bogus comments (which is right for html, but not xml)\n// so we do a bit of a hack and parse the data as an element to pull the attributes out\nString data = comment.getData();\nif (data.length() > 1 && (data.startsWith(\"!\") || data.startsWith(\"?\"))) {\nDocument doc = Jsoup.parse(\"<\" + data.substring(1, data.length() -1) + \">\", baseUri, Parser.xmlParser());\nElement el = doc.child(0);\ninsert = new XmlDeclaration(settings.normalizeTag(el.tagName()), data.startsWith(\"!\"));\ninsert.attributes().addAll(el.attributes());\n}\n}\ninsertNode(insert);\n}",
+            "method_id": 37
+        },
+        {
+            "method_signature": "org.jsoup.parser.XmlTreeBuilder:initialiseParse(Ljava/io/Reader;Ljava/lang/String;Lorg/jsoup/parser/ParseErrorList;Lorg/jsoup/parser/ParseSettings;)V",
+            "method_body": "protected void initialiseParse(Reader input, String baseUri, ParseErrorList errors, ParseSettings settings) {\nsuper.initialiseParse(input, baseUri, errors, settings);\nstack.add(doc); // place the document onto the stack. differs from HtmlTreeBuilder (not on stack)\ndoc.outputSettings().syntax(Document.OutputSettings.Syntax.xml);\n}",
+            "method_id": 38
+        },
+        {
+            "method_signature": "org.jsoup.parser.Tokeniser:advanceTransition(Lorg/jsoup/parser/TokeniserState;)V",
+            "method_body": "void advanceTransition(TokeniserState state) {\nreader.advance();\nthis.state = state;\n}",
+            "method_id": 39
+        },
+        {
+            "method_signature": "org.jsoup.parser.ParseSettings:normalizeTag(Ljava/lang/String;)Ljava/lang/String;",
+            "method_body": "String normalizeTag(String name) {\nname = name.trim();\nif (!preserveTagCase)\nname = lowerCase(name);\nreturn name;\n}",
+            "method_id": 40
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:consume()C",
+            "method_body": "char consume() {\nbufferUp();\nchar val = isEmptyNoBufferUp() ? EOF : charBuf[bufPos];\nbufPos++;\nreturn val;\n}",
+            "method_id": 41
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Document:outputSettings()Lorg/jsoup/nodes/Document$OutputSettings;",
+            "method_body": "public OutputSettings outputSettings() {\nreturn outputSettings;\n}",
+            "method_id": 42
+        },
+        {
+            "method_signature": "org.jsoup.parser.Tokeniser:read()Lorg/jsoup/parser/Token;",
+            "method_body": "Token read() {\nwhile (!isEmitPending)\nstate.read(this, reader);\n\n// if emit is pending, a non-character token was found: return any chars in buffer, and leave token for next read:\nif (charsBuilder.length() > 0) {\nString str = charsBuilder.toString();\ncharsBuilder.delete(0, charsBuilder.length());\ncharsString = null;\nreturn charPending.data(str);\n} else if (charsString != null) {\nToken token = charPending.data(charsString);\ncharsString = null;\nreturn token;\n} else {\nisEmitPending = false;\nreturn emitPending;\n}\n}",
+            "method_id": 43
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Entities$EscapeMode:<init>(Ljava/lang/String;ILjava/lang/String;I)V",
+            "method_body": "EscapeMode(String file, int size) {\nload(this, file, size);\n}",
+            "method_id": 44
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Comment:getData()Ljava/lang/String;",
+            "method_body": "public String getData() {\nreturn coreValue();\n}",
+            "method_id": 45
+        },
+        {
+            "method_signature": "org.jsoup.parser.ParseErrorList:<init>(II)V",
+            "method_body": "ParseErrorList(int initialCapacity, int maxSize) {\nsuper(initialCapacity);\nthis.maxSize = maxSize;\n}",
+            "method_id": 46
+        },
+        {
+            "method_signature": "org.jsoup.parser.TreeBuilder:<init>()V",
+            "method_body": "CharacterReader reader;\nTokeniser tokeniser;\nprotected Document doc; // current doc we are building into\nprotected ArrayList<Element> stack; // the stack of open elements\nprotected String baseUri; // current base uri, for creating new elements\nprotected Token currentToken; // currentToken is used only for error tracking.\nprotected ParseErrorList errors; // null when not tracking errors\nprotected ParseSettings settings;\n\nprivate Token.StartTag start = new Token.StartTag(); // start tag to process\nprivate Token.EndTag end  = new Token.EndTag();\n\nabstract ParseSettings defaultSettings();\n\nprotected void initialiseParse(Reader input, String baseUri, ParseErrorList errors, ParseSettings settings) {\nValidate.notNull(input, \"String input must not be null\");\nValidate.notNull(baseUri, \"BaseURI must not be null\");\n\ndoc = new Document(baseUri);\nthis.settings = settings;\nreader = new CharacterReader(input);\nthis.errors = errors;\ncurrentToken = null;\ntokeniser = new Tokeniser(reader, errors);\nstack = new ArrayList<>(32);\nthis.baseUri = baseUri;\n}",
+            "method_id": 47
+        },
+        {
+            "method_signature": "org.jsoup.parser.Parser:xmlParser()Lorg/jsoup/parser/Parser;",
+            "method_body": "public static Parser xmlParser() {\nreturn new Parser(new XmlTreeBuilder());\n}",
+            "method_id": 48
+        },
+        {
+            "method_signature": "org.jsoup.parser.Token$Character:<init>()V",
+            "method_body": "Character() {\nsuper();\ntype = TokenType.Character;\n}",
+            "method_id": 49
+        },
+        {
+            "method_signature": "org.jsoup.parser.Tag:<init>(Ljava/lang/String;)V",
+            "method_body": "private static final Map<String, Tag> tags = new HashMap<>(); // map of known tags\n\nprivate String tagName;\nprivate boolean isBlock = true; // block or inline\nprivate boolean formatAsBlock = true; // should be formatted as a block\nprivate boolean canContainInline = true; // only pcdata if not\nprivate boolean empty = false; // can hold nothing; e.g. img\nprivate boolean selfClosing = false; // can self close (<foo />). used for unknown tags that self close, without forcing them as empty.\nprivate boolean preserveWhitespace = false; // for pre, textarea, script etc\nprivate boolean formList = false; // a control that appears in forms: input, textarea, output etc\nprivate boolean formSubmit = false; // a control that can be submitted in a form: input etc\n\nprivate Tag(String tagName) {\nthis.tagName = tagName;\n}",
+            "method_id": 50
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:nextIndexOf(C)I",
+            "method_body": "int nextIndexOf(char c) {\n// doesn't handle scanning for surrogates\nbufferUp();\nfor (int i = bufPos; i < bufLength; i++) {\nif (c == charBuf[i])\nreturn i - bufPos;\n}\nreturn -1;\n}",
+            "method_id": 51
+        },
+        {
+            "method_signature": "org.jsoup.parser.ParseErrorList:noTracking()Lorg/jsoup/parser/ParseErrorList;",
+            "method_body": "public static ParseErrorList noTracking() {\nreturn new ParseErrorList(0, 0);\n}",
+            "method_id": 52
+        },
+        {
+            "method_signature": "org.jsoup.parser.Token$EOF:reset()Lorg/jsoup/parser/Token;",
+            "method_body": "Token reset() {\nreturn this;\n}",
+            "method_id": 53
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:<init>(Ljava/lang/String;)V",
+            "method_body": "public CharacterReader(String input) {\nthis(new StringReader(input), input.length());\n}",
+            "method_id": 54
+        },
+        {
+            "method_signature": "org.jsoup.parser.Token$StartTag:reset()Lorg/jsoup/parser/Token$Tag;",
+            "method_body": "Tag reset() {\nsuper.reset();\nattributes = new Attributes();\n// todo - would prefer these to be null, but need to check Element assertions\nreturn this;\n}",
+            "method_id": 55
+        },
+        {
+            "method_signature": "org.jsoup.helper.Validate:notEmpty(Ljava/lang/String;)V",
+            "method_body": "public static void notEmpty(String string) {\nif (string == null || string.length() == 0)\nthrow new IllegalArgumentException(\"String must not be empty\");\n}",
+            "method_id": 56
+        },
+        {
+            "method_signature": "org.jsoup.parser.Tokeniser:eofError(Lorg/jsoup/parser/TokeniserState;)V",
+            "method_body": "void eofError(TokeniserState state) {\nif (errors.canAddError())\nerrors.add(new ParseError(reader.pos(), \"Unexpectedly reached end of file (EOF) in input state [%s]\", state));\n}",
+            "method_id": 57
+        },
+        {
+            "method_signature": "org.jsoup.helper.Validate:isFalse(ZLjava/lang/String;)V",
+            "method_body": "public static void isFalse(boolean val, String msg) {\nif (val)\nthrow new IllegalArgumentException(msg);\n}",
+            "method_id": 58
+        },
+        {
+            "method_signature": "org.jsoup.parser.TreeBuilder:parse(Ljava/io/Reader;Ljava/lang/String;Lorg/jsoup/parser/ParseErrorList;Lorg/jsoup/parser/ParseSettings;)Lorg/jsoup/nodes/Document;",
+            "method_body": "Document parse(Reader input, String baseUri, ParseErrorList errors, ParseSettings settings) {\ninitialiseParse(input, baseUri, errors, settings);\nrunParser();\nreturn doc;\n}",
+            "method_id": 59
+        },
+        {
+            "method_signature": "org.jsoup.parser.Tag:register(Lorg/jsoup/parser/Tag;)V",
+            "method_body": "private static void register(Tag tag) {\ntags.put(tag.tagName, tag);\n}",
+            "method_id": 60
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Entities$EscapeMode:<clinit>()V",
+            "method_body": "private static final HashMap<String, String> multipoints = new HashMap<>(); // name -> multiple character references\nprivate static final Document.OutputSettings DefaultOutput = new Document.OutputSettings();\n\npublic enum EscapeMode {\n/**\n* Restricted entities suitable for XHTML output: lt, gt, amp, and quot only.\n*/\nxhtml(EntitiesData.xmlPoints, 4),\n/**\n* Default HTML output entities.\n*/\nbase(EntitiesData.basePoints, 106),\n/**\n* Complete HTML entities.\n*/\nextended(EntitiesData.fullPoints, 2125);\n\n// table of named references to their codepoints. sorted so we can binary search. built by BuildEntities.\nprivate String[] nameKeys;\nprivate int[] codeVals; // limitation is the few references with multiple characters; those go into multipoints.\n\n// table of codepoints to named entities.\nprivate int[] codeKeys; // we don' support multicodepoints to single named value currently\nprivate String[] nameVals;\n\nEscapeMode(String file, int size) {\nload(this, file, size);\n}\n\nint codepointForName(final String name) {\nint index = Arrays.binarySearch(nameKeys, name);\nreturn index >= 0 ? codeVals[index] : empty;\n}\n\nString nameForCodepoint(final int codepoint) {\nfinal int index = Arrays.binarySearch(codeKeys, codepoint);\nif (index >= 0) {\n// the results are ordered so lower case versions of same codepoint come after uppercase, and we prefer to emit lower\n// (and binary search for same item with multi results is undefined\nreturn (index < nameVals.length - 1 && codeKeys[index + 1] == codepoint) ?\nnameVals[index + 1] : nameVals[index];\n}\nreturn emptyName;\n}\n\nprivate int size() {\nreturn nameKeys.length;\n}\n}",
+            "method_id": 61
+        },
+        {
+            "method_signature": "org.jsoup.parser.ParseSettings:<clinit>()V",
+            "method_body": "public static final ParseSettings htmlDefault;\n/**\n* Preserve both tag and attribute case.\n*/\npublic static final ParseSettings preserveCase;\n\nstatic {\nhtmlDefault = new ParseSettings(false, false);\npreserveCase = new ParseSettings(true, true);\n}",
+            "method_id": 62
+        },
+        {
+            "method_signature": "org.jsoup.parser.TokeniserState$43:read(Lorg/jsoup/parser/Tokeniser;Lorg/jsoup/parser/CharacterReader;)V",
+            "method_body": "void read(Tokeniser t, CharacterReader r) {\n// todo: handle bogus comment starting from eof. when does that trigger?\n// rewind to capture character that lead us here\nr.unconsume();\nToken.Comment comment = new Token.Comment();\ncomment.bogus = true;\ncomment.data.append(r.consumeTo('>'));\n// todo: replace nullChar with replaceChar\nt.emit(comment);\nt.advanceTransition(Data);\n}",
+            "method_id": 63
+        },
+        {
+            "method_signature": "org.jsoup.helper.Validate:isTrue(Z)V",
+            "method_body": "public static void isTrue(boolean val) {\nif (!val)\nthrow new IllegalArgumentException(\"Must be true\");\n}",
+            "method_id": 64
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:current()C",
+            "method_body": "public char current() {\nbufferUp();\nreturn isEmptyNoBufferUp() ? EOF : charBuf[bufPos];\n}",
+            "method_id": 65
+        },
+        {
+            "method_signature": "org.jsoup.parser.TokeniserState$10:read(Lorg/jsoup/parser/Tokeniser;Lorg/jsoup/parser/CharacterReader;)V",
+            "method_body": "void read(Tokeniser t, CharacterReader r) {\n// previous TagOpen state did NOT consume, will have a letter char in current\n//String tagName = r.consumeToAnySorted(tagCharsSorted).toLowerCase();\nString tagName = r.consumeTagName();\nt.tagPending.appendTagName(tagName);\n\nchar c = r.consume();\nswitch (c) {\ncase '\\t':\ncase '\\n':\ncase '\\r':\ncase '\\f':\ncase ' ':\nt.transition(BeforeAttributeName);\nbreak;\ncase '/':\nt.transition(SelfClosingStartTag);\nbreak;\ncase '>':\nt.emitTagPending();\nt.transition(Data);\nbreak;\ncase nullChar: // replacement\nt.tagPending.appendTagName(replacementStr);\nbreak;\ncase eof: // should emit pending tag?\nt.eofError(this);\nt.transition(Data);\nbreak;\ndefault: // buffer underrun\nt.tagPending.appendTagName(c);\n}\n}",
+            "method_id": 66
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Element:<init>(Lorg/jsoup/parser/Tag;Ljava/lang/String;Lorg/jsoup/nodes/Attributes;)V",
+            "method_body": "public Element(Tag tag, String baseUri, Attributes attributes) {\nValidate.notNull(tag);\nValidate.notNull(baseUri);\nchildNodes = EMPTY_NODES;\nthis.baseUri = baseUri;\nthis.attributes = attributes;\nthis.tag = tag;\n}",
+            "method_id": 67
+        },
+        {
+            "method_signature": "org.jsoup.nodes.LeafNode:<clinit>()V",
+            "method_body": "private static final List<Node> EmptyNodes = Collections.emptyList();\n\nObject value; // either a string value, or an attribute map (in the rare case multiple attributes are set)\n\nprotected final boolean hasAttributes() {\nreturn value instanceof Attributes;\n}",
+            "method_id": 68
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Document:<init>(Ljava/lang/String;)V",
+            "method_body": "private OutputSettings outputSettings = new OutputSettings();\nprivate QuirksMode quirksMode = QuirksMode.noQuirks;\nprivate String location;\nprivate boolean updateMetaCharset = false;\n\n/**\nCreate a new, empty Document.\n@param baseUri base URI of document\n@see org.jsoup.Jsoup#parse\n@see #createShell\n*/\npublic Document(String baseUri) {\nsuper(Tag.valueOf(\"#root\", ParseSettings.htmlDefault), baseUri);\nthis.location = baseUri;\n}",
+            "method_id": 69
+        },
+        {
+            "method_signature": "org.jsoup.helper.Validate:notNull(Ljava/lang/Object;)V",
+            "method_body": "public static void notNull(Object obj) {\nif (obj == null)\nthrow new IllegalArgumentException(\"Object must not be null\");\n}",
+            "method_id": 70
+        },
+        {
+            "method_signature": "org.jsoup.parser.Token$Tag:ensureAttributeValue()V",
+            "method_body": "private void ensureAttributeValue() {\nhasPendingAttributeValue = true;\n// if on second hit, we'll need to move to the builder\nif (pendingAttributeValueS != null) {\npendingAttributeValue.append(pendingAttributeValueS);\npendingAttributeValueS = null;\n}\n}",
+            "method_id": 71
+        },
+        {
+            "method_signature": "org.jsoup.parser.Parser:parseInput(Ljava/lang/String;Ljava/lang/String;)Lorg/jsoup/nodes/Document;",
+            "method_body": "public Document parseInput(String html, String baseUri) {\nerrors = isTrackErrors() ? ParseErrorList.tracking(maxErrors) : ParseErrorList.noTracking();\nreturn treeBuilder.parse(new StringReader(html), baseUri, errors, settings);\n}",
+            "method_id": 72
+        },
+        {
+            "method_signature": "org.jsoup.parser.Tokeniser:<init>(Lorg/jsoup/parser/CharacterReader;Lorg/jsoup/parser/ParseErrorList;)V",
+            "method_body": "private final CharacterReader reader; // html input\nprivate final ParseErrorList errors; // errors found while tokenising\n\nprivate TokeniserState state = TokeniserState.Data; // current tokenisation state\nprivate Token emitPending; // the token we are about to emit on next read\nprivate boolean isEmitPending = false;\nprivate String charsString = null; // characters pending an emit. Will fall to charsBuilder if more than one\nprivate StringBuilder charsBuilder = new StringBuilder(1024); // buffers characters to output as one token, if more than one emit per read\nStringBuilder dataBuffer = new StringBuilder(1024); // buffers data looking for </script>\n\nToken.Tag tagPending; // tag we are building up\nToken.StartTag startPending = new Token.StartTag();\nToken.EndTag endPending = new Token.EndTag();\nToken.Character charPending = new Token.Character();\nToken.Doctype doctypePending = new Token.Doctype(); // doctype building up\nToken.Comment commentPending = new Token.Comment(); // comment building up\nprivate String lastStartTag; // the last start tag emitted, to test appropriate end tag\n\nTokeniser(CharacterReader reader, ParseErrorList errors) {\nthis.reader = reader;\nthis.errors = errors;\n}",
+            "method_id": 73
+        },
+        {
+            "method_signature": "org.jsoup.parser.Tag:valueOf(Ljava/lang/String;Lorg/jsoup/parser/ParseSettings;)Lorg/jsoup/parser/Tag;",
+            "method_body": "public static Tag valueOf(String tagName, ParseSettings settings) {\nValidate.notNull(tagName);\nTag tag = tags.get(tagName);\n\nif (tag == null) {\ntagName = settings.normalizeTag(tagName);\nValidate.notEmpty(tagName);\ntag = tags.get(tagName);\n\nif (tag == null) {\n// not defined: create default; go anywhere, do anything! (incl be inside a <p>)\ntag = new Tag(tagName);\ntag.isBlock = false;\n}\n}\nreturn tag;\n}",
+            "method_id": 74
+        },
+        {
+            "method_signature": "org.jsoup.parser.TokeniserState$1:read(Lorg/jsoup/parser/Tokeniser;Lorg/jsoup/parser/CharacterReader;)V",
+            "method_body": "void read(Tokeniser t, CharacterReader r) {\nswitch (r.current()) {\ncase '&':\nt.advanceTransition(CharacterReferenceInData);\nbreak;\ncase '<':\nt.advanceTransition(TagOpen);\nbreak;\ncase nullChar:\nt.error(this); // NOT replacement character (oddly?)\nt.emit(r.consume());\nbreak;\ncase eof:\nt.emit(new Token.EOF());\nbreak;\ndefault:\nString data = r.consumeData();\nt.emit(data);\nbreak;\n}\n}",
+            "method_id": 75
+        },
+        {
+            "method_signature": "org.jsoup.parser.ParseSettings:<init>(ZZ)V",
+            "method_body": "public ParseSettings(boolean tag, boolean attribute) {\npreserveTagCase = tag;\npreserveAttributeCase = attribute;\n}",
+            "method_id": 76
+        },
+        {
+            "method_signature": "org.jsoup.parser.Token$EOF:<init>()V",
+            "method_body": "EOF() {\ntype = Token.TokenType.EOF;\n}",
+            "method_id": 77
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Comment:nodeName()Ljava/lang/String;",
+            "method_body": "public String nodeName() {\nreturn \"#comment\";\n}",
+            "method_id": 78
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Entities:<clinit>()V",
+            "method_body": "private static final HashMap<String, String> multipoints = new HashMap<>(); // name -> multiple character references\nprivate static final Document.OutputSettings DefaultOutput = new Document.OutputSettings();\n\npublic enum EscapeMode {\n/**\n* Restricted entities suitable for XHTML output: lt, gt, amp, and quot only.\n*/\nxhtml(EntitiesData.xmlPoints, 4),\n/**\n* Default HTML output entities.\n*/\nbase(EntitiesData.basePoints, 106),\n/**\n* Complete HTML entities.\n*/\nextended(EntitiesData.fullPoints, 2125);\n\n// table of named references to their codepoints. sorted so we can binary search. built by BuildEntities.\nprivate String[] nameKeys;\nprivate int[] codeVals; // limitation is the few references with multiple characters; those go into multipoints.\n\n// table of codepoints to named entities.\nprivate int[] codeKeys; // we don' support multicodepoints to single named value currently\nprivate String[] nameVals;\n\nEscapeMode(String file, int size) {\nload(this, file, size);\n}\n\nint codepointForName(final String name) {\nint index = Arrays.binarySearch(nameKeys, name);\nreturn index >= 0 ? codeVals[index] : empty;\n}\n\nString nameForCodepoint(final int codepoint) {\nfinal int index = Arrays.binarySearch(codeKeys, codepoint);\nif (index >= 0) {\n// the results are ordered so lower case versions of same codepoint come after uppercase, and we prefer to emit lower\n// (and binary search for same item with multi results is undefined\nreturn (index < nameVals.length - 1 && codeKeys[index + 1] == codepoint) ?\nnameVals[index + 1] : nameVals[index];\n}\nreturn emptyName;\n}\n\nprivate int size() {\nreturn nameKeys.length;\n}\n}",
+            "method_id": 79
+        },
+        {
+            "method_signature": "org.jsoup.parser.Token$Doctype:<init>()V",
+            "method_body": "Doctype() {\ntype = TokenType.Doctype;\n}",
+            "method_id": 80
+        },
+        {
+            "method_signature": "org.jsoup.parser.Token$Tag:reset()Lorg/jsoup/parser/Token$Tag;",
+            "method_body": "Tag reset() {\ntagName = null;\nnormalName = null;\npendingAttributeName = null;\nreset(pendingAttributeValue);\npendingAttributeValueS = null;\nhasEmptyAttributeValue = false;\nhasPendingAttributeValue = false;\nselfClosing = false;\nattributes = null;\nreturn this;\n}",
+            "method_id": 81
+        },
+        {
+            "method_signature": "org.jsoup.parser.Tokeniser:createTagPending(Z)Lorg/jsoup/parser/Token$Tag;",
+            "method_body": "Token.Tag createTagPending(boolean start) {\ntagPending = start ? startPending.reset() : endPending.reset();\nreturn tagPending;\n}",
+            "method_id": 82
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Node:<init>()V",
+            "method_body": "protected Node() {\n}",
+            "method_id": 83
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:rangeEquals([CIILjava/lang/String;)Z",
+            "method_body": "static boolean rangeEquals(final char[] charBuf, final int start, int count, final String cached) {\nif (count == cached.length()) {\nint i = start;\nint j = 0;\nwhile (count-- != 0) {\nif (charBuf[i++] != cached.charAt(j++))\nreturn false;\n}\nreturn true;\n}\nreturn false;\n}",
+            "method_id": 84
+        },
+        {
+            "method_signature": "org.jsoup.parser.TokeniserState$39:read(Lorg/jsoup/parser/Tokeniser;Lorg/jsoup/parser/CharacterReader;)V",
+            "method_body": "void read(Tokeniser t, CharacterReader r) {\nString value = r.consumeToAny(attributeSingleValueCharsSorted);\nif (value.length() > 0)\nt.tagPending.appendAttributeValue(value);\nelse\nt.tagPending.setEmptyAttributeValue();\n\nchar c = r.consume();\nswitch (c) {\ncase '\\'':\nt.transition(AfterAttributeValue_quoted);\nbreak;\ncase '&':\nint[] ref = t.consumeCharacterReference('\\'', true);\nif (ref != null)\nt.tagPending.appendAttributeValue(ref);\nelse\nt.tagPending.appendAttributeValue('&');\nbreak;\ncase nullChar:\nt.error(this);\nt.tagPending.appendAttributeValue(replacementChar);\nbreak;\ncase eof:\nt.eofError(this);\nt.transition(Data);\nbreak;\ndefault: // hit end of buffer in first read, still in attribute\nt.tagPending.appendAttributeValue(c);\n}\n}",
+            "method_id": 85
+        },
+        {
+            "method_signature": "org.jsoup.helper.Validate:isTrue(ZLjava/lang/String;)V",
+            "method_body": "public static void isTrue(boolean val, String msg) {\nif (!val)\nthrow new IllegalArgumentException(msg);\n}",
+            "method_id": 86
+        },
+        {
+            "method_signature": "org.jsoup.parser.Token$Tag:appendAttributeName(Ljava/lang/String;)V",
+            "method_body": "final void appendAttributeName(String append) {\npendingAttributeName = pendingAttributeName == null ? append : pendingAttributeName.concat(append);\n}",
+            "method_id": 87
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:<init>(Ljava/io/Reader;)V",
+            "method_body": "public CharacterReader(Reader input) {\nthis(input, maxBufferLen);\n}",
+            "method_id": 88
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:consumeTo(C)Ljava/lang/String;",
+            "method_body": "public String consumeTo(char c) {\nint offset = nextIndexOf(c);\nif (offset != -1) {\nString consumed = cacheString(charBuf, stringCache, bufPos, offset);\nbufPos += offset;\nreturn consumed;\n} else {\nreturn consumeToEnd();\n}\n}",
+            "method_id": 89
+        },
+        {
+            "method_signature": "org.jsoup.parser.Tokeniser:transition(Lorg/jsoup/parser/TokeniserState;)V",
+            "method_body": "void transition(TokeniserState state) {\nthis.state = state;\n}",
+            "method_id": 90
+        },
+        {
+            "method_signature": "org.jsoup.nodes.Element:<clinit>()V",
+            "method_body": "private static final List<Node> EMPTY_NODES = Collections.emptyList();\nprivate static final Pattern classSplit = Pattern.compile(\"\\\\s+\");\nprivate Tag tag;\nprivate WeakReference<List<Element>> shadowChildrenRef; // points to child elements shadowed from node children\nList<Node> childNodes;\nprivate Attributes attributes;\nprivate String baseUri;\n\n/**\n* Create a new, standalone element.\n* @param tag tag name\n*/\npublic Element(String tag) {\nthis(Tag.valueOf(tag), \"\", new Attributes());\n}",
+            "method_id": 91
+        },
+        {
+            "method_signature": "org.jsoup.parser.TokeniserState$35:read(Lorg/jsoup/parser/Tokeniser;Lorg/jsoup/parser/CharacterReader;)V",
+            "method_body": "void read(Tokeniser t, CharacterReader r) {\nString name = r.consumeToAnySorted(attributeNameCharsSorted);\nt.tagPending.appendAttributeName(name);\n\nchar c = r.consume();\nswitch (c) {\ncase '\\t':\ncase '\\n':\ncase '\\r':\ncase '\\f':\ncase ' ':\nt.transition(AfterAttributeName);\nbreak;\ncase '/':\nt.transition(SelfClosingStartTag);\nbreak;\ncase '=':\nt.transition(BeforeAttributeValue);\nbreak;\ncase '>':\nt.emitTagPending();\nt.transition(Data);\nbreak;\ncase nullChar:\nt.error(this);\nt.tagPending.appendAttributeName(replacementChar);\nbreak;\ncase eof:\nt.eofError(this);\nt.transition(Data);\nbreak;\ncase '\"':\ncase '\\'':\ncase '<':\nt.error(this);\nt.tagPending.appendAttributeName(c);\nbreak;\ndefault: // buffer underrun\nt.tagPending.appendAttributeName(c);\n}\n}",
+            "method_id": 92
+        },
+        {
+            "method_signature": "org.jsoup.parser.Token$Tag:<init>()V",
+            "method_body": "protected String tagName;\nprotected String normalName; // lc version of tag name, for case insensitive tree build\nprivate String pendingAttributeName; // attribute names are generally caught in one hop, not accumulated\nprivate StringBuilder pendingAttributeValue = new StringBuilder(); // but values are accumulated, from e.g. & in hrefs\nprivate String pendingAttributeValueS; // try to get attr vals in one shot, vs Builder\nprivate boolean hasEmptyAttributeValue = false; // distinguish boolean attribute from empty string value\nprivate boolean hasPendingAttributeValue = false;\nboolean selfClosing = false;\nAttributes attributes; // start tags get attributes on construction. End tags get attributes on first new attribute (but only for parser convenience, not used).\n\n@Override\nTag reset() {\ntagName = null;\nnormalName = null;\npendingAttributeName = null;\nreset(pendingAttributeValue);\npendingAttributeValueS = null;\nhasEmptyAttributeValue = false;\nhasPendingAttributeValue = false;\nselfClosing = false;\nattributes = null;\nreturn this;\n}",
+            "method_id": 93
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:isEmpty()Z",
+            "method_body": "public boolean isEmpty() {\nbufferUp();\nreturn bufPos >= bufLength;\n}",
+            "method_id": 94
+        },
+        {
+            "method_signature": "org.jsoup.parser.XmlTreeBuilder:process(Lorg/jsoup/parser/Token;)Z",
+            "method_body": "protected boolean process(Token token) {\n// start tag, end tag, doctype, comment, character, eof\nswitch (token.type) {\ncase StartTag:\ninsert(token.asStartTag());\nbreak;\ncase EndTag:\npopStackToClose(token.asEndTag());\nbreak;\ncase Comment:\ninsert(token.asComment());\nbreak;\ncase Character:\ninsert(token.asCharacter());\nbreak;\ncase Doctype:\ninsert(token.asDoctype());\nbreak;\ncase EOF: // could put some normalisation here if desired\nbreak;\ndefault:\nValidate.fail(\"Unexpected token type: \" + token.type);\n}\nreturn true;\n}",
+            "method_id": 95
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:matchesLetter()Z",
+            "method_body": "boolean matchesLetter() {\nif (isEmpty())\nreturn false;\nchar c = charBuf[bufPos];\nreturn (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || Character.isLetter(c);\n}",
+            "method_id": 96
+        },
+        {
+            "method_signature": "org.jsoup.parser.TokeniserState$8:read(Lorg/jsoup/parser/Tokeniser;Lorg/jsoup/parser/CharacterReader;)V",
+            "method_body": "void read(Tokeniser t, CharacterReader r) {\nswitch (r.current()) {\ncase '!':\nt.advanceTransition(MarkupDeclarationOpen);\nbreak;\ncase '/':\nt.advanceTransition(EndTagOpen);\nbreak;\ncase '?':\nt.advanceTransition(BogusComment);\nbreak;\ndefault:\nif (r.matchesLetter()) {\nt.createTagPending(true);\nt.transition(TagName);\n} else {\nt.error(this);\nt.emit('<'); // char that got us here\nt.transition(Data);\n}\nbreak;\n}\n}",
+            "method_id": 97
+        },
+        {
+            "method_signature": "org.jsoup.parser.ParseErrorList:canAddError()Z",
+            "method_body": "boolean canAddError() {\nreturn size() < maxSize;\n}",
+            "method_id": 98
+        },
+        {
+            "method_signature": "org.jsoup.helper.Validate:notNull(Ljava/lang/Object;Ljava/lang/String;)V",
+            "method_body": "public static void notNull(Object obj, String msg) {\nif (obj == null)\nthrow new IllegalArgumentException(msg);\n}",
+            "method_id": 99
+        },
+        {
+            "method_signature": "org.jsoup.nodes.LeafNode:attr(Ljava/lang/String;)Ljava/lang/String;",
+            "method_body": "public String attr(String key) {\nValidate.notNull(key);\nif (!hasAttributes()) {\nreturn key.equals(nodeName()) ? (String) value : EmptyString;\n}\nreturn super.attr(key);\n}",
+            "method_id": 100
+        },
+        {
+            "method_signature": "org.jsoup.parser.Token$Tag:appendTagName(Ljava/lang/String;)V",
+            "method_body": "final void appendTagName(String append) {\ntagName = tagName == null ? append : tagName.concat(append);\nnormalName = lowerCase(tagName);\n}",
+            "method_id": 101
+        },
+        {
+            "method_signature": "org.jsoup.parser.CharacterReader:bufferUp()V",
+            "method_body": "private void bufferUp() {\nif (bufPos < bufSplitPoint)\nreturn;\n\ntry {\nreader.skip(bufPos);\nreader.mark(maxBufferLen);\nfinal int read = reader.read(charBuf);\nreader.reset();\nif (read != -1) {\nbufLength = read;\nreaderPos += bufPos;\nbufPos = 0;\nbufMark = 0;\nbufSplitPoint = bufLength > readAheadLimit ? readAheadLimit : bufLength;\n}\n} catch (IOException e) {\nthrow new UncheckedIOException(e);\n}\n}",
+            "method_id": 102
+        },
+        {
+            "method_signature": "org.jsoup.parser.TokeniserState$34:read(Lorg/jsoup/parser/Tokeniser;Lorg/jsoup/parser/CharacterReader;)V",
+            "method_body": "void read(Tokeniser t, CharacterReader r) {\nchar c = r.consume();\nswitch (c) {\ncase '\\t':\ncase '\\n':\ncase '\\r':\ncase '\\f':\ncase ' ':\nbreak; // ignore whitespace\ncase '/':\nt.transition(SelfClosingStartTag);\nbreak;\ncase '>':\nt.emitTagPending();\nt.transition(Data);\nbreak;\ncase nullChar:\nt.error(this);\nt.tagPending.newAttribute();\nr.unconsume();\nt.transition(AttributeName);\nbreak;\ncase eof:\nt.eofError(this);\nt.transition(Data);\nbreak;\ncase '\"':\ncase '\\'':\ncase '<':\ncase '=':\nt.error(this);\nt.tagPending.newAttribute();\nt.tagPending.appendAttributeName(c);\nt.transition(AttributeName);\nbreak;\ndefault: // A-Z, anything else\nt.tagPending.newAttribute();\nr.unconsume();\nt.transition(AttributeName);\n}\n}",
+            "method_id": 103
+        },
+        {
+            "method_signature": "org.jsoup.parser.Token$StartTag:<init>()V",
+            "method_body": "StartTag() {\nsuper();\nattributes = new Attributes();\ntype = TokenType.StartTag;\n}",
+            "method_id": 104
+        },
+        {
+            "method_signature": "org.jsoup.Jsoup:parse(Ljava/lang/String;Ljava/lang/String;Lorg/jsoup/parser/Parser;)Lorg/jsoup/nodes/Document;",
+            "method_body": "public static Document parse(String html, String baseUri, Parser parser) {\nreturn parser.parseInput(html, baseUri);\n}",
+            "method_id": 105
+        },
+        {
+            "method_signature": "org.jsoup.parser.XmlTreeBuilder$1:<clinit>()V",
+            "method_body": "protected boolean process(Token token) {\n// start tag, end tag, doctype, comment, character, eof\nswitch (token.type) {\ncase StartTag:\ninsert(token.asStartTag());\nbreak;\ncase EndTag:\npopStackToClose(token.asEndTag());\nbreak;\ncase Comment:\ninsert(token.asComment());\nbreak;\ncase Character:\ninsert(token.asCharacter());\nbreak;\ncase Doctype:\ninsert(token.asDoctype());\nbreak;\ncase EOF: // could put some normalisation here if desired\nbreak;\ndefault:\nValidate.fail(\"Unexpected token type: \" + token.type);\n}\nreturn true;\n}",
+            "method_id": 106
+        }
+    ]
+}

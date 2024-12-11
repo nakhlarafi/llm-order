@@ -1,0 +1,87 @@
+{
+    "bug_id": 2,
+    "test_id": 1,
+    "test_name": "org.apache.commons.codec.binary.Base64OutputStreamTest.testBase64EmptyOutputStream",
+    "test_body": "public void testBase64EmptyOutputStream() throws Exception {\nbyte[] emptyEncoded = new byte[0];\nbyte[] emptyDecoded = new byte[0];\ntestByteByByte(emptyEncoded, emptyDecoded, 76, CRLF);\ntestByChunk(emptyEncoded, emptyDecoded, 76, CRLF);\n}    \n",
+    "stack_trace": "junit.framework.AssertionFailedError: Streaming base64 encode\nat junit.framework.Assert.fail(Assert.java:57)\nat junit.framework.Assert.assertTrue(Assert.java:22)\nat junit.framework.TestCase.assertTrue(TestCase.java:192)\nat org.apache.commons.codec.binary.Base64OutputStreamTest.testByteByByte(Base64OutputStreamTest.java:142)\nat org.apache.commons.codec.binary.Base64OutputStreamTest.testBase64EmptyOutputStream(Base64OutputStreamTest.java:53)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.codec.binary.Base64:encode([BII)V",
+            "method_body": "void encode(byte[] in, int inPos, int inAvail) {\nif (eof) {\nreturn;\n}\n// inAvail < 0 is how we're informed of EOF in the underlying data we're\n// encoding.\nif (inAvail < 0) {\neof = true;\nif (buf == null || buf.length - pos < encodeSize) {\nresizeBuf();\n}\nswitch (modulus) {\ncase 1:\nbuf[pos++] = encodeTable[(x >> 2) & MASK_6BITS];\nbuf[pos++] = encodeTable[(x << 4) & MASK_6BITS];\n// URL-SAFE skips the padding to further reduce size.\nif (encodeTable == STANDARD_ENCODE_TABLE) {\nbuf[pos++] = PAD;\nbuf[pos++] = PAD;\n}\nbreak;\n\ncase 2:\nbuf[pos++] = encodeTable[(x >> 10) & MASK_6BITS];\nbuf[pos++] = encodeTable[(x >> 4) & MASK_6BITS];\nbuf[pos++] = encodeTable[(x << 2) & MASK_6BITS];\n// URL-SAFE skips the padding to further reduce size.\nif (encodeTable == STANDARD_ENCODE_TABLE) {\nbuf[pos++] = PAD;\n}\nbreak;\n}\nif (lineLength > 0) {\nSystem.arraycopy(lineSeparator, 0, buf, pos, lineSeparator.length);\npos += lineSeparator.length;\n}\n} else {\nfor (int i = 0; i < inAvail; i++) {\nif (buf == null || buf.length - pos < encodeSize) {\nresizeBuf();\n}\nmodulus = (++modulus) % 3;\nint b = in[inPos++];\nif (b < 0) { b += 256; }\nx = (x << 8) + b;\nif (0 == modulus) {\nbuf[pos++] = encodeTable[(x >> 18) & MASK_6BITS];\nbuf[pos++] = encodeTable[(x >> 12) & MASK_6BITS];\nbuf[pos++] = encodeTable[(x >> 6) & MASK_6BITS];\nbuf[pos++] = encodeTable[x & MASK_6BITS];\ncurrentLinePos += 4;\nif (lineLength > 0 && lineLength <= currentLinePos) {\nSystem.arraycopy(lineSeparator, 0, buf, pos, lineSeparator.length);\npos += lineSeparator.length;\ncurrentLinePos = 0;\n}\n}\n}\n}\n}",
+            "method_id": 0,
+            "loc": 60
+        },
+        {
+            "method_signature": "org.apache.commons.codec.binary.Base64:<init>(I[BZ)V",
+            "method_body": "public Base64(int lineLength, byte[] lineSeparator, boolean urlSafe) {\nthis.lineLength = lineLength;\nthis.lineSeparator = new byte[lineSeparator.length];\nSystem.arraycopy(lineSeparator, 0, this.lineSeparator, 0, lineSeparator.length);\nif (lineLength > 0) {\nthis.encodeSize = 4 + lineSeparator.length;\n} else {\nthis.encodeSize = 4;\n}\nthis.decodeSize = this.encodeSize - 1;\nif (containsBase64Byte(lineSeparator)) {\nString sep;\ntry {\nsep = new String(lineSeparator, \"UTF-8\");\n} catch (UnsupportedEncodingException uee) {\nsep = new String(lineSeparator);\n}\nthrow new IllegalArgumentException(\"lineSeperator must not contain base64 characters: [\" + sep + \"]\");\n}\nthis.encodeTable = urlSafe ? URL_SAFE_ENCODE_TABLE : STANDARD_ENCODE_TABLE;\n}",
+            "method_id": 1,
+            "loc": 21
+        },
+        {
+            "method_signature": "org.apache.commons.codec.binary.Base64:readResults([BII)I",
+            "method_body": "int readResults(byte[] b, int bPos, int bAvail) {\nif (buf != null) {\nint len = Math.min(avail(), bAvail);\nif (buf != b) {\nSystem.arraycopy(buf, readPos, b, bPos, len);\nreadPos += len;\nif (readPos >= pos) {\nbuf = null;\n}\n} else {\n// Re-using the original consumer's output array is only\n// allowed for one round.\nbuf = null;\n}\nreturn len;\n}\nreturn eof ? -1 : 0;\n}",
+            "method_id": 2,
+            "loc": 18
+        },
+        {
+            "method_signature": "org.apache.commons.codec.binary.Base64OutputStream:flush(Z)V",
+            "method_body": "private void flush(boolean propogate) throws IOException {\nint avail = base64.avail();\nif (avail > 0) {\nbyte[] buf = new byte[avail];\nint c = base64.readResults(buf, 0, avail);\nif (c > 0) {\nout.write(buf, 0, c);\n}\n}\nif (propogate) {\nout.flush();\n}\n}",
+            "method_id": 3,
+            "loc": 13
+        },
+        {
+            "method_signature": "org.apache.commons.codec.binary.Base64:resizeBuf()V",
+            "method_body": "private void resizeBuf() {\nif (buf == null) {\nbuf = new byte[8192];\npos = 0;\nreadPos = 0;\n} else {\nbyte[] b = new byte[buf.length * 2];\nSystem.arraycopy(buf, 0, b, 0, buf.length);\nbuf = b;\n}\n}",
+            "method_id": 4,
+            "loc": 11
+        },
+        {
+            "method_signature": "org.apache.commons.codec.binary.Base64OutputStream:close()V",
+            "method_body": "public void close() throws IOException {\n// Notify encoder of EOF (-1).\nif (doEncode) {\nbase64.encode(singleByte, 0, -1);\n} else {\nbase64.decode(singleByte, 0, -1);\n}\nflush();\nout.close();\n}",
+            "method_id": 5,
+            "loc": 10
+        },
+        {
+            "method_signature": "org.apache.commons.codec.binary.Base64:containsBase64Byte([B)Z",
+            "method_body": "private static boolean containsBase64Byte(byte[] arrayOctet) {\nfor (int i = 0; i < arrayOctet.length; i++) {\nif (isBase64(arrayOctet[i])) {\nreturn true;\n}\n}\nreturn false;\n}",
+            "method_id": 6,
+            "loc": 8
+        },
+        {
+            "method_signature": "org.apache.commons.codec.binary.Base64:<clinit>()V",
+            "method_body": "static final int CHUNK_SIZE = 76;\n\n/**\n* Chunk separator per RFC 2045 section 2.1.\n*\n* @see <a href=\"http://www.ietf.org/rfc/rfc2045.txt\">RFC 2045 section 2.1</a>\n*/\nstatic final byte[] CHUNK_SEPARATOR = {'\\r','\\n'};",
+            "method_id": 7,
+            "loc": 8
+        },
+        {
+            "method_signature": "org.apache.commons.codec.binary.Base64OutputStream:<init>(Ljava/io/OutputStream;ZI[B)V",
+            "method_body": "public Base64OutputStream(OutputStream out, boolean doEncode, int lineLength, byte[] lineSeparator) {\nsuper(out);\nthis.doEncode = doEncode;\nthis.base64 = new Base64(lineLength, lineSeparator);\n}",
+            "method_id": 8,
+            "loc": 5
+        },
+        {
+            "method_signature": "org.apache.commons.codec.binary.Base64:<init>(I[B)V",
+            "method_body": "public Base64(int lineLength, byte[] lineSeparator) {\nthis(lineLength, lineSeparator, false);\n}",
+            "method_id": 9,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.codec.binary.Base64:avail()I",
+            "method_body": "int avail() {\nreturn buf != null ? pos - readPos : 0;\n}",
+            "method_id": 10,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.codec.binary.Base64:isBase64(B)Z",
+            "method_body": "public static boolean isBase64(byte octet) {\nreturn octet == PAD || (octet >= 0 && octet < DECODE_TABLE.length && DECODE_TABLE[octet] != -1);\n}",
+            "method_id": 11,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.codec.binary.Base64OutputStream:flush()V",
+            "method_body": "public void flush() throws IOException {\nflush(true);\n}",
+            "method_id": 12,
+            "loc": 3
+        }
+    ]
+}

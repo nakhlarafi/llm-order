@@ -1,0 +1,204 @@
+{
+    "bug_id": 21,
+    "test_id": 0,
+    "test_name": "org.apache.commons.math3.linear.RectangularCholeskyDecompositionTest.testMath789",
+    "test_body": "public void testMath789() {\nfinal RealMatrix m1 = MatrixUtils.createRealMatrix(new double[][]{\n{0.013445532, 0.010394690, 0.009881156, 0.010499559},\n{0.010394690, 0.023006616, 0.008196856, 0.010732709},\n{0.009881156, 0.008196856, 0.019023866, 0.009210099},\n{0.010499559, 0.010732709, 0.009210099, 0.019107243}\n});\nRealMatrix root1 = new RectangularCholeskyDecomposition(m1, 1.0e-10).getRootMatrix();\nRealMatrix rebuiltM1 = root1.multiply(root1.transpose());\nAssert.assertEquals(0.0, m1.subtract(rebuiltM1).getNorm(), 1.0e-16);\nfinal RealMatrix m2 = MatrixUtils.createRealMatrix(new double[][]{\n{0.0, 0.0, 0.0, 0.0, 0.0},\n{0.0, 0.013445532, 0.010394690, 0.009881156, 0.010499559},\n{0.0, 0.010394690, 0.023006616, 0.008196856, 0.010732709},\n{0.0, 0.009881156, 0.008196856, 0.019023866, 0.009210099},\n{0.0, 0.010499559, 0.010732709, 0.009210099, 0.019107243}\n});\nRealMatrix root2 = new RectangularCholeskyDecomposition(m2, 1.0e-10).getRootMatrix();\nRealMatrix rebuiltM2 = root2.multiply(root2.transpose());\nAssert.assertEquals(0.0, m2.subtract(rebuiltM2).getNorm(), 1.0e-16);\nfinal RealMatrix m3 = MatrixUtils.createRealMatrix(new double[][]{\n{0.013445532, 0.010394690, 0.0, 0.009881156, 0.010499559},\n{0.010394690, 0.023006616, 0.0, 0.008196856, 0.010732709},\n{0.0, 0.0, 0.0, 0.0, 0.0},\n{0.009881156, 0.008196856, 0.0, 0.019023866, 0.009210099},\n{0.010499559, 0.010732709, 0.0, 0.009210099, 0.019107243}\n});\nRealMatrix root3 = new RectangularCholeskyDecomposition(m3, 1.0e-10).getRootMatrix();\nRealMatrix rebuiltM3 = root3.multiply(root3.transpose());\nAssert.assertEquals(0.0, m3.subtract(rebuiltM3).getNorm(), 1.0e-16);\n}\n",
+    "stack_trace": "junit.framework.AssertionFailedError: expected:<0.0> but was:<0.0180652917341963>\nat org.junit.Assert.fail(Assert.java:88)\nat org.junit.Assert.failNotEquals(Assert.java:743)\nat org.junit.Assert.assertEquals(Assert.java:494)\nat org.junit.Assert.assertEquals(Assert.java:592)\nat org.apache.commons.math3.linear.RectangularCholeskyDecompositionTest.testMath789(RectangularCholeskyDecompositionTest.java:108)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.math3.linear.AbstractRealMatrix$5:<init>(Lorg/apache/commons/math3/linear/AbstractRealMatrix;Lorg/apache/commons/math3/linear/RealMatrix;)V",
+            "method_body": "public RealMatrix transpose() {\nfinal int nRows = getRowDimension();\nfinal int nCols = getColumnDimension();\nfinal RealMatrix out = createMatrix(nCols, nRows);\nwalkInOptimizedOrder(new DefaultRealMatrixPreservingVisitor() {\nout.setEntry(column, row, value);\n}\nreturn out;\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.AbstractRealMatrix:multiply(Lorg/apache/commons/math3/linear/RealMatrix;)Lorg/apache/commons/math3/linear/RealMatrix;",
+            "method_body": "public RealMatrix multiply(final RealMatrix m) {\n// Safety check.\nMatrixUtils.checkMultiplicationCompatible(this, m);\n\nfinal int nRows = getRowDimension();\nfinal int nCols = m.getColumnDimension();\nfinal int nSum  = getColumnDimension();\nfinal RealMatrix out = createMatrix(nRows, nCols);\nfor (int row = 0; row < nRows; ++row) {\nfor (int col = 0; col < nCols; ++col) {\ndouble sum = 0;\nfor (int i = 0; i < nSum; ++i) {\nsum += getEntry(row, i) * m.getEntry(i, col);\n}\nout.setEntry(row, col, sum);\n}\n}\n\nreturn out;\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.MatrixUtils:createRealMatrix([[D)Lorg/apache/commons/math3/linear/RealMatrix;",
+            "method_body": "public static RealMatrix createRealMatrix(double[][] data)\nthrows NullArgumentException, DimensionMismatchException,\nNoDataException {\nif (data == null ||\ndata[0] == null) {\nthrow new NullArgumentException();\n}\nreturn (data.length * data[0].length <= 4096) ?\nnew Array2DRowRealMatrix(data) : new BlockRealMatrix(data);\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.AbstractRealMatrix:subtract(Lorg/apache/commons/math3/linear/RealMatrix;)Lorg/apache/commons/math3/linear/RealMatrix;",
+            "method_body": "public RealMatrix subtract(final RealMatrix m) {\n// Safety check.\nMatrixUtils.checkSubtractionCompatible(this, m);\n\nfinal int rowCount    = getRowDimension();\nfinal int columnCount = getColumnDimension();\nfinal RealMatrix out = createMatrix(rowCount, columnCount);\nfor (int row = 0; row < rowCount; ++row) {\nfor (int col = 0; col < columnCount; ++col) {\nout.setEntry(row, col, getEntry(row, col) - m.getEntry(row, col));\n}\n}\n\nreturn out;\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.Array2DRowRealMatrix:getData()[[D",
+            "method_body": "public double[][] getData() {\nreturn copyOut();\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.AbstractRealMatrix$1:start(IIIIII)V",
+            "method_body": "public double getNorm() {\nreturn walkInColumnOrder(new RealMatrixPreservingVisitor() {\n\n/** Last row index. */\nprivate double endRow;\n\n/** Sum of absolute values on one column. */\nprivate double columnSum;\n\n/** Maximal sum across all columns. */\nprivate double maxColSum;\n\n/** {@inheritDoc} */\npublic void start(final int rows, final int columns,\nfinal int startRow, final int endRow,\nfinal int startColumn, final int endColumn) {\nthis.endRow = endRow;\ncolumnSum   = 0;\nmaxColSum   = 0;\n}\n\n/** {@inheritDoc} */\npublic void visit(final int row, final int column, final double value) {\ncolumnSum += FastMath.abs(value);\nif (row == endRow) {\nmaxColSum = FastMath.max(maxColSum, columnSum);\ncolumnSum = 0;\n}\n}\n\n/** {@inheritDoc} */\npublic double end() {\nreturn maxColSum;\n}\n});\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.Array2DRowRealMatrix:copyIn([[D)V",
+            "method_body": "private void copyIn(final double[][] in)\nthrows DimensionMismatchException, NoDataException, NullArgumentException {\nsetSubMatrix(in, 0, 0);\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.AbstractRealMatrix:getNorm()D",
+            "method_body": "public double getNorm() {\nreturn walkInColumnOrder(new RealMatrixPreservingVisitor() {\n\n/** Last row index. */\nprivate double endRow;\n\n/** Sum of absolute values on one column. */\nprivate double columnSum;\n\n/** Maximal sum across all columns. */\nprivate double maxColSum;\n\n/** {@inheritDoc} */\npublic void start(final int rows, final int columns,\nfinal int startRow, final int endRow,\nfinal int startColumn, final int endColumn) {\nthis.endRow = endRow;\ncolumnSum   = 0;\nmaxColSum   = 0;\n}\n\n/** {@inheritDoc} */\npublic void visit(final int row, final int column, final double value) {\ncolumnSum += FastMath.abs(value);\nif (row == endRow) {\nmaxColSum = FastMath.max(maxColSum, columnSum);\ncolumnSum = 0;\n}\n}\n\n/** {@inheritDoc} */\npublic double end() {\nreturn maxColSum;\n}\n});\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.Array2DRowRealMatrix:walkInRowOrder(Lorg/apache/commons/math3/linear/RealMatrixPreservingVisitor;)D",
+            "method_body": "public double walkInRowOrder(final RealMatrixPreservingVisitor visitor) {\nfinal int rows    = getRowDimension();\nfinal int columns = getColumnDimension();\nvisitor.start(rows, columns, 0, rows - 1, 0, columns - 1);\nfor (int i = 0; i < rows; ++i) {\nfinal double[] rowI = data[i];\nfor (int j = 0; j < columns; ++j) {\nvisitor.visit(i, j, rowI[j]);\n}\n}\nreturn visitor.end();\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.Array2DRowRealMatrix:setSubMatrix([[DII)V",
+            "method_body": "public void setSubMatrix(final double[][] subMatrix,\nfinal int row, final int column) {\nif (data == null) {\nif (row > 0) {\nthrow new MathIllegalStateException(LocalizedFormats.FIRST_ROWS_NOT_INITIALIZED_YET, row);\n}\nif (column > 0) {\nthrow new MathIllegalStateException(LocalizedFormats.FIRST_COLUMNS_NOT_INITIALIZED_YET, column);\n}\nMathUtils.checkNotNull(subMatrix);\nfinal int nRows = subMatrix.length;\nif (nRows == 0) {\nthrow new NoDataException(LocalizedFormats.AT_LEAST_ONE_ROW);\n}\n\nfinal int nCols = subMatrix[0].length;\nif (nCols == 0) {\nthrow new NoDataException(LocalizedFormats.AT_LEAST_ONE_COLUMN);\n}\ndata = new double[subMatrix.length][nCols];\nfor (int i = 0; i < data.length; ++i) {\nif (subMatrix[i].length != nCols) {\nthrow new DimensionMismatchException(subMatrix[i].length, nCols);\n}\nSystem.arraycopy(subMatrix[i], 0, data[i + row], column, nCols);\n}\n} else {\nsuper.setSubMatrix(subMatrix, row, column);\n}\n\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.math3.util.MathUtils:checkNotNull(Ljava/lang/Object;)V",
+            "method_body": "public static void checkNotNull(Object o)\nthrows NullArgumentException {\nif (o == null) {\nthrow new NullArgumentException();\n}\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.Array2DRowRealMatrix:getEntry(II)D",
+            "method_body": "public double getEntry(final int row, final int column) {\nMatrixUtils.checkMatrixIndex(this, row, column);\nreturn data[row][column];\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.MatrixUtils:checkSubtractionCompatible(Lorg/apache/commons/math3/linear/AnyMatrix;Lorg/apache/commons/math3/linear/AnyMatrix;)V",
+            "method_body": "public static void checkSubtractionCompatible(final AnyMatrix left, final AnyMatrix right)\nthrows MatrixDimensionMismatchException {\nif ((left.getRowDimension()    != right.getRowDimension()) ||\n(left.getColumnDimension() != right.getColumnDimension())) {\nthrow new MatrixDimensionMismatchException(left.getRowDimension(), left.getColumnDimension(),\nright.getRowDimension(), right.getColumnDimension());\n}\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.AbstractRealMatrix:<init>(II)V",
+            "method_body": "protected AbstractRealMatrix(final int rowDimension, final int columnDimension) {\nif (rowDimension < 1) {\nthrow new NotStrictlyPositiveException(rowDimension);\n}\nif (columnDimension < 1) {\nthrow new NotStrictlyPositiveException(columnDimension);\n}\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.Array2DRowRealMatrix:setEntry(IID)V",
+            "method_body": "public void setEntry(final int row, final int column, final double value) {\nMatrixUtils.checkMatrixIndex(this, row, column);\ndata[row][column] = value;\n}",
+            "method_id": 14
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.AbstractRealMatrix:walkInOptimizedOrder(Lorg/apache/commons/math3/linear/RealMatrixPreservingVisitor;)D",
+            "method_body": "public double walkInOptimizedOrder(final RealMatrixPreservingVisitor visitor) {\nreturn walkInRowOrder(visitor);\n}",
+            "method_id": 15
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.MatrixUtils:checkMultiplicationCompatible(Lorg/apache/commons/math3/linear/AnyMatrix;Lorg/apache/commons/math3/linear/AnyMatrix;)V",
+            "method_body": "public static void checkMultiplicationCompatible(final AnyMatrix left, final AnyMatrix right)\nthrows DimensionMismatchException {\n\nif (left.getColumnDimension() != right.getRowDimension()) {\nthrow new DimensionMismatchException(left.getColumnDimension(),\nright.getRowDimension());\n}\n}",
+            "method_id": 16
+        },
+        {
+            "method_signature": "org.apache.commons.math3.util.FastMath:max(DD)D",
+            "method_body": "public static double max(final double a, final double b) {\nif (a > b) {\nreturn a;\n}\nif (a < b) {\nreturn b;\n}\n/* if either arg is NaN, return NaN */\nif (a != b) {\nreturn Double.NaN;\n}\n/* min(+0.0,-0.0) == -0.0 */\n/* 0x8000000000000000L == Double.doubleToRawLongBits(-0.0d) */\nlong bits = Double.doubleToRawLongBits(a);\nif (bits == 0x8000000000000000L) {\nreturn b;\n}\nreturn a;\n}",
+            "method_id": 17
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.RectangularCholeskyDecomposition:getRootMatrix()Lorg/apache/commons/math3/linear/RealMatrix;",
+            "method_body": "public RealMatrix getRootMatrix() {\nreturn root;\n}",
+            "method_id": 18
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.AbstractRealMatrix$1:visit(IID)V",
+            "method_body": "public double getNorm() {\nreturn walkInColumnOrder(new RealMatrixPreservingVisitor() {\n\n/** Last row index. */\nprivate double endRow;\n\n/** Sum of absolute values on one column. */\nprivate double columnSum;\n\n/** Maximal sum across all columns. */\nprivate double maxColSum;\n\n/** {@inheritDoc} */\npublic void start(final int rows, final int columns,\nfinal int startRow, final int endRow,\nfinal int startColumn, final int endColumn) {\nthis.endRow = endRow;\ncolumnSum   = 0;\nmaxColSum   = 0;\n}\n\n/** {@inheritDoc} */\npublic void visit(final int row, final int column, final double value) {\ncolumnSum += FastMath.abs(value);\nif (row == endRow) {\nmaxColSum = FastMath.max(maxColSum, columnSum);\ncolumnSum = 0;\n}\n}\n\n/** {@inheritDoc} */\npublic double end() {\nreturn maxColSum;\n}\n});\n}",
+            "method_id": 19
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.MatrixUtils:checkMatrixIndex(Lorg/apache/commons/math3/linear/AnyMatrix;II)V",
+            "method_body": "public static void checkMatrixIndex(final AnyMatrix m,\nfinal int row, final int column)\nthrows OutOfRangeException {\ncheckRowIndex(m, row);\ncheckColumnIndex(m, column);\n}",
+            "method_id": 20
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.AbstractRealMatrix$1:<init>(Lorg/apache/commons/math3/linear/AbstractRealMatrix;)V",
+            "method_body": "public double getNorm() {\nreturn walkInColumnOrder(new RealMatrixPreservingVisitor() {\nthis.endRow = endRow;\ncolumnSum   = 0;\nmaxColSum   = 0;\n}\ncolumnSum += FastMath.abs(value);\nif (row == endRow) {\nmaxColSum = FastMath.max(maxColSum, columnSum);\ncolumnSum = 0;\n}\nreturn maxColSum;\n}",
+            "method_id": 21
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.Array2DRowRealMatrix:<init>(II)V",
+            "method_body": "public Array2DRowRealMatrix(final int rowDimension, final int columnDimension) {\nsuper(rowDimension, columnDimension);\ndata = new double[rowDimension][columnDimension];\n}",
+            "method_id": 22
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.Array2DRowRealMatrix:createMatrix(II)Lorg/apache/commons/math3/linear/RealMatrix;",
+            "method_body": "public RealMatrix createMatrix(final int rowDimension,\nfinal int columnDimension) {\nreturn new Array2DRowRealMatrix(rowDimension, columnDimension);\n}",
+            "method_id": 23
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.MatrixUtils:createRealMatrix(II)Lorg/apache/commons/math3/linear/RealMatrix;",
+            "method_body": "public static RealMatrix createRealMatrix(final int rows, final int columns) {\nreturn (rows * columns <= 4096) ?\nnew Array2DRowRealMatrix(rows, columns) : new BlockRealMatrix(rows, columns);\n}",
+            "method_id": 24
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.DefaultRealMatrixPreservingVisitor:end()D",
+            "method_body": "public double end() {\nreturn 0;\n}",
+            "method_id": 25
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.Array2DRowRealMatrix:getColumnDimension()I",
+            "method_body": "public int getColumnDimension() {\nreturn ((data == null) || (data[0] == null)) ? 0 : data[0].length;\n}",
+            "method_id": 26
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.Array2DRowRealMatrix:walkInColumnOrder(Lorg/apache/commons/math3/linear/RealMatrixPreservingVisitor;)D",
+            "method_body": "public double walkInColumnOrder(final RealMatrixPreservingVisitor visitor) {\nfinal int rows    = getRowDimension();\nfinal int columns = getColumnDimension();\nvisitor.start(rows, columns, 0, rows - 1, 0, columns - 1);\nfor (int j = 0; j < columns; ++j) {\nfor (int i = 0; i < rows; ++i) {\nvisitor.visit(i, j, data[i][j]);\n}\n}\nreturn visitor.end();\n}",
+            "method_id": 27
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.AbstractRealMatrix:transpose()Lorg/apache/commons/math3/linear/RealMatrix;",
+            "method_body": "public RealMatrix transpose() {\nfinal int nRows = getRowDimension();\nfinal int nCols = getColumnDimension();\nfinal RealMatrix out = createMatrix(nCols, nRows);\nwalkInOptimizedOrder(new DefaultRealMatrixPreservingVisitor() {\n\n/** {@inheritDoc} */\n@Override\npublic void visit(final int row, final int column, final double value) {\nout.setEntry(column, row, value);\n}\n\n});\n\nreturn out;\n}",
+            "method_id": 28
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.AbstractRealMatrix$1:end()D",
+            "method_body": "public double getNorm() {\nreturn walkInColumnOrder(new RealMatrixPreservingVisitor() {\n\n/** Last row index. */\nprivate double endRow;\n\n/** Sum of absolute values on one column. */\nprivate double columnSum;\n\n/** Maximal sum across all columns. */\nprivate double maxColSum;\n\n/** {@inheritDoc} */\npublic void start(final int rows, final int columns,\nfinal int startRow, final int endRow,\nfinal int startColumn, final int endColumn) {\nthis.endRow = endRow;\ncolumnSum   = 0;\nmaxColSum   = 0;\n}\n\n/** {@inheritDoc} */\npublic void visit(final int row, final int column, final double value) {\ncolumnSum += FastMath.abs(value);\nif (row == endRow) {\nmaxColSum = FastMath.max(maxColSum, columnSum);\ncolumnSum = 0;\n}\n}\n\n/** {@inheritDoc} */\npublic double end() {\nreturn maxColSum;\n}\n});\n}",
+            "method_id": 29
+        },
+        {
+            "method_signature": "org.apache.commons.math3.util.FastMath:sqrt(D)D",
+            "method_body": "public static double sqrt(final double a) {\nreturn Math.sqrt(a);\n}",
+            "method_id": 30
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.Array2DRowRealMatrix:getRowDimension()I",
+            "method_body": "public int getRowDimension() {\nreturn (data == null) ? 0 : data.length;\n}",
+            "method_id": 31
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.Array2DRowRealMatrix:<init>([[D)V",
+            "method_body": "public Array2DRowRealMatrix(final double[][] d)\nthrows DimensionMismatchException, NoDataException, NullArgumentException {\ncopyIn(d);\n}",
+            "method_id": 32
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.AbstractRealMatrix$5:visit(IID)V",
+            "method_body": "public RealMatrix transpose() {\nfinal int nRows = getRowDimension();\nfinal int nCols = getColumnDimension();\nfinal RealMatrix out = createMatrix(nCols, nRows);\nwalkInOptimizedOrder(new DefaultRealMatrixPreservingVisitor() {\n\n/** {@inheritDoc} */\n@Override\npublic void visit(final int row, final int column, final double value) {\nout.setEntry(column, row, value);\n}\n\n});\n\nreturn out;\n}",
+            "method_id": 33
+        },
+        {
+            "method_signature": "org.apache.commons.math3.util.FastMath:abs(D)D",
+            "method_body": "public static double abs(double x) {\nreturn (x < 0.0) ? -x : (x == 0.0) ? 0.0 : x; // -0.0 => +0.0\n}",
+            "method_id": 34
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.MatrixUtils:checkColumnIndex(Lorg/apache/commons/math3/linear/AnyMatrix;I)V",
+            "method_body": "public static void checkColumnIndex(final AnyMatrix m, final int column)\nthrows OutOfRangeException {\nif (column < 0 || column >= m.getColumnDimension()) {\nthrow new OutOfRangeException(LocalizedFormats.COLUMN_INDEX,\ncolumn, 0, m.getColumnDimension() - 1);\n}\n}",
+            "method_id": 35
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.Array2DRowRealMatrix:copyOut()[[D",
+            "method_body": "private double[][] copyOut() {\nfinal int nRows = this.getRowDimension();\nfinal double[][] out = new double[nRows][this.getColumnDimension()];\n// can't copy 2-d array in one shot, otherwise get row references\nfor (int i = 0; i < nRows; i++) {\nSystem.arraycopy(data[i], 0, out[i], 0, data[i].length);\n}\nreturn out;\n}",
+            "method_id": 36
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.RectangularCholeskyDecomposition:<init>(Lorg/apache/commons/math3/linear/RealMatrix;D)V",
+            "method_body": "public RectangularCholeskyDecomposition(RealMatrix matrix, double small)\nthrows NonPositiveDefiniteMatrixException {\n\nfinal int order = matrix.getRowDimension();\nfinal double[][] c = matrix.getData();\nfinal double[][] b = new double[order][order];\n\nint[] swap  = new int[order];\nint[] index = new int[order];\nfor (int i = 0; i < order; ++i) {\nindex[i] = i;\n}\n\nint r = 0;\nfor (boolean loop = true; loop;) {\n\n// find maximal diagonal element\nswap[r] = r;\nfor (int i = r + 1; i < order; ++i) {\nint ii  = index[i];\nint isi = index[swap[i]];\nif (c[ii][ii] > c[isi][isi]) {\nswap[r] = i;\n}\n}\n\n\n// swap elements\nif (swap[r] != r) {\nint tmp = index[r];\nindex[r] = index[swap[r]];\nindex[swap[r]] = tmp;\n}\n\n// check diagonal element\nint ir = index[r];\nif (c[ir][ir] < small) {\n\nif (r == 0) {\nthrow new NonPositiveDefiniteMatrixException(c[ir][ir], ir, small);\n}\n\n// check remaining diagonal elements\nfor (int i = r; i < order; ++i) {\nif (c[index[i]][index[i]] < -small) {\n// there is at least one sufficiently negative diagonal element,\n// the symmetric positive semidefinite matrix is wrong\nthrow new NonPositiveDefiniteMatrixException(c[index[i]][index[i]], i, small);\n}\n}\n\n// all remaining diagonal elements are close to zero, we consider we have\n// found the rank of the symmetric positive semidefinite matrix\n++r;\nloop = false;\n\n} else {\n\n// transform the matrix\nfinal double sqrt = FastMath.sqrt(c[ir][ir]);\nb[r][r] = sqrt;\nfinal double inverse  = 1 / sqrt;\nfor (int i = r + 1; i < order; ++i) {\nfinal int ii = index[i];\nfinal double e = inverse * c[ii][ir];\nb[i][r] = e;\nc[ii][ii] -= e * e;\nfor (int j = r + 1; j < i; ++j) {\nfinal int ij = index[j];\nfinal double f = c[ii][ij] - e * b[j][r];\nc[ii][ij] = f;\nc[ij][ii] = f;\n}\n}\n\n// prepare next iteration\nloop = ++r < order;\n}\n}\n\n// build the root matrix\nrank = r;\nroot = MatrixUtils.createRealMatrix(order, r);\nfor (int i = 0; i < order; ++i) {\nfor (int j = 0; j < r; ++j) {\nroot.setEntry(index[i], j, b[i][j]);\n}\n}\n\n}",
+            "method_id": 37
+        },
+        {
+            "method_signature": "org.apache.commons.math3.linear.MatrixUtils:checkRowIndex(Lorg/apache/commons/math3/linear/AnyMatrix;I)V",
+            "method_body": "public static void checkRowIndex(final AnyMatrix m, final int row)\nthrows OutOfRangeException {\nif (row < 0 ||\nrow >= m.getRowDimension()) {\nthrow new OutOfRangeException(LocalizedFormats.ROW_INDEX,\nrow, 0, m.getRowDimension() - 1);\n}\n}",
+            "method_id": 38
+        }
+    ]
+}

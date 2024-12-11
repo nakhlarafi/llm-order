@@ -1,0 +1,225 @@
+{
+    "bug_id": 12,
+    "test_id": 0,
+    "test_name": "com.google.gson.internal.bind.JsonTreeReaderTest.testSkipValue_filledJsonObject",
+    "test_body": "public void testSkipValue_filledJsonObject() throws IOException {\nJsonObject jsonObject = new JsonObject();\nJsonArray jsonArray = new JsonArray();\njsonArray.add('c');\njsonArray.add(\"text\");\njsonObject.add(\"a\", jsonArray);\njsonObject.addProperty(\"b\", true);\njsonObject.addProperty(\"i\", 1);\njsonObject.add(\"n\", JsonNull.INSTANCE);\nJsonObject jsonObject2 = new JsonObject();\njsonObject2.addProperty(\"n\", 2L);\njsonObject.add(\"o\", jsonObject2);\njsonObject.addProperty(\"s\", \"text\");\nJsonTreeReader in = new JsonTreeReader(jsonObject);\nin.skipValue();\nassertEquals(JsonToken.END_DOCUMENT, in.peek());\n}\n",
+    "stack_trace": "java.lang.ArrayIndexOutOfBoundsException: -1\nat com.google.gson.internal.bind.JsonTreeReader.skipValue(JsonTreeReader.java:262)\nat com.google.gson.internal.bind.JsonTreeReaderTest.testSkipValue_filledJsonObject(JsonTreeReaderTest.java:47)",
+    "covered_methods": [
+        {
+            "method_signature": "com.google.gson.internal.LinkedTreeMap:find(Ljava/lang/Object;Z)Lcom/google/gson/internal/LinkedTreeMap$Node;",
+            "method_body": "Node<K, V> find(K key, boolean create) {\nComparator<? super K> comparator = this.comparator;\nNode<K, V> nearest = root;\nint comparison = 0;\n\nif (nearest != null) {\n// Micro-optimization: avoid polymorphic calls to Comparator.compare().\n@SuppressWarnings(\"unchecked\") // Throws a ClassCastException below if there's trouble.\nComparable<Object> comparableKey = (comparator == NATURAL_ORDER)\n? (Comparable<Object>) key\n: null;\n\nwhile (true) {\ncomparison = (comparableKey != null)\n? comparableKey.compareTo(nearest.key)\n: comparator.compare(key, nearest.key);\n\n// We found the requested key.\nif (comparison == 0) {\nreturn nearest;\n}\n\n// If it exists, the key is in a subtree. Go deeper.\nNode<K, V> child = (comparison < 0) ? nearest.left : nearest.right;\nif (child == null) {\nbreak;\n}\n\nnearest = child;\n}\n}\n\n// The key doesn't exist in this tree.\nif (!create) {\nreturn null;\n}\n\n// Create the node and add it to the tree or the table.\nNode<K, V> header = this.header;\nNode<K, V> created;\nif (nearest == null) {\n// Check that the value is comparable if we didn't do any comparisons.\nif (comparator == NATURAL_ORDER && !(key instanceof Comparable)) {\nthrow new ClassCastException(key.getClass().getName() + \" is not Comparable\");\n}\ncreated = new Node<K, V>(nearest, key, header, header.prev);\nroot = created;\n} else {\ncreated = new Node<K, V>(nearest, key, header, header.prev);\nif (comparison < 0) { // nearest.key is higher\nnearest.left = created;\n} else { // comparison > 0, nearest.key is lower\nnearest.right = created;\n}\nrebalance(nearest, true);\n}\nsize++;\nmodCount++;\n\nreturn created;\n}",
+            "method_id": 0,
+            "loc": 61
+        },
+        {
+            "method_signature": "com.google.gson.internal.LinkedTreeMap:rebalance(Lcom/google/gson/internal/LinkedTreeMap$Node;Z)V",
+            "method_body": "private void rebalance(Node<K, V> unbalanced, boolean insert) {\nfor (Node<K, V> node = unbalanced; node != null; node = node.parent) {\nNode<K, V> left = node.left;\nNode<K, V> right = node.right;\nint leftHeight = left != null ? left.height : 0;\nint rightHeight = right != null ? right.height : 0;\n\nint delta = leftHeight - rightHeight;\nif (delta == -2) {\nNode<K, V> rightLeft = right.left;\nNode<K, V> rightRight = right.right;\nint rightRightHeight = rightRight != null ? rightRight.height : 0;\nint rightLeftHeight = rightLeft != null ? rightLeft.height : 0;\n\nint rightDelta = rightLeftHeight - rightRightHeight;\nif (rightDelta == -1 || (rightDelta == 0 && !insert)) {\nrotateLeft(node); // AVL right right\n} else {\nassert (rightDelta == 1);\nrotateRight(right); // AVL right left\nrotateLeft(node);\n}\nif (insert) {\nbreak; // no further rotations will be necessary\n}\n\n} else if (delta == 2) {\nNode<K, V> leftLeft = left.left;\nNode<K, V> leftRight = left.right;\nint leftRightHeight = leftRight != null ? leftRight.height : 0;\nint leftLeftHeight = leftLeft != null ? leftLeft.height : 0;\n\nint leftDelta = leftLeftHeight - leftRightHeight;\nif (leftDelta == 1 || (leftDelta == 0 && !insert)) {\nrotateRight(node); // AVL left left\n} else {\nassert (leftDelta == -1);\nrotateLeft(left); // AVL left right\nrotateRight(node);\n}\nif (insert) {\nbreak; // no further rotations will be necessary\n}\n\n} else if (delta == 0) {\nnode.height = leftHeight + 1; // leftHeight == rightHeight\nif (insert) {\nbreak; // the insert caused balance, so rebalancing is done!\n}\n\n} else {\nassert (delta == -1 || delta == 1);\nnode.height = Math.max(leftHeight, rightHeight) + 1;\nif (!insert) {\nbreak; // the height hasn't changed, so rebalancing is done!\n}\n}\n}\n}",
+            "method_id": 1,
+            "loc": 59
+        },
+        {
+            "method_signature": "com.google.gson.internal.bind.JsonTreeReader:peek()Lcom/google/gson/stream/JsonToken;",
+            "method_body": "@Override public JsonToken peek() throws IOException {\nif (stackSize == 0) {\nreturn JsonToken.END_DOCUMENT;\n}\n\nObject o = peekStack();\nif (o instanceof Iterator) {\nboolean isObject = stack[stackSize - 2] instanceof JsonObject;\nIterator<?> iterator = (Iterator<?>) o;\nif (iterator.hasNext()) {\nif (isObject) {\nreturn JsonToken.NAME;\n} else {\npush(iterator.next());\nreturn peek();\n}\n} else {\nreturn isObject ? JsonToken.END_OBJECT : JsonToken.END_ARRAY;\n}\n} else if (o instanceof JsonObject) {\nreturn JsonToken.BEGIN_OBJECT;\n} else if (o instanceof JsonArray) {\nreturn JsonToken.BEGIN_ARRAY;\n} else if (o instanceof JsonPrimitive) {\nJsonPrimitive primitive = (JsonPrimitive) o;\nif (primitive.isString()) {\nreturn JsonToken.STRING;\n} else if (primitive.isBoolean()) {\nreturn JsonToken.BOOLEAN;\n} else if (primitive.isNumber()) {\nreturn JsonToken.NUMBER;\n} else {\nthrow new AssertionError();\n}\n} else if (o instanceof JsonNull) {\nreturn JsonToken.NULL;\n} else if (o == SENTINEL_CLOSED) {\nthrow new IllegalStateException(\"JsonReader is closed\");\n} else {\nthrow new AssertionError();\n}\n}",
+            "method_id": 2,
+            "loc": 42
+        },
+        {
+            "method_signature": "com.google.gson.internal.LinkedTreeMap:rotateLeft(Lcom/google/gson/internal/LinkedTreeMap$Node;)V",
+            "method_body": "private void rotateLeft(Node<K, V> root) {\nNode<K, V> left = root.left;\nNode<K, V> pivot = root.right;\nNode<K, V> pivotLeft = pivot.left;\nNode<K, V> pivotRight = pivot.right;\n\n// move the pivot's left child to the root's right\nroot.right = pivotLeft;\nif (pivotLeft != null) {\npivotLeft.parent = root;\n}\n\nreplaceInParent(root, pivot);\n\n// move the root to the pivot's left\npivot.left = root;\nroot.parent = pivot;\n\n// fix heights\nroot.height = Math.max(left != null ? left.height : 0,\npivotLeft != null ? pivotLeft.height : 0) + 1;\npivot.height = Math.max(root.height,\npivotRight != null ? pivotRight.height : 0) + 1;\n}",
+            "method_id": 3,
+            "loc": 24
+        },
+        {
+            "method_signature": "com.google.gson.internal.LinkedTreeMap:replaceInParent(Lcom/google/gson/internal/LinkedTreeMap$Node;Lcom/google/gson/internal/LinkedTreeMap$Node;)V",
+            "method_body": "private void replaceInParent(Node<K, V> node, Node<K, V> replacement) {\nNode<K, V> parent = node.parent;\nnode.parent = null;\nif (replacement != null) {\nreplacement.parent = parent;\n}\n\nif (parent != null) {\nif (parent.left == node) {\nparent.left = replacement;\n} else {\nassert (parent.right == node);\nparent.right = replacement;\n}\n} else {\nroot = replacement;\n}\n}",
+            "method_id": 4,
+            "loc": 18
+        },
+        {
+            "method_signature": "com.google.gson.internal.bind.JsonTreeReader:push(Ljava/lang/Object;)V",
+            "method_body": "private void push(Object newTop) {\nif (stackSize == stack.length) {\nObject[] newStack = new Object[stackSize * 2];\nint[] newPathIndices = new int[stackSize * 2];\nString[] newPathNames = new String[stackSize * 2];\nSystem.arraycopy(stack, 0, newStack, 0, stackSize);\nSystem.arraycopy(pathIndices, 0, newPathIndices, 0, stackSize);\nSystem.arraycopy(pathNames, 0, newPathNames, 0, stackSize);\nstack = newStack;\npathIndices = newPathIndices;\npathNames = newPathNames;\n}\nstack[stackSize++] = newTop;\n}",
+            "method_id": 5,
+            "loc": 14
+        },
+        {
+            "method_signature": "com.google.gson.JsonPrimitive:isPrimitiveOrString(Ljava/lang/Object;)Z",
+            "method_body": "private static boolean isPrimitiveOrString(Object target) {\nif (target instanceof String) {\nreturn true;\n}\n\nClass<?> classOfPrimitive = target.getClass();\nfor (Class<?> standardPrimitive : PRIMITIVE_TYPES) {\nif (standardPrimitive.isAssignableFrom(classOfPrimitive)) {\nreturn true;\n}\n}\nreturn false;\n}",
+            "method_id": 6,
+            "loc": 13
+        },
+        {
+            "method_signature": "com.google.gson.JsonPrimitive:setValue(Ljava/lang/Object;)V",
+            "method_body": "void setValue(Object primitive) {\nif (primitive instanceof Character) {\n// convert characters to strings since in JSON, characters are represented as a single\n// character string\nchar c = ((Character) primitive).charValue();\nthis.value = String.valueOf(c);\n} else {\n$Gson$Preconditions.checkArgument(primitive instanceof Number\n|| isPrimitiveOrString(primitive));\nthis.value = primitive;\n}\n}",
+            "method_id": 7,
+            "loc": 12
+        },
+        {
+            "method_signature": "com.google.gson.internal.bind.JsonTreeReader:skipValue()V",
+            "method_body": "@Override public void skipValue() throws IOException {\nif (peek() == JsonToken.NAME) {\nnextName();\npathNames[stackSize - 2] = \"null\";\n} else {\npopStack();\npathNames[stackSize - 1] = \"null\";\n}\npathIndices[stackSize - 1]++;\n}",
+            "method_id": 8,
+            "loc": 10
+        },
+        {
+            "method_signature": "com.google.gson.internal.LinkedTreeMap:put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+            "method_body": "@Override public V put(K key, V value) {\nif (key == null) {\nthrow new NullPointerException(\"key == null\");\n}\nNode<K, V> created = find(key, true);\nV result = created.value;\ncreated.value = value;\nreturn result;\n}",
+            "method_id": 9,
+            "loc": 9
+        },
+        {
+            "method_signature": "com.google.gson.internal.LinkedTreeMap$Node:<init>(Lcom/google/gson/internal/LinkedTreeMap$Node;Ljava/lang/Object;Lcom/google/gson/internal/LinkedTreeMap$Node;Lcom/google/gson/internal/LinkedTreeMap$Node;)V",
+            "method_body": "Node(Node<K, V> parent, K key, Node<K, V> next, Node<K, V> prev) {\nthis.parent = parent;\nthis.key = key;\nthis.height = 1;\nthis.next = next;\nthis.prev = prev;\nprev.next = this;\nnext.prev = this;\n}",
+            "method_id": 10,
+            "loc": 9
+        },
+        {
+            "method_signature": "com.google.gson.internal.bind.JsonTreeReader:<clinit>()V",
+            "method_body": "private static final Reader UNREADABLE_READER = new Reader() {\n@Override public int read(char[] buffer, int offset, int count) throws IOException {\nthrow new AssertionError();\n}\n@Override public void close() throws IOException {\nthrow new AssertionError();\n}\n};",
+            "method_id": 11,
+            "loc": 8
+        },
+        {
+            "method_signature": "com.google.gson.stream.JsonReader:<init>(Ljava/io/Reader;)V",
+            "method_body": "public JsonReader(Reader in) {\nif (in == null) {\nthrow new NullPointerException(\"in == null\");\n}\nthis.in = in;\n}",
+            "method_id": 12,
+            "loc": 6
+        },
+        {
+            "method_signature": "com.google.gson.JsonObject:add(Ljava/lang/String;Lcom/google/gson/JsonElement;)V",
+            "method_body": "public void add(String property, JsonElement value) {\nif (value == null) {\nvalue = JsonNull.INSTANCE;\n}\nmembers.put(property, value);\n}",
+            "method_id": 13,
+            "loc": 6
+        },
+        {
+            "method_signature": "com.google.gson.internal.$Gson$Preconditions:checkArgument(Z)V",
+            "method_body": "public static void checkArgument(boolean condition) {\nif (!condition) {\nthrow new IllegalArgumentException();\n}\n}",
+            "method_id": 14,
+            "loc": 5
+        },
+        {
+            "method_signature": "com.google.gson.internal.LinkedTreeMap:<init>(Ljava/util/Comparator;)V",
+            "method_body": "public LinkedTreeMap(Comparator<? super K> comparator) {\nthis.comparator = comparator != null\n? comparator\n: (Comparator) NATURAL_ORDER;\n}",
+            "method_id": 15,
+            "loc": 5
+        },
+        {
+            "method_signature": "com.google.gson.JsonNull:<clinit>()V",
+            "method_body": "public static final JsonNull INSTANCE = new JsonNull();\n\n/**\n* Creates a new JsonNull object.\n* Deprecated since Gson version 1.8. Use {@link #INSTANCE} instead",
+            "method_id": 16,
+            "loc": 5
+        },
+        {
+            "method_signature": "com.google.gson.internal.bind.JsonTreeReader:popStack()Ljava/lang/Object;",
+            "method_body": "private Object popStack() {\nObject result = stack[--stackSize];\nstack[stackSize] = null;\nreturn result;\n}",
+            "method_id": 17,
+            "loc": 5
+        },
+        {
+            "method_signature": "com.google.gson.internal.LinkedTreeMap$Node:<init>()V",
+            "method_body": "Node() {\nkey = null;\nnext = prev = this;\n}",
+            "method_id": 18,
+            "loc": 4
+        },
+        {
+            "method_signature": "com.google.gson.internal.bind.JsonTreeReader:<init>(Lcom/google/gson/JsonElement;)V",
+            "method_body": "public JsonTreeReader(JsonElement element) {\nsuper(UNREADABLE_READER);\npush(element);\n}",
+            "method_id": 19,
+            "loc": 4
+        },
+        {
+            "method_signature": "com.google.gson.internal.LinkedTreeMap:<init>()V",
+            "method_body": "public LinkedTreeMap() {\nthis((Comparator<? super K>) NATURAL_ORDER);\n}",
+            "method_id": 20,
+            "loc": 3
+        },
+        {
+            "method_signature": "com.google.gson.JsonArray:<init>()V",
+            "method_body": "public JsonArray() {\nelements = new ArrayList<JsonElement>();\n}",
+            "method_id": 21,
+            "loc": 3
+        },
+        {
+            "method_signature": "com.google.gson.JsonArray:add(Ljava/lang/String;)V",
+            "method_body": "public void add(String string) {\nelements.add(string == null ? JsonNull.INSTANCE : new JsonPrimitive(string));\n}",
+            "method_id": 22,
+            "loc": 3
+        },
+        {
+            "method_signature": "com.google.gson.JsonPrimitive:<init>(Ljava/lang/String;)V",
+            "method_body": "public JsonPrimitive(String string) {\nsetValue(string);\n}",
+            "method_id": 23,
+            "loc": 3
+        },
+        {
+            "method_signature": "com.google.gson.JsonObject:createJsonElement(Ljava/lang/Object;)Lcom/google/gson/JsonElement;",
+            "method_body": "private JsonElement createJsonElement(Object value) {\nreturn value == null ? JsonNull.INSTANCE : new JsonPrimitive(value);\n}",
+            "method_id": 24,
+            "loc": 3
+        },
+        {
+            "method_signature": "com.google.gson.JsonPrimitive:<init>(Ljava/lang/Object;)V",
+            "method_body": "JsonPrimitive(Object primitive) {\nsetValue(primitive);\n}",
+            "method_id": 25,
+            "loc": 3
+        },
+        {
+            "method_signature": "com.google.gson.JsonObject:addProperty(Ljava/lang/String;Ljava/lang/String;)V",
+            "method_body": "public void addProperty(String property, String value) {\nadd(property, createJsonElement(value));\n}",
+            "method_id": 26,
+            "loc": 3
+        },
+        {
+            "method_signature": "com.google.gson.JsonObject:addProperty(Ljava/lang/String;Ljava/lang/Number;)V",
+            "method_body": "public void addProperty(String property, Number value) {\nadd(property, createJsonElement(value));\n}",
+            "method_id": 27,
+            "loc": 3
+        },
+        {
+            "method_signature": "com.google.gson.JsonObject:addProperty(Ljava/lang/String;Ljava/lang/Boolean;)V",
+            "method_body": "public void addProperty(String property, Boolean value) {\nadd(property, createJsonElement(value));\n}",
+            "method_id": 28,
+            "loc": 3
+        },
+        {
+            "method_signature": "com.google.gson.JsonPrimitive:<init>(Ljava/lang/Character;)V",
+            "method_body": "public JsonPrimitive(Character c) {\nsetValue(c);\n}",
+            "method_id": 29,
+            "loc": 3
+        },
+        {
+            "method_signature": "com.google.gson.JsonPrimitive:<clinit>()V",
+            "method_body": "private static final Class<?>[] PRIMITIVE_TYPES = { int.class, long.class, short.class,\nfloat.class, double.class, byte.class, boolean.class, char.class, Integer.class, Long.class,\nShort.class, Float.class, Double.class, Byte.class, Boolean.class, Character.class };",
+            "method_id": 30,
+            "loc": 3
+        },
+        {
+            "method_signature": "com.google.gson.JsonNull:<init>()V",
+            "method_body": "public JsonNull() {\n// Do nothing\n}",
+            "method_id": 31,
+            "loc": 3
+        },
+        {
+            "method_signature": "com.google.gson.JsonArray:add(Ljava/lang/Character;)V",
+            "method_body": "public void add(Character character) {\nelements.add(character == null ? JsonNull.INSTANCE : new JsonPrimitive(character));\n}",
+            "method_id": 32,
+            "loc": 3
+        },
+        {
+            "method_signature": "com.google.gson.internal.bind.JsonTreeReader:peekStack()Ljava/lang/Object;",
+            "method_body": "private Object peekStack() {\nreturn stack[stackSize - 1];\n}",
+            "method_id": 33,
+            "loc": 3
+        },
+        {
+            "method_signature": "com.google.gson.JsonObject:<init>()V",
+            "method_body": "private final LinkedTreeMap<String, JsonElement> members =\n}",
+            "method_id": 34,
+            "loc": 2
+        },
+        {
+            "method_signature": "com.google.gson.internal.LinkedTreeMap:<clinit>()V",
+            "method_body": "private static final Comparator<Comparable> NATURAL_ORDER = new Comparator<Comparable>() {\n};",
+            "method_id": 35,
+            "loc": 2
+        }
+    ]
+}

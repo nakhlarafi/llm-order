@@ -1,0 +1,414 @@
+{
+    "bug_id": 42,
+    "test_id": 0,
+    "test_name": "org.apache.commons.math.optimization.linear.SimplexSolverTest.testMath713NegativeVariable",
+    "test_body": "public void testMath713NegativeVariable() {\nLinearObjectiveFunction f = new LinearObjectiveFunction(new double[] {1.0, 1.0}, 0.0d);\nArrayList<LinearConstraint> constraints = new ArrayList<LinearConstraint>();\nconstraints.add(new LinearConstraint(new double[] {1, 0}, Relationship.EQ, 1));\ndouble epsilon = 1e-6;\nSimplexSolver solver = new SimplexSolver();\nRealPointValuePair solution = solver.optimize(f, constraints, GoalType.MINIMIZE, true);\nAssert.assertTrue(Precision.compareTo(solution.getPoint()[0], 0.0d, epsilon) >= 0);\nAssert.assertTrue(Precision.compareTo(solution.getPoint()[1], 0.0d, epsilon) >= 0);\n}\n",
+    "stack_trace": "junit.framework.AssertionFailedError\nat org.junit.Assert.fail(Assert.java:86)\nat org.junit.Assert.assertTrue(Assert.java:41)\nat org.junit.Assert.assertTrue(Assert.java:52)\nat org.apache.commons.math.optimization.linear.SimplexSolverTest.testMath713NegativeVariable(SimplexSolverTest.java:43)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.LinearObjectiveFunction:getValue([D)D",
+            "method_body": "public double getValue(final double[] point) {\nreturn coefficients.dotProduct(new ArrayRealVector(point, false)) + constantTerm;\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexTableau:getSolution()Lorg/apache/commons/math/optimization/RealPointValuePair;",
+            "method_body": "protected RealPointValuePair getSolution() {\nint negativeVarColumn = columnLabels.indexOf(NEGATIVE_VAR_COLUMN_LABEL);\nInteger negativeVarBasicRow = negativeVarColumn > 0 ? getBasicRow(negativeVarColumn) : null;\ndouble mostNegative = negativeVarBasicRow == null ? 0 : getEntry(negativeVarBasicRow, getRhsOffset());\n\nSet<Integer> basicRows = new HashSet<Integer>();\ndouble[] coefficients = new double[getOriginalNumDecisionVariables()];\nfor (int i = 0; i < coefficients.length; i++) {\nint colIndex = columnLabels.indexOf(\"x\" + i);\nif (colIndex < 0) {\ncoefficients[i] = 0;\ncontinue;\n}\nInteger basicRow = getBasicRow(colIndex);\n// if the basic row is found to be the objective function row\n// set the coefficient to 0 -> this case handles unconstrained\n// variables that are still part of the objective function\nif (basicRows.contains(basicRow)) {\n// if multiple variables can take a given value\n// then we choose the first and set the rest equal to 0\ncoefficients[i] = 0 - (restrictToNonNegative ? 0 : mostNegative);\n} else {\nbasicRows.add(basicRow);\ncoefficients[i] =\n(basicRow == null ? 0 : getEntry(basicRow, getRhsOffset())) -\n(restrictToNonNegative ? 0 : mostNegative);\n}\n}\nreturn new RealPointValuePair(coefficients, f.getValue(coefficients));\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.AbstractLinearOptimizer:incrementIterationsCounter()V",
+            "method_body": "protected void incrementIterationsCounter()\nthrows MaxCountExceededException {\nif (++iterations > maxIterations) {\nthrow new MaxCountExceededException(maxIterations);\n}\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexSolver:getPivotColumn(Lorg/apache/commons/math/optimization/linear/SimplexTableau;)Ljava/lang/Integer;",
+            "method_body": "private Integer getPivotColumn(SimplexTableau tableau) {\ndouble minValue = 0;\nInteger minPos = null;\nfor (int i = tableau.getNumObjectiveFunctions(); i < tableau.getWidth() - 1; i++) {\nfinal double entry = tableau.getEntry(0, i);\nif (Precision.compareTo(entry, minValue, maxUlps) < 0) {\nminValue = entry;\nminPos = i;\n}\n}\nreturn minPos;\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexSolver:getPivotRow(Lorg/apache/commons/math/optimization/linear/SimplexTableau;I)Ljava/lang/Integer;",
+            "method_body": "private Integer getPivotRow(SimplexTableau tableau, final int col) {\n// create a list of all the rows that tie for the lowest score in the minimum ratio test\nList<Integer> minRatioPositions = new ArrayList<Integer>();\ndouble minRatio = Double.MAX_VALUE;\nfor (int i = tableau.getNumObjectiveFunctions(); i < tableau.getHeight(); i++) {\nfinal double rhs = tableau.getEntry(i, tableau.getWidth() - 1);\nfinal double entry = tableau.getEntry(i, col);\n\nif (Precision.compareTo(entry, 0d, maxUlps) > 0) {\nfinal double ratio = rhs / entry;\nfinal int cmp = Precision.compareTo(ratio, minRatio, maxUlps);\nif (cmp == 0) {\nminRatioPositions.add(i);\n} else if (cmp < 0) {\nminRatio = ratio;\nminRatioPositions = new ArrayList<Integer>();\nminRatioPositions.add(i);\n}\n}\n}\n\nif (minRatioPositions.size() == 0) {\nreturn null;\n} else if (minRatioPositions.size() > 1) {\n// there's a degeneracy as indicated by a tie in the minimum ratio test\n// check if there's an artificial variable that can be forced out of the basis\nfor (Integer row : minRatioPositions) {\nfor (int i = 0; i < tableau.getNumArtificialVariables(); i++) {\nint column = i + tableau.getArtificialVariableOffset();\nfinal double entry = tableau.getEntry(row, column);\nif (Precision.equals(entry, 1d, maxUlps) &&\nrow.equals(tableau.getBasicRow(column))) {\nreturn row;\n}\n}\n}\n}\nreturn minRatioPositions.get(0);\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexSolver:doIteration(Lorg/apache/commons/math/optimization/linear/SimplexTableau;)V",
+            "method_body": "protected void doIteration(final SimplexTableau tableau)\nthrows MaxCountExceededException, UnboundedSolutionException {\n\nincrementIterationsCounter();\n\nInteger pivotCol = getPivotColumn(tableau);\nInteger pivotRow = getPivotRow(tableau, pivotCol);\nif (pivotRow == null) {\nthrow new UnboundedSolutionException();\n}\n\n// set the pivot element to 1\ndouble pivotVal = tableau.getEntry(pivotRow, pivotCol);\ntableau.divideRow(pivotRow, pivotVal);\n\n// set the rest of the pivot column to 0\nfor (int i = 0; i < tableau.getHeight(); i++) {\nif (i != pivotRow) {\ndouble multiplier = tableau.getEntry(i, pivotCol);\ntableau.subtractRow(i, pivotRow, multiplier);\n}\n}\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexTableau:getBasicRow(I)Ljava/lang/Integer;",
+            "method_body": "protected Integer getBasicRow(final int col) {\nInteger row = null;\nfor (int i = 0; i < getHeight(); i++) {\nfinal double entry = getEntry(i, col);\nif (Precision.equals(entry, 1d, maxUlps) && (row == null)) {\nrow = i;\n} else if (!Precision.equals(entry, 0d, maxUlps)) {\nreturn null;\n}\n}\nreturn row;\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexTableau:dropPhase1Objective()V",
+            "method_body": "protected void dropPhase1Objective() {\nif (getNumObjectiveFunctions() == 1) {\nreturn;\n}\n\nList<Integer> columnsToDrop = new ArrayList<Integer>();\ncolumnsToDrop.add(0);\n\n// positive cost non-artificial variables\nfor (int i = getNumObjectiveFunctions(); i < getArtificialVariableOffset(); i++) {\nfinal double entry = tableau.getEntry(0, i);\nif (Precision.compareTo(entry, 0d, maxUlps) > 0) {\ncolumnsToDrop.add(i);\n}\n}\n\n// non-basic artificial variables\nfor (int i = 0; i < getNumArtificialVariables(); i++) {\nint col = i + getArtificialVariableOffset();\nif (getBasicRow(col) == null) {\ncolumnsToDrop.add(col);\n}\n}\n\ndouble[][] matrix = new double[getHeight() - 1][getWidth() - columnsToDrop.size()];\nfor (int i = 1; i < getHeight(); i++) {\nint col = 0;\nfor (int j = 0; j < getWidth(); j++) {\nif (!columnsToDrop.contains(j)) {\nmatrix[i - 1][col++] = tableau.getEntry(i, j);\n}\n}\n}\n\nfor (int i = columnsToDrop.size() - 1; i >= 0; i--) {\ncolumnLabels.remove((int) columnsToDrop.get(i));\n}\n\nthis.tableau = new Array2DRowRealMatrix(matrix);\nthis.numArtificialVariables = 0;\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexTableau:divideRow(ID)V",
+            "method_body": "protected void divideRow(final int dividendRow, final double divisor) {\nfor (int j = 0; j < getWidth(); j++) {\ntableau.setEntry(dividendRow, j, tableau.getEntry(dividendRow, j) / divisor);\n}\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexTableau:subtractRow(IID)V",
+            "method_body": "protected void subtractRow(final int minuendRow, final int subtrahendRow,\nfinal double multiple) {\ntableau.setRowVector(minuendRow, tableau.getRowVector(minuendRow)\n.subtract(tableau.getRowVector(subtrahendRow).mapMultiply(multiple)));\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexTableau:getArtificialVariableOffset()I",
+            "method_body": "protected final int getArtificialVariableOffset() {\nreturn getNumObjectiveFunctions() + numDecisionVariables + numSlackVariables;\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexTableau:getRhsOffset()I",
+            "method_body": "protected final int getRhsOffset() {\nreturn getWidth() - 1;\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.Precision:compareTo(DDI)I",
+            "method_body": "public static int compareTo(final double x, final double y, final int maxUlps) {\nif (equals(x, y, maxUlps)) {\nreturn 0;\n} else if (x < y) {\nreturn -1;\n}\nreturn 1;\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.AbstractLinearOptimizer:<init>()V",
+            "method_body": "protected AbstractLinearOptimizer() {\nsetMaxIterations(DEFAULT_MAX_ITERATIONS);\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.AbstractLinearOptimizer:setMaxIterations(I)V",
+            "method_body": "public void setMaxIterations(int maxIterations) {\nthis.maxIterations = maxIterations;\n}",
+            "method_id": 14
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.AbstractLinearOptimizer:optimize(Lorg/apache/commons/math/optimization/linear/LinearObjectiveFunction;Ljava/util/Collection;Lorg/apache/commons/math/optimization/GoalType;Z)Lorg/apache/commons/math/optimization/RealPointValuePair;",
+            "method_body": "public RealPointValuePair optimize(final LinearObjectiveFunction f,\nfinal Collection<LinearConstraint> constraints,\nfinal GoalType goalType, final boolean restrictToNonNegative)\nthrows MathIllegalStateException {\n\n// store linear problem characteristics\nthis.function          = f;\nthis.linearConstraints = constraints;\nthis.goal              = goalType;\nthis.nonNegative       = restrictToNonNegative;\n\niterations  = 0;\n\n// solve the problem\nreturn doOptimize();\n\n}",
+            "method_id": 15
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexSolver:<init>()V",
+            "method_body": "public SimplexSolver() {\nthis(DEFAULT_EPSILON, DEFAULT_ULPS);\n}",
+            "method_id": 16
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexSolver:<init>(DI)V",
+            "method_body": "public SimplexSolver(final double epsilon, final int maxUlps) {\nthis.epsilon = epsilon;\nthis.maxUlps = maxUlps;\n}",
+            "method_id": 17
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexSolver:solvePhase1(Lorg/apache/commons/math/optimization/linear/SimplexTableau;)V",
+            "method_body": "protected void solvePhase1(final SimplexTableau tableau)\nthrows MaxCountExceededException, UnboundedSolutionException, NoFeasibleSolutionException {\n\n// make sure we're in Phase 1\nif (tableau.getNumArtificialVariables() == 0) {\nreturn;\n}\n\nwhile (!tableau.isOptimal()) {\ndoIteration(tableau);\n}\n\n// if W is not zero then we have no feasible solution\nif (!Precision.equals(tableau.getEntry(0, tableau.getRhsOffset()), 0d, epsilon)) {\nthrow new NoFeasibleSolutionException();\n}\n}",
+            "method_id": 18
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexSolver:doOptimize()Lorg/apache/commons/math/optimization/RealPointValuePair;",
+            "method_body": "public RealPointValuePair doOptimize()\nthrows MaxCountExceededException, UnboundedSolutionException, NoFeasibleSolutionException {\nfinal SimplexTableau tableau =\nnew SimplexTableau(function, linearConstraints, goal, nonNegative,\nepsilon, maxUlps);\n\nsolvePhase1(tableau);\ntableau.dropPhase1Objective();\n\nwhile (!tableau.isOptimal()) {\ndoIteration(tableau);\n}\nreturn tableau.getSolution();\n}",
+            "method_id": 19
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexTableau:isOptimal()Z",
+            "method_body": "boolean isOptimal() {\nfor (int i = getNumObjectiveFunctions(); i < getWidth() - 1; i++) {\nfinal double entry = tableau.getEntry(0, i);\nif (Precision.compareTo(entry, 0d, epsilon) < 0) {\nreturn false;\n}\n}\nreturn true;\n}",
+            "method_id": 20
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexTableau:getHeight()I",
+            "method_body": "protected final int getHeight() {\nreturn tableau.getRowDimension();\n}",
+            "method_id": 21
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexTableau:getWidth()I",
+            "method_body": "protected final int getWidth() {\nreturn tableau.getColumnDimension();\n}",
+            "method_id": 22
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexTableau:getEntry(II)D",
+            "method_body": "protected final double getEntry(final int row, final int column) {\nreturn tableau.getEntry(row, column);\n}",
+            "method_id": 23
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.Precision:compareTo(DDD)I",
+            "method_body": "public static int compareTo(double x, double y, double eps) {\nif (equals(x, y, eps)) {\nreturn 0;\n} else if (x < y) {\nreturn -1;\n}\nreturn 1;\n}",
+            "method_id": 24
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.Precision:equals(DDD)Z",
+            "method_body": "public static boolean equals(double x, double y, double eps) {\nreturn equals(x, y, 1) || FastMath.abs(y - x) <= eps;\n}",
+            "method_id": 25
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.LinearObjectiveFunction:<init>([DD)V",
+            "method_body": "public LinearObjectiveFunction(double[] coefficients, double constantTerm) {\nthis(new ArrayRealVector(coefficients), constantTerm);\n}",
+            "method_id": 26
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.LinearObjectiveFunction:<init>(Lorg/apache/commons/math/linear/RealVector;D)V",
+            "method_body": "public LinearObjectiveFunction(RealVector coefficients, double constantTerm) {\nthis.coefficients = coefficients;\nthis.constantTerm = constantTerm;\n}",
+            "method_id": 27
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.LinearObjectiveFunction:getCoefficients()Lorg/apache/commons/math/linear/RealVector;",
+            "method_body": "public RealVector getCoefficients() {\nreturn coefficients;\n}",
+            "method_id": 28
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.LinearObjectiveFunction:getConstantTerm()D",
+            "method_body": "public double getConstantTerm() {\nreturn constantTerm;\n}",
+            "method_id": 29
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.LinearConstraint:<init>([DLorg/apache/commons/math/optimization/linear/Relationship;D)V",
+            "method_body": "public LinearConstraint(final double[] coefficients, final Relationship relationship,\nfinal double value) {\nthis(new ArrayRealVector(coefficients), relationship, value);\n}",
+            "method_id": 30
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.LinearConstraint:<init>(Lorg/apache/commons/math/linear/RealVector;Lorg/apache/commons/math/optimization/linear/Relationship;D)V",
+            "method_body": "public LinearConstraint(final RealVector coefficients, final Relationship relationship,\nfinal double value) {\nthis.coefficients = coefficients;\nthis.relationship = relationship;\nthis.value        = value;\n}",
+            "method_id": 31
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.LinearConstraint:getCoefficients()Lorg/apache/commons/math/linear/RealVector;",
+            "method_body": "public RealVector getCoefficients() {\nreturn coefficients;\n}",
+            "method_id": 32
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.LinearConstraint:getRelationship()Lorg/apache/commons/math/optimization/linear/Relationship;",
+            "method_body": "public Relationship getRelationship() {\nreturn relationship;\n}",
+            "method_id": 33
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.LinearConstraint:getValue()D",
+            "method_body": "public double getValue() {\nreturn value;\n}",
+            "method_id": 34
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexTableau:<init>(Lorg/apache/commons/math/optimization/linear/LinearObjectiveFunction;Ljava/util/Collection;Lorg/apache/commons/math/optimization/GoalType;ZDI)V",
+            "method_body": "SimplexTableau(final LinearObjectiveFunction f,\nfinal Collection<LinearConstraint> constraints,\nfinal GoalType goalType, final boolean restrictToNonNegative,\nfinal double epsilon,\nfinal int maxUlps) {\nthis.f                      = f;\nthis.constraints            = normalizeConstraints(constraints);\nthis.restrictToNonNegative  = restrictToNonNegative;\nthis.epsilon                = epsilon;\nthis.maxUlps                = maxUlps;\nthis.numDecisionVariables   = f.getCoefficients().getDimension() +\n(restrictToNonNegative ? 0 : 1);\nthis.numSlackVariables      = getConstraintTypeCounts(Relationship.LEQ) +\ngetConstraintTypeCounts(Relationship.GEQ);\nthis.numArtificialVariables = getConstraintTypeCounts(Relationship.EQ) +\ngetConstraintTypeCounts(Relationship.GEQ);\nthis.tableau = createTableau(goalType == GoalType.MAXIMIZE);\ninitializeColumnLabels();\n}",
+            "method_id": 35
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexTableau:initializeColumnLabels()V",
+            "method_body": "protected void initializeColumnLabels() {\nif (getNumObjectiveFunctions() == 2) {\ncolumnLabels.add(\"W\");\n}\ncolumnLabels.add(\"Z\");\nfor (int i = 0; i < getOriginalNumDecisionVariables(); i++) {\ncolumnLabels.add(\"x\" + i);\n}\nif (!restrictToNonNegative) {\ncolumnLabels.add(NEGATIVE_VAR_COLUMN_LABEL);\n}\nfor (int i = 0; i < getNumSlackVariables(); i++) {\ncolumnLabels.add(\"s\" + i);\n}\nfor (int i = 0; i < getNumArtificialVariables(); i++) {\ncolumnLabels.add(\"a\" + i);\n}\ncolumnLabels.add(\"RHS\");\n}",
+            "method_id": 36
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexTableau:createTableau(Z)Lorg/apache/commons/math/linear/RealMatrix;",
+            "method_body": "protected RealMatrix createTableau(final boolean maximize) {\n\n// create a matrix of the correct size\nint width = numDecisionVariables + numSlackVariables +\nnumArtificialVariables + getNumObjectiveFunctions() + 1; // + 1 is for RHS\nint height = constraints.size() + getNumObjectiveFunctions();\nArray2DRowRealMatrix matrix = new Array2DRowRealMatrix(height, width);\n\n// initialize the objective function rows\nif (getNumObjectiveFunctions() == 2) {\nmatrix.setEntry(0, 0, -1);\n}\nint zIndex = (getNumObjectiveFunctions() == 1) ? 0 : 1;\nmatrix.setEntry(zIndex, zIndex, maximize ? 1 : -1);\nRealVector objectiveCoefficients =\nmaximize ? f.getCoefficients().mapMultiply(-1) : f.getCoefficients();\ncopyArray(objectiveCoefficients.toArray(), matrix.getDataRef()[zIndex]);\nmatrix.setEntry(zIndex, width - 1,\nmaximize ? f.getConstantTerm() : -1 * f.getConstantTerm());\n\nif (!restrictToNonNegative) {\nmatrix.setEntry(zIndex, getSlackVariableOffset() - 1,\ngetInvertedCoefficientSum(objectiveCoefficients));\n}\n\n// initialize the constraint rows\nint slackVar = 0;\nint artificialVar = 0;\nfor (int i = 0; i < constraints.size(); i++) {\nLinearConstraint constraint = constraints.get(i);\nint row = getNumObjectiveFunctions() + i;\n\n// decision variable coefficients\ncopyArray(constraint.getCoefficients().toArray(), matrix.getDataRef()[row]);\n\n// x-\nif (!restrictToNonNegative) {\nmatrix.setEntry(row, getSlackVariableOffset() - 1,\ngetInvertedCoefficientSum(constraint.getCoefficients()));\n}\n\n// RHS\nmatrix.setEntry(row, width - 1, constraint.getValue());\n\n// slack variables\nif (constraint.getRelationship() == Relationship.LEQ) {\nmatrix.setEntry(row, getSlackVariableOffset() + slackVar++, 1);  // slack\n} else if (constraint.getRelationship() == Relationship.GEQ) {\nmatrix.setEntry(row, getSlackVariableOffset() + slackVar++, -1); // excess\n}\n\n// artificial variables\nif ((constraint.getRelationship() == Relationship.EQ) ||\n(constraint.getRelationship() == Relationship.GEQ)) {\nmatrix.setEntry(0, getArtificialVariableOffset() + artificialVar, 1);\nmatrix.setEntry(row, getArtificialVariableOffset() + artificialVar++, 1);\nmatrix.setRowVector(0, matrix.getRowVector(0).subtract(matrix.getRowVector(row)));\n}\n}\n\nreturn matrix;\n}",
+            "method_id": 37
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexTableau:normalizeConstraints(Ljava/util/Collection;)Ljava/util/List;",
+            "method_body": "public List<LinearConstraint> normalizeConstraints(Collection<LinearConstraint> originalConstraints) {\nList<LinearConstraint> normalized = new ArrayList<LinearConstraint>();\nfor (LinearConstraint constraint : originalConstraints) {\nnormalized.add(normalize(constraint));\n}\nreturn normalized;\n}",
+            "method_id": 38
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexTableau:normalize(Lorg/apache/commons/math/optimization/linear/LinearConstraint;)Lorg/apache/commons/math/optimization/linear/LinearConstraint;",
+            "method_body": "private LinearConstraint normalize(final LinearConstraint constraint) {\nif (constraint.getValue() < 0) {\nreturn new LinearConstraint(constraint.getCoefficients().mapMultiply(-1),\nconstraint.getRelationship().oppositeRelationship(),\n-1 * constraint.getValue());\n}\nreturn new LinearConstraint(constraint.getCoefficients(),\nconstraint.getRelationship(), constraint.getValue());\n}",
+            "method_id": 39
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexTableau:getNumObjectiveFunctions()I",
+            "method_body": "protected final int getNumObjectiveFunctions() {\nreturn this.numArtificialVariables > 0 ? 2 : 1;\n}",
+            "method_id": 40
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexTableau:getConstraintTypeCounts(Lorg/apache/commons/math/optimization/linear/Relationship;)I",
+            "method_body": "private int getConstraintTypeCounts(final Relationship relationship) {\nint count = 0;\nfor (final LinearConstraint constraint : constraints) {\nif (constraint.getRelationship() == relationship) {\n++count;\n}\n}\nreturn count;\n}",
+            "method_id": 41
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexTableau:copyArray([D[D)V",
+            "method_body": "private void copyArray(final double[] src, final double[] dest) {\nSystem.arraycopy(src, 0, dest, getNumObjectiveFunctions(), src.length);\n}",
+            "method_id": 42
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexTableau:getOriginalNumDecisionVariables()I",
+            "method_body": "protected final int getOriginalNumDecisionVariables() {\nreturn f.getCoefficients().getDimension();\n}",
+            "method_id": 43
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexTableau:getNumSlackVariables()I",
+            "method_body": "protected final int getNumSlackVariables() {\nreturn numSlackVariables;\n}",
+            "method_id": 44
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.linear.SimplexTableau:getNumArtificialVariables()I",
+            "method_body": "protected final int getNumArtificialVariables() {\nreturn numArtificialVariables;\n}",
+            "method_id": 45
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.AbstractRealMatrix:getRowVector(I)Lorg/apache/commons/math/linear/RealVector;",
+            "method_body": "public RealVector getRowVector(final int row) {\nreturn new ArrayRealVector(getRow(row), false);\n}",
+            "method_id": 46
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.AbstractRealMatrix:setRowVector(ILorg/apache/commons/math/linear/RealVector;)V",
+            "method_body": "public void setRowVector(final int row, final RealVector vector) {\nMatrixUtils.checkRowIndex(this, row);\nfinal int nCols = getColumnDimension();\nif (vector.getDimension() != nCols) {\nthrow new MatrixDimensionMismatchException(1, vector.getDimension(),\n1, nCols);\n}\nfor (int i = 0; i < nCols; ++i) {\nsetEntry(row, i, vector.getEntry(i));\n}\n}",
+            "method_id": 47
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:getDataRef()[[D",
+            "method_body": "public double[][] getDataRef() {\nreturn data;\n}",
+            "method_id": 48
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.AbstractRealMatrix:getRow(I)[D",
+            "method_body": "public double[] getRow(final int row) {\nMatrixUtils.checkRowIndex(this, row);\nfinal int nCols = getColumnDimension();\nfinal double[] out = new double[nCols];\nfor (int i = 0; i < nCols; ++i) {\nout[i] = getEntry(row, i);\n}\n\nreturn out;\n}",
+            "method_id": 49
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.ArrayRealVector:mapMultiplyToSelf(D)Lorg/apache/commons/math/linear/RealVector;",
+            "method_body": "public RealVector mapMultiplyToSelf(double d) {\nfor (int i = 0; i < data.length; i++) {\ndata[i] = data[i] * d;\n}\nreturn this;\n}",
+            "method_id": 50
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.RealVector:mapMultiply(D)Lorg/apache/commons/math/linear/RealVector;",
+            "method_body": "public RealVector mapMultiply(double d) {\nreturn copy().mapMultiplyToSelf(d);\n}",
+            "method_id": 51
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.RealPointValuePair:getPoint()[D",
+            "method_body": "public double[] getPoint() {\nreturn (point == null) ? null : point.clone();\n}",
+            "method_id": 52
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.ArrayRealVector:subtract(Lorg/apache/commons/math/linear/RealVector;)Lorg/apache/commons/math/linear/ArrayRealVector;",
+            "method_body": "public ArrayRealVector subtract(RealVector v) {\nif (v instanceof ArrayRealVector) {\nfinal double[] vData = ((ArrayRealVector) v).data;\nfinal int dim = vData.length;\ncheckVectorDimensions(dim);\nArrayRealVector result = new ArrayRealVector(dim);\ndouble[] resultData = result.data;\nfor (int i = 0; i < dim; i++) {\nresultData[i] = data[i] - vData[i];\n}\nreturn result;\n} else {\ncheckVectorDimensions(v);\ndouble[] out = data.clone();\nIterator<Entry> it = v.sparseIterator();\nEntry e;\nwhile(it.hasNext() && (e = it.next()) != null) {\nout[e.getIndex()] -= e.getValue();\n}\nreturn new ArrayRealVector(out, false);\n}\n}",
+            "method_id": 53
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.ArrayRealVector:dotProduct(Lorg/apache/commons/math/linear/RealVector;)D",
+            "method_body": "public double dotProduct(RealVector v) {\nif (v instanceof ArrayRealVector) {\nfinal double[] vData = ((ArrayRealVector) v).data;\ncheckVectorDimensions(vData.length);\ndouble dot = 0;\nfor (int i = 0; i < data.length; i++) {\ndot += data[i] * vData[i];\n}\nreturn dot;\n} else {\ncheckVectorDimensions(v);\ndouble dot = 0;\nIterator<Entry> it = v.sparseIterator();\nEntry e;\nwhile(it.hasNext() && (e = it.next()) != null) {\ndot += data[e.getIndex()] * e.getValue();\n}\nreturn dot;\n}\n}",
+            "method_id": 54
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.ArrayRealVector:copy()Lorg/apache/commons/math/linear/ArrayRealVector;",
+            "method_body": "public ArrayRealVector copy() {\nreturn new ArrayRealVector(this, true);\n}",
+            "method_id": 55
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.ArrayRealVector:<init>(Lorg/apache/commons/math/linear/ArrayRealVector;Z)V",
+            "method_body": "public ArrayRealVector(ArrayRealVector v, boolean deep) {\ndata = deep ? v.data.clone() : v.data;\n}",
+            "method_id": 56
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.RealPointValuePair:<init>([DD)V",
+            "method_body": "public RealPointValuePair(final double[] point, final double value) {\nthis.point = (point == null) ? null : point.clone();\nthis.value = value;\n}",
+            "method_id": 57
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.ArrayRealVector:toArray()[D",
+            "method_body": "public double[] toArray(){\nreturn data.clone();\n}",
+            "method_id": 58
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.ArrayRealVector:checkVectorDimensions(I)V",
+            "method_body": "protected void checkVectorDimensions(int n) {\nif (data.length != n) {\nthrow new DimensionMismatchException(data.length, n);\n}\n}",
+            "method_id": 59
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.ArrayRealVector:<init>(I)V",
+            "method_body": "public ArrayRealVector(int size) {\ndata = new double[size];\n}",
+            "method_id": 60
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.ArrayRealVector:<init>([DZ)V",
+            "method_body": "public ArrayRealVector(double[] d, boolean copyArray) {\nif (d == null) {\nthrow new NullArgumentException();\n}\ndata = copyArray ? d.clone() :  d;\n}",
+            "method_id": 61
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.ArrayRealVector:getEntry(I)D",
+            "method_body": "public double getEntry(int index) {\nreturn data[index];\n}",
+            "method_id": 62
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.ArrayRealVector:<init>([D)V",
+            "method_body": "public ArrayRealVector(double[] d) {\ndata = d.clone();\n}",
+            "method_id": 63
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:<init>([[D)V",
+            "method_body": "public Array2DRowRealMatrix(final double[][] d)\nthrows DimensionMismatchException, NoDataException, NullArgumentException {\ncopyIn(d);\n}",
+            "method_id": 64
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:setSubMatrix([[DII)V",
+            "method_body": "public void setSubMatrix(final double[][] subMatrix,\nfinal int row, final int column) {\nif (data == null) {\nif (row > 0) {\nthrow new MathIllegalStateException(LocalizedFormats.FIRST_ROWS_NOT_INITIALIZED_YET, row);\n}\nif (column > 0) {\nthrow new MathIllegalStateException(LocalizedFormats.FIRST_COLUMNS_NOT_INITIALIZED_YET, column);\n}\nMathUtils.checkNotNull(subMatrix);\nfinal int nRows = subMatrix.length;\nif (nRows == 0) {\nthrow new NoDataException(LocalizedFormats.AT_LEAST_ONE_ROW);\n}\n\nfinal int nCols = subMatrix[0].length;\nif (nCols == 0) {\nthrow new NoDataException(LocalizedFormats.AT_LEAST_ONE_COLUMN);\n}\ndata = new double[subMatrix.length][nCols];\nfor (int i = 0; i < data.length; ++i) {\nif (subMatrix[i].length != nCols) {\nthrow new DimensionMismatchException(subMatrix[i].length, nCols);\n}\nSystem.arraycopy(subMatrix[i], 0, data[i + row], column, nCols);\n}\n} else {\nsuper.setSubMatrix(subMatrix, row, column);\n}\n\n}",
+            "method_id": 65
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:copyIn([[D)V",
+            "method_body": "private void copyIn(final double[][] in)\nthrows DimensionMismatchException, NoDataException, NullArgumentException {\nsetSubMatrix(in, 0, 0);\n}",
+            "method_id": 66
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:getEntry(II)D",
+            "method_body": "public double getEntry(final int row, final int column) {\nMatrixUtils.checkMatrixIndex(this, row, column);\nreturn data[row][column];\n}",
+            "method_id": 67
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:setEntry(IID)V",
+            "method_body": "public void setEntry(final int row, final int column, final double value) {\nMatrixUtils.checkMatrixIndex(this, row, column);\ndata[row][column] = value;\n}",
+            "method_id": 68
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.ArrayRealVector:getDimension()I",
+            "method_body": "public int getDimension() {\nreturn data.length;\n}",
+            "method_id": 69
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:<init>(II)V",
+            "method_body": "public Array2DRowRealMatrix(final int rowDimension, final int columnDimension) {\nsuper(rowDimension, columnDimension);\ndata = new double[rowDimension][columnDimension];\n}",
+            "method_id": 70
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.MatrixUtils:checkMatrixIndex(Lorg/apache/commons/math/linear/AnyMatrix;II)V",
+            "method_body": "public static void checkMatrixIndex(final AnyMatrix m,\nfinal int row, final int column) {\ncheckRowIndex(m, row);\ncheckColumnIndex(m, column);\n}",
+            "method_id": 71
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:getRowDimension()I",
+            "method_body": "public int getRowDimension() {\nreturn (data == null) ? 0 : data.length;\n}",
+            "method_id": 72
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:getColumnDimension()I",
+            "method_body": "public int getColumnDimension() {\nreturn ((data == null) || (data[0] == null)) ? 0 : data[0].length;\n}",
+            "method_id": 73
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.MatrixUtils:checkRowIndex(Lorg/apache/commons/math/linear/AnyMatrix;I)V",
+            "method_body": "public static void checkRowIndex(final AnyMatrix m, final int row) {\nif (row < 0 ||\nrow >= m.getRowDimension()) {\nthrow new OutOfRangeException(LocalizedFormats.ROW_INDEX,\nrow, 0, m.getRowDimension() - 1);\n}\n}",
+            "method_id": 74
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.MatrixUtils:checkColumnIndex(Lorg/apache/commons/math/linear/AnyMatrix;I)V",
+            "method_body": "public static void checkColumnIndex(final AnyMatrix m, final int column) {\nif (column < 0 || column >= m.getColumnDimension()) {\nthrow new OutOfRangeException(LocalizedFormats.COLUMN_INDEX,\ncolumn, 0, m.getColumnDimension() - 1);\n}\n}",
+            "method_id": 75
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.AbstractRealMatrix:<init>(II)V",
+            "method_body": "protected AbstractRealMatrix(final int rowDimension, final int columnDimension) {\nif (rowDimension < 1) {\nthrow new NotStrictlyPositiveException(rowDimension);\n}\nif (columnDimension < 1) {\nthrow new NotStrictlyPositiveException(columnDimension);\n}\n}",
+            "method_id": 76
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.Precision:equals(DDI)Z",
+            "method_body": "public static boolean equals(double x, double y, int maxUlps) {\nlong xInt = Double.doubleToLongBits(x);\nlong yInt = Double.doubleToLongBits(y);\n\n// Make lexicographically ordered as a two's-complement integer.\nif (xInt < 0) {\nxInt = SGN_MASK - xInt;\n}\nif (yInt < 0) {\nyInt = SGN_MASK - yInt;\n}\n\nfinal boolean isEqual = FastMath.abs(xInt - yInt) <= maxUlps;\n\nreturn isEqual && !Double.isNaN(x) && !Double.isNaN(y);\n}",
+            "method_id": 77
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.FastMath:abs(J)J",
+            "method_body": "public static long abs(final long x) {\nreturn (x < 0l) ? -x : x;\n}",
+            "method_id": 78
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.MathUtils:checkNotNull(Ljava/lang/Object;)V",
+            "method_body": "public static void checkNotNull(Object o)\nthrows NullArgumentException {\nif (o == null) {\nthrow new NullArgumentException();\n}\n}",
+            "method_id": 79
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.FastMath:abs(D)D",
+            "method_body": "public static double abs(double x) {\nreturn (x < 0.0) ? -x : (x == 0.0) ? 0.0 : x; // -0.0 => +0.0\n}",
+            "method_id": 80
+        }
+    ]
+}

@@ -1,0 +1,255 @@
+{
+    "bug_id": 100,
+    "test_id": 0,
+    "test_name": "org.apache.commons.math.estimation.GaussNewtonEstimatorTest.testBoundParameters",
+    "test_body": "public void testBoundParameters() throws EstimationException {\nEstimatedParameter[] p = {\nnew EstimatedParameter(\"unbound0\", 2, false),\nnew EstimatedParameter(\"unbound1\", 2, false),\nnew EstimatedParameter(\"bound\",    2, true)\n};\nLinearProblem problem = new LinearProblem(new LinearMeasurement[] {\nnew LinearMeasurement(new double[] { 1.0, 1.0, 1.0 },\nnew EstimatedParameter[] { p[0], p[1], p[2] },\n3.0),\nnew LinearMeasurement(new double[] { 1.0, -1.0, 1.0 },\nnew EstimatedParameter[] { p[0], p[1], p[2] },\n1.0),\nnew LinearMeasurement(new double[] { 1.0, 3.0, 2.0 },\nnew EstimatedParameter[] { p[0], p[1], p[2] },\n7.0)\n});\nGaussNewtonEstimator estimator = new GaussNewtonEstimator(100, 1.0e-6, 1.0e-6);\nestimator.estimate(problem);\nassertTrue(estimator.getRMS(problem) < 1.0e-10);\ndouble[][] covariances = estimator.getCovariances(problem);\nint i0 = 0, i1 = 1;\nif (problem.getUnboundParameters()[0].getName().endsWith(\"1\")) {\ni0 = 1;\ni1 = 0;\n}\nassertEquals(11.0 / 24, covariances[i0][i0], 1.0e-10);\nassertEquals(-3.0 / 24, covariances[i0][i1], 1.0e-10);\nassertEquals(-3.0 / 24, covariances[i1][i0], 1.0e-10);\nassertEquals( 3.0 / 24, covariances[i1][i1], 1.0e-10);\ndouble[] errors = estimator.guessParametersErrors(problem);\nassertEquals(0, errors[i0], 1.0e-10);\nassertEquals(0, errors[i1], 1.0e-10);\n}\n",
+    "stack_trace": "java.lang.ArrayIndexOutOfBoundsException: 6\nat org.apache.commons.math.estimation.AbstractEstimator.getCovariances(AbstractEstimator.java:173)\nat org.apache.commons.math.estimation.GaussNewtonEstimatorTest.testBoundParameters(GaussNewtonEstimatorTest.java:472)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.math.linear.RealMatrixImpl:luDecompose()V",
+            "method_body": "public void luDecompose() throws InvalidMatrixException {\n\nint nRows = this.getRowDimension();\nint nCols = this.getColumnDimension();\nif (nRows != nCols) {\nthrow new InvalidMatrixException(\"LU decomposition requires that the matrix be square.\");\n}\nlu = this.getData();\n\n// Initialize permutation array and parity\npermutation = new int[nRows];\nfor (int row = 0; row < nRows; row++) {\npermutation[row] = row;\n}\nparity = 1;\n\n// Loop over columns\nfor (int col = 0; col < nCols; col++) {\n\ndouble sum = 0;\n\n// upper\nfor (int row = 0; row < col; row++) {\nsum = lu[row][col];\nfor (int i = 0; i < row; i++) {\nsum -= lu[row][i] * lu[i][col];\n}\nlu[row][col] = sum;\n}\n\n// lower\nint max = col; // permutation row\ndouble largest = 0d;\nfor (int row = col; row < nRows; row++) {\nsum = lu[row][col];\nfor (int i = 0; i < col; i++) {\nsum -= lu[row][i] * lu[i][col];\n}\nlu[row][col] = sum;\n\n// maintain best permutation choice\nif (Math.abs(sum) > largest) {\nlargest = Math.abs(sum);\nmax = row;\n}\n}\n\n// Singularity check\nif (Math.abs(lu[max][col]) < TOO_SMALL) {\nlu = null;\nthrow new InvalidMatrixException(\"matrix is singular\");\n}\n\n// Pivot if necessary\nif (max != col) {\ndouble tmp = 0;\nfor (int i = 0; i < nCols; i++) {\ntmp = lu[max][i];\nlu[max][i] = lu[col][i];\nlu[col][i] = tmp;\n}\nint temp = permutation[max];\npermutation[max] = permutation[col];\npermutation[col] = temp;\nparity = -parity;\n}\n\n//Divide the lower elements by the \"winning\" diagonal elt.\nfor (int row = col + 1; row < nRows; row++) {\nlu[row][col] /= lu[col][col];\n}\n}\n}",
+            "method_id": 0,
+            "loc": 73
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.GaussNewtonEstimator:estimate(Lorg/apache/commons/math/estimation/EstimationProblem;)V",
+            "method_body": "public void estimate(EstimationProblem problem)\nthrows EstimationException {\n\ninitializeEstimate(problem);\n\n// work matrices\ndouble[] grad             = new double[parameters.length];\nRealMatrixImpl bDecrement = new RealMatrixImpl(parameters.length, 1);\ndouble[][] bDecrementData = bDecrement.getDataRef();\nRealMatrixImpl wGradGradT = new RealMatrixImpl(parameters.length, parameters.length);\ndouble[][] wggData        = wGradGradT.getDataRef();\n\n// iterate until convergence is reached\ndouble previous = Double.POSITIVE_INFINITY;\ndo {\n\n// build the linear problem\nincrementJacobianEvaluationsCounter();\nRealMatrix b = new RealMatrixImpl(parameters.length, 1);\nRealMatrix a = new RealMatrixImpl(parameters.length, parameters.length);\nfor (int i = 0; i < measurements.length; ++i) {\nif (! measurements [i].isIgnored()) {\n\ndouble weight   = measurements[i].getWeight();\ndouble residual = measurements[i].getResidual();\n\n// compute the normal equation\nfor (int j = 0; j < parameters.length; ++j) {\ngrad[j] = measurements[i].getPartial(parameters[j]);\nbDecrementData[j][0] = weight * residual * grad[j];\n}\n\n// build the contribution matrix for measurement i\nfor (int k = 0; k < parameters.length; ++k) {\ndouble[] wggRow = wggData[k];\ndouble gk = grad[k];\nfor (int l = 0; l < parameters.length; ++l) {\nwggRow[l] =  weight * gk * grad[l];\n}\n}\n\n// update the matrices\na = a.add(wGradGradT);\nb = b.add(bDecrement);\n\n}\n}\n\ntry {\n\n// solve the linearized least squares problem\nRealMatrix dX = a.solve(b);\n\n// update the estimated parameters\nfor (int i = 0; i < parameters.length; ++i) {\nparameters[i].setEstimate(parameters[i].getEstimate() + dX.getEntry(i, 0));\n}\n\n} catch(InvalidMatrixException e) {\nthrow new EstimationException(\"unable to solve: singular problem\", new Object[0]);\n}\n\n\nprevious = cost;\nupdateResidualsAndCost();\n\n} while ((getCostEvaluations() < 2) ||\n(Math.abs(previous - cost) > (cost * steadyStateThreshold) &&\n(Math.abs(cost) > convergence)));\n\n}",
+            "method_id": 1,
+            "loc": 71
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.RealMatrixImpl:solve(Lorg/apache/commons/math/linear/RealMatrix;)Lorg/apache/commons/math/linear/RealMatrix;",
+            "method_body": "public RealMatrix solve(RealMatrix b) throws IllegalArgumentException, InvalidMatrixException  {\nif (b.getRowDimension() != this.getRowDimension()) {\nthrow new IllegalArgumentException(\"Incorrect row dimension\");\n}\nif (!this.isSquare()) {\nthrow new InvalidMatrixException(\"coefficient matrix is not square\");\n}\nif (this.isSingular()) { // side effect: compute LU decomp\nthrow new InvalidMatrixException(\"Matrix is singular.\");\n}\n\nint nCol = this.getColumnDimension();\nint nColB = b.getColumnDimension();\nint nRowB = b.getRowDimension();\n\n// Apply permutations to b\ndouble[][] bp = new double[nRowB][nColB];\nfor (int row = 0; row < nRowB; row++) {\nfor (int col = 0; col < nColB; col++) {\nbp[row][col] = b.getEntry(permutation[row], col);\n}\n}\n\n// Solve LY = b\nfor (int col = 0; col < nCol; col++) {\nfor (int i = col + 1; i < nCol; i++) {\nfor (int j = 0; j < nColB; j++) {\nbp[i][j] -= bp[col][j] * lu[i][col];\n}\n}\n}\n\n// Solve UX = Y\nfor (int col = nCol - 1; col >= 0; col--) {\nfor (int j = 0; j < nColB; j++) {\nbp[col][j] /= lu[col][col];\n}\nfor (int i = 0; i < col; i++) {\nfor (int j = 0; j < nColB; j++) {\nbp[i][j] -= bp[col][j] * lu[i][col];\n}\n}\n}\n\nRealMatrixImpl outMat = new RealMatrixImpl(bp);\nreturn outMat;\n}",
+            "method_id": 2,
+            "loc": 47
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.RealMatrixImpl:setSubMatrix([[DII)V",
+            "method_body": "public void setSubMatrix(double[][] subMatrix, int row, int column)\nthrows MatrixIndexException {\nif ((row < 0) || (column < 0)){\nthrow new MatrixIndexException\n(\"invalid row or column index selection\");\n}\nint nRows = subMatrix.length;\nif (nRows == 0) {\nthrow new IllegalArgumentException(\n\"Matrix must have at least one row.\");\n}\nint nCols = subMatrix[0].length;\nif (nCols == 0) {\nthrow new IllegalArgumentException(\n\"Matrix must have at least one column.\");\n}\nfor (int r = 1; r < nRows; r++) {\nif (subMatrix[r].length != nCols) {\nthrow new IllegalArgumentException(\n\"All input rows must have the same length.\");\n}\n}\nif (data == null) {\nif ((row > 0)||(column > 0)) throw new MatrixIndexException\n(\"matrix must be initialized to perfom this method\");\ndata = new double[nRows][nCols];\nSystem.arraycopy(subMatrix, 0, data, 0, subMatrix.length);\n}\nif (((nRows + row) > this.getRowDimension()) ||\n(nCols + column > this.getColumnDimension()))\nthrow new MatrixIndexException(\n\"invalid row or column index selection\");\nfor (int i = 0; i < nRows; i++) {\nSystem.arraycopy(subMatrix[i], 0, data[row + i], column, nCols);\n}\nlu = null;\n}",
+            "method_id": 3,
+            "loc": 37
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.AbstractEstimator:getCovariances(Lorg/apache/commons/math/estimation/EstimationProblem;)[[D",
+            "method_body": "public double[][] getCovariances(EstimationProblem problem)\nthrows EstimationException {\n\n// set up the jacobian\nupdateJacobian();\n\n// compute transpose(J).J, avoiding building big intermediate matrices\nfinal int rows = problem.getMeasurements().length;\nfinal int cols = problem.getAllParameters().length;\nfinal int max  = cols * rows;\ndouble[][] jTj = new double[cols][cols];\nfor (int i = 0; i < cols; ++i) {\nfor (int j = i; j < cols; ++j) {\ndouble sum = 0;\nfor (int k = 0; k < max; k += cols) {\nsum += jacobian[k + i] * jacobian[k + j];\n}\njTj[i][j] = sum;\njTj[j][i] = sum;\n}\n}\n\ntry {\n// compute the covariances matrix\nreturn new RealMatrixImpl(jTj).inverse().getData();\n} catch (InvalidMatrixException ime) {\nthrow new EstimationException(\"unable to compute covariances: singular problem\",\nnew Object[0]);\n}\n\n}",
+            "method_id": 4,
+            "loc": 31
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.AbstractEstimator:initializeEstimate(Lorg/apache/commons/math/estimation/EstimationProblem;)V",
+            "method_body": "protected void initializeEstimate(EstimationProblem problem) {\n\n// reset counters\ncostEvaluations     = 0;\njacobianEvaluations = 0;\n\n// retrieve the equations and the parameters\nmeasurements = problem.getMeasurements();\nparameters   = problem.getUnboundParameters();\n\n// arrays shared with the other private methods\nrows      = measurements.length;\ncols      = parameters.length;\njacobian  = new double[rows * cols];\nresiduals = new double[rows];\n\ncost = Double.POSITIVE_INFINITY;\n\n}",
+            "method_id": 5,
+            "loc": 19
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.AbstractEstimator:updateResidualsAndCost()V",
+            "method_body": "protected void updateResidualsAndCost()\nthrows EstimationException {\n\nif (++costEvaluations > maxCostEval) {\nthrow new EstimationException(\"maximal number of evaluations exceeded ({0})\",\nnew Object[] { new Integer(maxCostEval) });\n}\n\ncost = 0;\nfor (int i = 0, index = 0; i < rows; i++, index += cols) {\nWeightedMeasurement wm = measurements[i];\ndouble residual = wm.getResidual();\nresiduals[i] = Math.sqrt(wm.getWeight()) * residual;\ncost += wm.getWeight() * residual * residual;\n}\ncost = Math.sqrt(cost);\n\n}",
+            "method_id": 6,
+            "loc": 18
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.SimpleEstimationProblem:getUnboundParameters()[Lorg/apache/commons/math/estimation/EstimatedParameter;",
+            "method_body": "public EstimatedParameter[] getUnboundParameters() {\n\n// filter the unbound parameters\nList unbound = new ArrayList(parameters.size());\nfor (Iterator iterator = parameters.iterator(); iterator.hasNext();) {\nEstimatedParameter p = (EstimatedParameter) iterator.next();\nif (! p.isBound()) {\nunbound.add(p);\n}\n}\n\n// convert to an array\nreturn (EstimatedParameter[]) unbound.toArray(new EstimatedParameter[unbound.size()]);\n\n}",
+            "method_id": 7,
+            "loc": 15
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.RealMatrixImpl:add(Lorg/apache/commons/math/linear/RealMatrix;)Lorg/apache/commons/math/linear/RealMatrix;",
+            "method_body": "public RealMatrix add(RealMatrix m) throws IllegalArgumentException {\nif (this.getColumnDimension() != m.getColumnDimension() ||\nthis.getRowDimension() != m.getRowDimension()) {\nthrow new IllegalArgumentException(\"matrix dimension mismatch\");\n}\nint rowCount = this.getRowDimension();\nint columnCount = this.getColumnDimension();\ndouble[][] outData = new double[rowCount][columnCount];\nfor (int row = 0; row < rowCount; row++) {\nfor (int col = 0; col < columnCount; col++) {\noutData[row][col] = data[row][col] + m.getEntry(row, col);\n}\n}\nreturn new RealMatrixImpl(outData);\n}",
+            "method_id": 8,
+            "loc": 15
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.RealMatrixImpl:isSingular()Z",
+            "method_body": "public boolean isSingular() {\nif (lu == null) {\ntry {\nluDecompose();\nreturn false;\n} catch (InvalidMatrixException ex) {\nreturn true;\n}\n} else { // LU decomp must have been successfully performed\nreturn false; // so the matrix is not singular\n}\n}",
+            "method_id": 9,
+            "loc": 12
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.WeightedMeasurement:setIgnored(Z)V",
+            "method_body": "public abstract double getPartial(EstimatedParameter parameter);\n\n/**\n* Set the ignore flag to the specified value\n* Setting the ignore flag to true allow to reject wrong\n* measurements, which sometimes can be detected only rather late.\n*\n* @param ignored value for the ignore flag\n*/\npublic void setIgnored(boolean ignored) {\nthis.ignored = ignored;\n}",
+            "method_id": 10,
+            "loc": 12
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.AbstractEstimator:updateJacobian()V",
+            "method_body": "protected void updateJacobian() {\nincrementJacobianEvaluationsCounter();\nArrays.fill(jacobian, 0);\nfor (int i = 0, index = 0; i < rows; i++) {\nWeightedMeasurement wm = measurements[i];\ndouble factor = -Math.sqrt(wm.getWeight());\nfor (int j = 0; j < cols; ++j) {\njacobian[index++] = factor * wm.getPartial(parameters[j]);\n}\n}\n}",
+            "method_id": 11,
+            "loc": 11
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.AbstractEstimator:getRMS(Lorg/apache/commons/math/estimation/EstimationProblem;)D",
+            "method_body": "public double getRMS(EstimationProblem problem) {\nWeightedMeasurement[] wm = problem.getMeasurements();\ndouble criterion = 0;\nfor (int i = 0; i < wm.length; ++i) {\ndouble residual = wm[i].getResidual();\ncriterion += wm[i].getWeight() * residual * residual;\n}\nreturn Math.sqrt(criterion / wm.length);\n}",
+            "method_id": 12,
+            "loc": 9
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.RealMatrixImpl:copyOut()[[D",
+            "method_body": "private double[][] copyOut() {\nint nRows = this.getRowDimension();\ndouble[][] out = new double[nRows][this.getColumnDimension()];\n// can't copy 2-d array in one shot, otherwise get row references\nfor (int i = 0; i < nRows; i++) {\nSystem.arraycopy(data[i], 0, out[i], 0, data[i].length);\n}\nreturn out;\n}",
+            "method_id": 13,
+            "loc": 9
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.RealMatrixImpl:<init>(II)V",
+            "method_body": "public RealMatrixImpl(int rowDimension, int columnDimension) {\nif (rowDimension <= 0 || columnDimension <= 0) {\nthrow new IllegalArgumentException(\n\"row and column dimensions must be postive\");\n}\ndata = new double[rowDimension][columnDimension];\nlu = null;\n}",
+            "method_id": 14,
+            "loc": 8
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.GaussNewtonEstimator:<init>(IDD)V",
+            "method_body": "public GaussNewtonEstimator(int maxCostEval,\ndouble convergence,\ndouble steadyStateThreshold) {\nsetMaxCostEval(maxCostEval);\nthis.steadyStateThreshold = steadyStateThreshold;\nthis.convergence          = convergence;\n}",
+            "method_id": 15,
+            "loc": 7
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.RealMatrixImpl:getEntry(II)D",
+            "method_body": "public double getEntry(int row, int column)\nthrows MatrixIndexException {\nif (!isValidCoordinate(row,column)) {\nthrow new MatrixIndexException(\"matrix entry does not exist\");\n}\nreturn data[row][column];\n}",
+            "method_id": 16,
+            "loc": 7
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.EstimatedParameter:<init>(Ljava/lang/String;DZ)V",
+            "method_body": "public EstimatedParameter(String name,\ndouble firstEstimate,\nboolean bound) {\nthis.name  = name;\nestimate   = firstEstimate;\nthis.bound = bound;\n}",
+            "method_id": 17,
+            "loc": 7
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.WeightedMeasurement:<init>(DDZ)V",
+            "method_body": "public WeightedMeasurement(double weight, double measuredValue,\nboolean ignored) {\nthis.weight        = weight;\nthis.measuredValue = measuredValue;\nthis.ignored       = ignored;\n}",
+            "method_id": 18,
+            "loc": 6
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.RealMatrixImpl:isValidCoordinate(II)Z",
+            "method_body": "private boolean isValidCoordinate(int row, int col) {\nint nRows = this.getRowDimension();\nint nCols = this.getColumnDimension();\n\nreturn !(row < 0 || row > nRows - 1 || col < 0 || col > nCols -1);\n}",
+            "method_id": 19,
+            "loc": 6
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.SimpleEstimationProblem:<init>()V",
+            "method_body": "public SimpleEstimationProblem() {\nparameters   = new ArrayList();\nmeasurements = new ArrayList();\n}",
+            "method_id": 20,
+            "loc": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.RealMatrixImpl:<init>([[D)V",
+            "method_body": "public RealMatrixImpl(double[][] d) {\nthis.copyIn(d);\nlu = null;\n}",
+            "method_id": 21,
+            "loc": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.WeightedMeasurement:getResidual()D",
+            "method_body": "public double getResidual() {\nreturn measuredValue - getTheoreticalValue();\n}",
+            "method_id": 22,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.RealMatrixImpl:getData()[[D",
+            "method_body": "public double[][] getData() {\nreturn copyOut();\n}",
+            "method_id": 23,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.RealMatrixImpl:getRowDimension()I",
+            "method_body": "public int getRowDimension() {\nreturn data.length;\n}",
+            "method_id": 24,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.SimpleEstimationProblem:getMeasurements()[Lorg/apache/commons/math/estimation/WeightedMeasurement;",
+            "method_body": "public WeightedMeasurement[] getMeasurements() {\nreturn (WeightedMeasurement[]) measurements.toArray(new WeightedMeasurement[measurements.size()]);\n}",
+            "method_id": 25,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.WeightedMeasurement:getWeight()D",
+            "method_body": "public double getWeight() {\nreturn weight;\n}",
+            "method_id": 26,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.AbstractEstimator:getCostEvaluations()I",
+            "method_body": "public final int getCostEvaluations() {\nreturn costEvaluations;\n}",
+            "method_id": 27,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.RealMatrixImpl:copyIn([[D)V",
+            "method_body": "private void copyIn(double[][] in) {\nsetSubMatrix(in,0,0);\n}",
+            "method_id": 28,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.SimpleEstimationProblem:addParameter(Lorg/apache/commons/math/estimation/EstimatedParameter;)V",
+            "method_body": "protected void addParameter(EstimatedParameter p) {\nparameters.add(p);\n}",
+            "method_id": 29,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.SimpleEstimationProblem:getAllParameters()[Lorg/apache/commons/math/estimation/EstimatedParameter;",
+            "method_body": "public EstimatedParameter[] getAllParameters() {\nreturn (EstimatedParameter[]) parameters.toArray(new EstimatedParameter[parameters.size()]);\n}",
+            "method_id": 30,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.RealMatrixImpl:getColumnDimension()I",
+            "method_body": "public int getColumnDimension() {\nreturn data[0].length;\n}",
+            "method_id": 31,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.WeightedMeasurement:isIgnored()Z",
+            "method_body": "public boolean isIgnored() {\nreturn ignored;\n}",
+            "method_id": 32,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.AbstractEstimator:incrementJacobianEvaluationsCounter()V",
+            "method_body": "protected final void incrementJacobianEvaluationsCounter() {\n++jacobianEvaluations;\n}",
+            "method_id": 33,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.EstimatedParameter:getEstimate()D",
+            "method_body": "public double getEstimate() {\nreturn estimate;\n}",
+            "method_id": 34,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.RealMatrixImpl:getDataRef()[[D",
+            "method_body": "public double[][] getDataRef() {\nreturn data;\n}",
+            "method_id": 35,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.RealMatrixImpl:isSquare()Z",
+            "method_body": "public boolean isSquare() {\nreturn (this.getColumnDimension() == this.getRowDimension());\n}",
+            "method_id": 36,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.EstimatedParameter:isBound()Z",
+            "method_body": "public boolean isBound() {\nreturn bound;\n}",
+            "method_id": 37,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.SimpleEstimationProblem:addMeasurement(Lorg/apache/commons/math/estimation/WeightedMeasurement;)V",
+            "method_body": "protected void addMeasurement(WeightedMeasurement m) {\nmeasurements.add(m);\n}",
+            "method_id": 38,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.AbstractEstimator:setMaxCostEval(I)V",
+            "method_body": "public final void setMaxCostEval(int maxCostEval) {\nthis.maxCostEval = maxCostEval;\n}",
+            "method_id": 39,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.estimation.EstimatedParameter:setEstimate(D)V",
+            "method_body": "public void setEstimate(double estimate) {\nthis.estimate = estimate;\n}",
+            "method_id": 40,
+            "loc": 3
+        }
+    ]
+}

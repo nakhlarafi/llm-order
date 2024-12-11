@@ -1,0 +1,59 @@
+{
+    "bug_id": 11,
+    "test_id": 2,
+    "test_name": "org.apache.commons.codec.net.QuotedPrintableCodecTest.testUltimateSoftBreak",
+    "test_body": "public void testUltimateSoftBreak() throws Exception {\nfinal QuotedPrintableCodec qpcodec = new QuotedPrintableCodec();\nString plain =\"This is a example of a quoted-printable text file. There is no end to it\\t\";\nString expected = \"This is a example of a quoted-printable text file. There is no end to i=\\r\\nt=09\";\nassertEquals(expected, qpcodec.encode(plain));\nplain =\"This is a example of a quoted-printable text file. There is no end to it \";\nexpected = \"This is a example of a quoted-printable text file. There is no end to i=\\r\\nt=20\";\nassertEquals(expected, qpcodec.encode(plain));\n// whitespace before soft break\nplain =\"This is a example of a quoted-printable text file. There is no end to   \";\nexpected = \"This is a example of a quoted-printable text file. There is no end to=20=\\r\\n =20\";\nassertEquals(expected, qpcodec.encode(plain));\n// non-printable character before soft break\nplain =\"This is a example of a quoted-printable text file. There is no end to=  \";\nexpected = \"This is a example of a quoted-printable text file. There is no end to=3D=\\r\\n =20\";\nassertEquals(expected, qpcodec.encode(plain));\n}\n",
+    "stack_trace": "junit.framework.AssertionFailedError: expected:<...There is no end to i[=\nt=09]> but was:<...There is no end to i[t\t]>\nat org.junit.Assert.assertEquals(Assert.java:115)\nat org.junit.Assert.assertEquals(Assert.java:144)\nat org.apache.commons.codec.net.QuotedPrintableCodecTest.testUltimateSoftBreak(QuotedPrintableCodecTest.java:326)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.codec.net.QuotedPrintableCodec:<clinit>()V",
+            "method_body": "private final String charset;\n\n/**\n* BitSet of printable characters as defined in RFC 1521.\n*/\nprivate static final BitSet PRINTABLE_CHARS = new BitSet(256);\n\nprivate static final byte ESCAPE_CHAR = '=';\n\nprivate static final byte TAB = 9;\n\nprivate static final byte SPACE = 32;\n\n\n\n/** Safe line length for quoted printable encoded text. */\n\n// Static initializer for printable chars collection\nstatic {\n// alpha characters\nfor (int i = 33; i <= 60; i++) {\nPRINTABLE_CHARS.set(i);\n}\nfor (int i = 62; i <= 126; i++) {\nPRINTABLE_CHARS.set(i);\n}\nPRINTABLE_CHARS.set(TAB);\nPRINTABLE_CHARS.set(SPACE);\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.codec.net.QuotedPrintableCodec:encodeQuotedPrintable(Ljava/util/BitSet;[B)[B",
+            "method_body": "public static final byte[] encodeQuotedPrintable(BitSet printable, byte[] bytes) {\nif (bytes == null) {\nreturn null;\n}\nif (printable == null) {\nprintable = PRINTABLE_CHARS;\n}\nByteArrayOutputStream buffer = new ByteArrayOutputStream();\n// encode up to buffer.length - 3, the last three octets will be treated\n// separately for simplification of note #3\n// up to this length it is safe to add any byte, encoded or not\nfor (byte c : bytes) {\nint b = c;\nif (b < 0) {\nb = 256 + b;\n}\nif (printable.get(b)) {\nbuffer.write(b);\n} else {\n// rule #3: whitespace at the end of a line *must* be encoded\n\n// rule #5: soft line break\nencodeQuotedPrintable(b, buffer);\n}\n}\n\n// rule #3: whitespace at the end of a line *must* be encoded\n// if we would do a soft break line after this octet, encode whitespace\n\n// note #3: '=' *must not* be the ultimate or penultimate character\n// simplification: if < 6 bytes left, do a soft line break as we may need\n//                 exactly 6 bytes space for the last 2 bytes\n// rule #3: trailing whitespace shall be encoded\n\nreturn buffer.toByteArray();\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.codec.net.QuotedPrintableCodec:<init>()V",
+            "method_body": "public QuotedPrintableCodec() {\nthis(CharEncoding.UTF_8);\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.codec.net.QuotedPrintableCodec:<init>(Ljava/lang/String;)V",
+            "method_body": "public QuotedPrintableCodec(String charset) {\nsuper();\nthis.charset = charset;\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.codec.net.QuotedPrintableCodec:encode(Ljava/lang/String;)Ljava/lang/String;",
+            "method_body": "public String encode(String pString) throws EncoderException {\nif (pString == null) {\nreturn null;\n}\ntry {\nreturn encode(pString, getDefaultCharset());\n} catch (UnsupportedEncodingException e) {\nthrow new EncoderException(e.getMessage(), e);\n}\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.codec.net.QuotedPrintableCodec:encode(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
+            "method_body": "public String encode(String pString, String charset) throws UnsupportedEncodingException {\nif (pString == null) {\nreturn null;\n}\nreturn StringUtils.newStringUsAscii(encode(pString.getBytes(charset)));\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.codec.net.QuotedPrintableCodec:encode([B)[B",
+            "method_body": "public byte[] encode(byte[] bytes) {\nreturn encodeQuotedPrintable(PRINTABLE_CHARS, bytes);\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.codec.binary.StringUtils:newStringUsAscii([B)Ljava/lang/String;",
+            "method_body": "public static String newStringUsAscii(byte[] bytes) {\nreturn StringUtils.newString(bytes, CharEncoding.US_ASCII);\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.codec.net.QuotedPrintableCodec:getDefaultCharset()Ljava/lang/String;",
+            "method_body": "public String getDefaultCharset() {\nreturn this.charset;\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.codec.binary.StringUtils:newString([BLjava/lang/String;)Ljava/lang/String;",
+            "method_body": "public static String newString(byte[] bytes, String charsetName) {\nif (bytes == null) {\nreturn null;\n}\ntry {\nreturn new String(bytes, charsetName);\n} catch (UnsupportedEncodingException e) {\nthrow StringUtils.newIllegalStateException(charsetName, e);\n}\n}",
+            "method_id": 9
+        }
+    ]
+}

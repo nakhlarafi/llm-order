@@ -1,0 +1,501 @@
+{
+    "bug_id": 3,
+    "test_id": 0,
+    "test_name": "com.fasterxml.jackson.core.json.TestLocation.testOffsetWithInputOffset",
+    "test_body": "public void testOffsetWithInputOffset() throws Exception\n{\nfinal JsonFactory f = new JsonFactory();\nJsonLocation loc;\nJsonParser p;\n// 3 spaces before, 2 after, just for padding\nbyte[] b = \"   { }  \".getBytes(\"UTF-8\");\n// and then peel them off\np = f.createParser(b, 3, b.length-5);\nassertToken(JsonToken.START_OBJECT, p.nextToken());\nloc = p.getTokenLocation();\nassertEquals(0L, loc.getByteOffset());\nassertEquals(-1L, loc.getCharOffset());\nassertEquals(1, loc.getLineNr());\nassertEquals(1, loc.getColumnNr());\nloc = p.getCurrentLocation();\nassertEquals(1L, loc.getByteOffset());\nassertEquals(-1L, loc.getCharOffset());\nassertEquals(1, loc.getLineNr());\nassertEquals(2, loc.getColumnNr());\np.close();\n}\n",
+    "stack_trace": "junit.framework.AssertionFailedError: expected:<0> but was:<3>\nat junit.framework.Assert.fail(Assert.java:57)\nat junit.framework.Assert.failNotEquals(Assert.java:329)\nat junit.framework.Assert.assertEquals(Assert.java:78)\nat junit.framework.Assert.assertEquals(Assert.java:159)\nat junit.framework.Assert.assertEquals(Assert.java:166)\nat junit.framework.TestCase.assertEquals(TestCase.java:324)\nat com.fasterxml.jackson.core.json.TestLocation.testOffsetWithInputOffset(TestLocation.java:68)",
+    "covered_methods": [
+        {
+            "method_signature": "com.fasterxml.jackson.core.json.ByteSourceJsonBootstrapper:ensureLoaded(I)Z",
+            "method_body": "public static MatchStrength hasJSONFormat(InputAccessor acc) throws IOException\n{\n// Ideally we should see \"[\" or \"{\"; but if not, we'll accept double-quote (String)\n// in future could also consider accepting non-standard matches?\n\nif (!acc.hasMoreBytes()) {\nreturn MatchStrength.INCONCLUSIVE;\n}\nbyte b = acc.nextByte();\n// Very first thing, a UTF-8 BOM?\nif (b == UTF8_BOM_1) { // yes, looks like UTF-8 BOM\nif (!acc.hasMoreBytes()) {\nreturn MatchStrength.INCONCLUSIVE;\n}\nif (acc.nextByte() != UTF8_BOM_2) {\nreturn MatchStrength.NO_MATCH;\n}\nif (!acc.hasMoreBytes()) {\nreturn MatchStrength.INCONCLUSIVE;\n}\nif (acc.nextByte() != UTF8_BOM_3) {\nreturn MatchStrength.NO_MATCH;\n}\nif (!acc.hasMoreBytes()) {\nreturn MatchStrength.INCONCLUSIVE;\n}\nb = acc.nextByte();\n}\n// Then possible leading space\nint ch = skipSpace(acc, b);\nif (ch < 0) {\nreturn MatchStrength.INCONCLUSIVE;\n}\n// First, let's see if it looks like a structured type:\nif (ch == '{') { // JSON object?\n// Ideally we need to find either double-quote or closing bracket\nch = skipSpace(acc);\nif (ch < 0) {\nreturn MatchStrength.INCONCLUSIVE;\n}\nif (ch == '\"' || ch == '}') {\nreturn MatchStrength.SOLID_MATCH;\n}\n// ... should we allow non-standard? Let's not yet... can add if need be\nreturn MatchStrength.NO_MATCH;\n}\nMatchStrength strength;\n\nif (ch == '[') {\nch = skipSpace(acc);\nif (ch < 0) {\nreturn MatchStrength.INCONCLUSIVE;\n}\n// closing brackets is easy; but for now, let's also accept opening...\nif (ch == ']' || ch == '[') {\nreturn MatchStrength.SOLID_MATCH;\n}\nreturn MatchStrength.SOLID_MATCH;\n} else {\n// plain old value is not very convincing...\nstrength = MatchStrength.WEAK_MATCH;\n}\n\nif (ch == '\"') { // string value\nreturn strength;\n}\nif (ch <= '9' && ch >= '0') { // number\nreturn strength;\n}\nif (ch == '-') { // negative number\nch = skipSpace(acc);\nif (ch < 0) {\nreturn MatchStrength.INCONCLUSIVE;\n}\nreturn (ch <= '9' && ch >= '0') ? strength : MatchStrength.NO_MATCH;\n}\n// or one of literals\nif (ch == 'n') { // null\nreturn tryMatch(acc, \"ull\", strength);\n}\nif (ch == 't') { // true\nreturn tryMatch(acc, \"rue\", strength);\n}\nif (ch == 'f') { // false\nreturn tryMatch(acc, \"alse\", strength);\n}\nreturn MatchStrength.NO_MATCH;\n}\n\nprivate static MatchStrength tryMatch(InputAccessor acc, String matchStr, MatchStrength fullMatchStrength)\nthrows IOException\n{\nfor (int i = 0, len = matchStr.length(); i < len; ++i) {\nif (!acc.hasMoreBytes()) {\nreturn MatchStrength.INCONCLUSIVE;\n}\nif (acc.nextByte() != matchStr.charAt(i)) {\nreturn MatchStrength.NO_MATCH;\n}\n}\nreturn fullMatchStrength;\n}\n\nprivate static int skipSpace(InputAccessor acc) throws IOException\n{\nif (!acc.hasMoreBytes()) {\nreturn -1;\n}\nreturn skipSpace(acc, acc.nextByte());\n}\n\nprivate static int skipSpace(InputAccessor acc, byte b) throws IOException\n{\nwhile (true) {\nint ch = (int) b & 0xFF;\nif (!(ch == ' ' || ch == '\\r' || ch == '\\n' || ch == '\\t')) {\nreturn ch;\n}\nif (!acc.hasMoreBytes()) {\nreturn -1;\n}\nb = acc.nextByte();\nch = (int) b & 0xFF;\n}\n}\n\n/*\n/**********************************************************\n/* Internal methods, parsing\n/**********************************************************\n*/\n\n/**\n* @return True if a BOM was succesfully found, and encoding\n*   thereby recognized.\n*/\nprivate boolean handleBOM(int quad)\nthrows IOException\n{\n/* Handling of (usually) optional BOM (required for\n* multi-byte formats); first 32-bit charsets:\n*/\nswitch (quad) {\ncase 0x0000FEFF:\n_bigEndian = true;\n_inputPtr += 4;\n_bytesPerChar = 4;\nreturn true;\ncase 0xFFFE0000: // UCS-4, LE?\n_inputPtr += 4;\n_bytesPerChar = 4;\n_bigEndian = false;\nreturn true;\ncase 0x0000FFFE: // UCS-4, in-order...\nreportWeirdUCS4(\"2143\"); // throws exception\ncase 0xFEFF0000: // UCS-4, in-order...\nreportWeirdUCS4(\"3412\"); // throws exception\n}\n// Ok, if not, how about 16-bit encoding BOMs?\nint msw = quad >>> 16;\nif (msw == 0xFEFF) { // UTF-16, BE\n_inputPtr += 2;\n_bytesPerChar = 2;\n_bigEndian = true;\nreturn true;\n}\nif (msw == 0xFFFE) { // UTF-16, LE\n_inputPtr += 2;\n_bytesPerChar = 2;\n_bigEndian = false;\nreturn true;\n}\n// And if not, then UTF-8 BOM?\nif ((quad >>> 8) == 0xEFBBBF) { // UTF-8\n_inputPtr += 3;\n_bytesPerChar = 1;\n_bigEndian = true; // doesn't really matter\nreturn true;\n}\nreturn false;\n}\n\nprivate boolean checkUTF32(int quad)\nthrows IOException\n{\n/* Handling of (usually) optional BOM (required for\n* multi-byte formats); first 32-bit charsets:\n*/\nif ((quad >> 8) == 0) { // 0x000000?? -> UTF32-BE\n_bigEndian = true;\n} else if ((quad & 0x00FFFFFF) == 0) { // 0x??000000 -> UTF32-LE\n_bigEndian = false;\n} else if ((quad & ~0x00FF0000) == 0) { // 0x00??0000 -> UTF32-in-order\nreportWeirdUCS4(\"3412\");\n} else if ((quad & ~0x0000FF00) == 0) { // 0x0000??00 -> UTF32-in-order\nreportWeirdUCS4(\"2143\");\n} else {\n// Can not be valid UTF-32 encoded JSON...\nreturn false;\n}\n// Not BOM (just regular content), nothing to skip past:\n//_inputPtr += 4;\n_bytesPerChar = 4;\nreturn true;\n}\n\nprivate boolean checkUTF16(int i16)\n{\nif ((i16 & 0xFF00) == 0) { // UTF-16BE\n_bigEndian = true;\n} else if ((i16 & 0x00FF) == 0) { // UTF-16LE\n_bigEndian = false;\n} else { // nope, not  UTF-16\nreturn false;\n}\n// Not BOM (just regular content), nothing to skip past:\n//_inputPtr += 2;\n_bytesPerChar = 2;\nreturn true;\n}\n\n/*\n/**********************************************************\n/* Internal methods, problem reporting\n/**********************************************************\n*/\n\nprivate void reportWeirdUCS4(String type)\nthrows IOException\n{\nthrow new CharConversionException(\"Unsupported UCS-4 endianness (\"+type+\") detected\");\n}\n\n/*\n/**********************************************************\n/* Internal methods, raw input access\n/**********************************************************\n*/\n\nprotected boolean ensureLoaded(int minimum)\nthrows IOException\n{\n/* Let's assume here buffer has enough room -- this will always\n* be true for the limited used this method gets\n*/\nint gotten = (_inputEnd - _inputPtr);\nwhile (gotten < minimum) {\nint count;\n\nif (_in == null) { // block source\ncount = -1;\n} else {\ncount = _in.read(_inputBuffer, _inputEnd, _inputBuffer.length - _inputEnd);\n}\nif (count < 1) {\nreturn false;\n}\n_inputEnd += count;\ngotten += count;\n}\nreturn true;\n}\n}",
+            "method_id": 0,
+            "loc": 263
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.json.ByteSourceJsonBootstrapper:checkUTF16(I)Z",
+            "method_body": "public static MatchStrength hasJSONFormat(InputAccessor acc) throws IOException\n{\n// Ideally we should see \"[\" or \"{\"; but if not, we'll accept double-quote (String)\n// in future could also consider accepting non-standard matches?\n\nif (!acc.hasMoreBytes()) {\nreturn MatchStrength.INCONCLUSIVE;\n}\nbyte b = acc.nextByte();\n// Very first thing, a UTF-8 BOM?\nif (b == UTF8_BOM_1) { // yes, looks like UTF-8 BOM\nif (!acc.hasMoreBytes()) {\nreturn MatchStrength.INCONCLUSIVE;\n}\nif (acc.nextByte() != UTF8_BOM_2) {\nreturn MatchStrength.NO_MATCH;\n}\nif (!acc.hasMoreBytes()) {\nreturn MatchStrength.INCONCLUSIVE;\n}\nif (acc.nextByte() != UTF8_BOM_3) {\nreturn MatchStrength.NO_MATCH;\n}\nif (!acc.hasMoreBytes()) {\nreturn MatchStrength.INCONCLUSIVE;\n}\nb = acc.nextByte();\n}\n// Then possible leading space\nint ch = skipSpace(acc, b);\nif (ch < 0) {\nreturn MatchStrength.INCONCLUSIVE;\n}\n// First, let's see if it looks like a structured type:\nif (ch == '{') { // JSON object?\n// Ideally we need to find either double-quote or closing bracket\nch = skipSpace(acc);\nif (ch < 0) {\nreturn MatchStrength.INCONCLUSIVE;\n}\nif (ch == '\"' || ch == '}') {\nreturn MatchStrength.SOLID_MATCH;\n}\n// ... should we allow non-standard? Let's not yet... can add if need be\nreturn MatchStrength.NO_MATCH;\n}\nMatchStrength strength;\n\nif (ch == '[') {\nch = skipSpace(acc);\nif (ch < 0) {\nreturn MatchStrength.INCONCLUSIVE;\n}\n// closing brackets is easy; but for now, let's also accept opening...\nif (ch == ']' || ch == '[') {\nreturn MatchStrength.SOLID_MATCH;\n}\nreturn MatchStrength.SOLID_MATCH;\n} else {\n// plain old value is not very convincing...\nstrength = MatchStrength.WEAK_MATCH;\n}\n\nif (ch == '\"') { // string value\nreturn strength;\n}\nif (ch <= '9' && ch >= '0') { // number\nreturn strength;\n}\nif (ch == '-') { // negative number\nch = skipSpace(acc);\nif (ch < 0) {\nreturn MatchStrength.INCONCLUSIVE;\n}\nreturn (ch <= '9' && ch >= '0') ? strength : MatchStrength.NO_MATCH;\n}\n// or one of literals\nif (ch == 'n') { // null\nreturn tryMatch(acc, \"ull\", strength);\n}\nif (ch == 't') { // true\nreturn tryMatch(acc, \"rue\", strength);\n}\nif (ch == 'f') { // false\nreturn tryMatch(acc, \"alse\", strength);\n}\nreturn MatchStrength.NO_MATCH;\n}\n\nprivate static MatchStrength tryMatch(InputAccessor acc, String matchStr, MatchStrength fullMatchStrength)\nthrows IOException\n{\nfor (int i = 0, len = matchStr.length(); i < len; ++i) {\nif (!acc.hasMoreBytes()) {\nreturn MatchStrength.INCONCLUSIVE;\n}\nif (acc.nextByte() != matchStr.charAt(i)) {\nreturn MatchStrength.NO_MATCH;\n}\n}\nreturn fullMatchStrength;\n}\n\nprivate static int skipSpace(InputAccessor acc) throws IOException\n{\nif (!acc.hasMoreBytes()) {\nreturn -1;\n}\nreturn skipSpace(acc, acc.nextByte());\n}\n\nprivate static int skipSpace(InputAccessor acc, byte b) throws IOException\n{\nwhile (true) {\nint ch = (int) b & 0xFF;\nif (!(ch == ' ' || ch == '\\r' || ch == '\\n' || ch == '\\t')) {\nreturn ch;\n}\nif (!acc.hasMoreBytes()) {\nreturn -1;\n}\nb = acc.nextByte();\nch = (int) b & 0xFF;\n}\n}\n\n/*\n/**********************************************************\n/* Internal methods, parsing\n/**********************************************************\n*/\n\n/**\n* @return True if a BOM was succesfully found, and encoding\n*   thereby recognized.\n*/\nprivate boolean handleBOM(int quad)\nthrows IOException\n{\n/* Handling of (usually) optional BOM (required for\n* multi-byte formats); first 32-bit charsets:\n*/\nswitch (quad) {\ncase 0x0000FEFF:\n_bigEndian = true;\n_inputPtr += 4;\n_bytesPerChar = 4;\nreturn true;\ncase 0xFFFE0000: // UCS-4, LE?\n_inputPtr += 4;\n_bytesPerChar = 4;\n_bigEndian = false;\nreturn true;\ncase 0x0000FFFE: // UCS-4, in-order...\nreportWeirdUCS4(\"2143\"); // throws exception\ncase 0xFEFF0000: // UCS-4, in-order...\nreportWeirdUCS4(\"3412\"); // throws exception\n}\n// Ok, if not, how about 16-bit encoding BOMs?\nint msw = quad >>> 16;\nif (msw == 0xFEFF) { // UTF-16, BE\n_inputPtr += 2;\n_bytesPerChar = 2;\n_bigEndian = true;\nreturn true;\n}\nif (msw == 0xFFFE) { // UTF-16, LE\n_inputPtr += 2;\n_bytesPerChar = 2;\n_bigEndian = false;\nreturn true;\n}\n// And if not, then UTF-8 BOM?\nif ((quad >>> 8) == 0xEFBBBF) { // UTF-8\n_inputPtr += 3;\n_bytesPerChar = 1;\n_bigEndian = true; // doesn't really matter\nreturn true;\n}\nreturn false;\n}\n\nprivate boolean checkUTF32(int quad)\nthrows IOException\n{\n/* Handling of (usually) optional BOM (required for\n* multi-byte formats); first 32-bit charsets:\n*/\nif ((quad >> 8) == 0) { // 0x000000?? -> UTF32-BE\n_bigEndian = true;\n} else if ((quad & 0x00FFFFFF) == 0) { // 0x??000000 -> UTF32-LE\n_bigEndian = false;\n} else if ((quad & ~0x00FF0000) == 0) { // 0x00??0000 -> UTF32-in-order\nreportWeirdUCS4(\"3412\");\n} else if ((quad & ~0x0000FF00) == 0) { // 0x0000??00 -> UTF32-in-order\nreportWeirdUCS4(\"2143\");\n} else {\n// Can not be valid UTF-32 encoded JSON...\nreturn false;\n}\n// Not BOM (just regular content), nothing to skip past:\n//_inputPtr += 4;\n_bytesPerChar = 4;\nreturn true;\n}\n\nprivate boolean checkUTF16(int i16)\n{\nif ((i16 & 0xFF00) == 0) { // UTF-16BE\n_bigEndian = true;\n} else if ((i16 & 0x00FF) == 0) { // UTF-16LE\n_bigEndian = false;\n} else { // nope, not  UTF-16\nreturn false;\n}\n// Not BOM (just regular content), nothing to skip past:\n//_inputPtr += 2;\n_bytesPerChar = 2;\nreturn true;\n}\n\n/*\n/**********************************************************\n/* Internal methods, problem reporting\n/**********************************************************\n*/\n\nprivate void reportWeirdUCS4(String type)\nthrows IOException\n{\nthrow new CharConversionException(\"Unsupported UCS-4 endianness (\"+type+\") detected\");\n}\n\n/*\n/**********************************************************\n/* Internal methods, raw input access\n/**********************************************************\n*/\n\nprotected boolean ensureLoaded(int minimum)\nthrows IOException\n{\n/* Let's assume here buffer has enough room -- this will always\n* be true for the limited used this method gets\n*/\nint gotten = (_inputEnd - _inputPtr);\nwhile (gotten < minimum) {\nint count;\n\nif (_in == null) { // block source\ncount = -1;\n} else {\ncount = _in.read(_inputBuffer, _inputEnd, _inputBuffer.length - _inputEnd);\n}\nif (count < 1) {\nreturn false;\n}\n_inputEnd += count;\ngotten += count;\n}\nreturn true;\n}\n}",
+            "method_id": 1,
+            "loc": 263
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.base.ParserBase:<clinit>()V",
+            "method_body": "protected byte[] _binaryValue;\n\n/*\n/**********************************************************\n/* Constants and fields of former 'JsonNumericParserBase'\n/**********************************************************\n*/\n\nfinal protected static int NR_UNKNOWN = 0;\n\n// First, integer types\n\nfinal protected static int NR_INT = 0x0001;\nfinal protected static int NR_LONG = 0x0002;\nfinal protected static int NR_BIGINT = 0x0004;\n\n// And then floating point types\n\nfinal protected static int NR_DOUBLE = 0x008;\nfinal protected static int NR_BIGDECIMAL = 0x0010;\n\n// Also, we need some numeric constants\n\nfinal static BigInteger BI_MIN_INT = BigInteger.valueOf(Integer.MIN_VALUE);\nfinal static BigInteger BI_MAX_INT = BigInteger.valueOf(Integer.MAX_VALUE);\n\nfinal static BigInteger BI_MIN_LONG = BigInteger.valueOf(Long.MIN_VALUE);\nfinal static BigInteger BI_MAX_LONG = BigInteger.valueOf(Long.MAX_VALUE);\n\nfinal static BigDecimal BD_MIN_LONG = new BigDecimal(BI_MIN_LONG);\nfinal static BigDecimal BD_MAX_LONG = new BigDecimal(BI_MAX_LONG);\n\nfinal static BigDecimal BD_MIN_INT = new BigDecimal(BI_MIN_INT);\nfinal static BigDecimal BD_MAX_INT = new BigDecimal(BI_MAX_INT);\n\nfinal static long MIN_INT_L = (long) Integer.MIN_VALUE;\nfinal static long MAX_INT_L = (long) Integer.MAX_VALUE;\n\n// These are not very accurate, but have to do... (for bounds checks)\n\nfinal static double MIN_LONG_D = (double) Long.MIN_VALUE;\nfinal static double MAX_LONG_D = (double) Long.MAX_VALUE;\n\nfinal static double MIN_INT_D = (double) Integer.MIN_VALUE;\nfinal static double MAX_INT_D = (double) Integer.MAX_VALUE;\n\n// Digits, numeric\nfinal protected static int INT_0 = '0';\nfinal protected static int INT_9 = '9';\n\nfinal protected static int INT_MINUS = '-';\nfinal protected static int INT_PLUS = '+';\n\nfinal protected static char CHAR_NULL = '\\0';\n\n// Numeric value holders: multiple fields used for\n// for efficiency\n\n/**\n* Bitfield that indicates which numeric representations\n* have been calculated for the current type\n*/\nprotected int _numTypesValid = NR_UNKNOWN;\n\n// First primitives\n\nprotected int _numberInt;\n\nprotected long _numberLong;\n\nprotected double _numberDouble;\n\n// And then object types\n\nprotected BigInteger _numberBigInt;\n\nprotected BigDecimal _numberBigDecimal;\n\n// And then other information about value itself\n\n/**\n* Flag that indicates whether numeric value has a negative\n* value. That is, whether its textual representation starts\n* with minus character.\n*/\nprotected boolean _numberNegative;\n\n/**\n* Length of integer part of the number, in characters\n*/\nprotected int _intLength;\n\n/**\n* Length of the fractional part (not including decimal\n* point or exponent), in characters.\n* Not used for  pure integer values.\n*/\nprotected int _fractLength;\n\n/**\n* Length of the exponent part of the number, if any, not\n* including 'e' marker or sign, just digits.\n* Not used for  pure integer values.\n*/\nprotected int _expLength;\n\n/*\n/**********************************************************\n/* Life-cycle\n/**********************************************************\n*/\n\nprotected ParserBase(IOContext ctxt, int features)\n{\nsuper();\n_features = features;\n_ioContext = ctxt;\n_textBuffer = ctxt.constructTextBuffer();\nDupDetector dups = Feature.STRICT_DUPLICATE_DETECTION.enabledIn(features)\n? DupDetector.rootDetector(this) : null;\nJsonReadContext readCtxt = JsonReadContext.createRootContext(dups);\n_parsingContext = readCtxt;\n}",
+            "method_id": 2,
+            "loc": 123
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.json.UTF8StreamJsonParser:<clinit>()V",
+            "method_body": "final static byte BYTE_LF = (byte) '\\n';\n\n// This is the main input-code lookup table, fetched eagerly\nprivate final static int[] _icUTF8 = CharTypes.getInputCodeUtf8();\n\n// Latin1 encoding is not supported, but we do use 8-bit subset for\n// pre-processing task, to simplify first pass, keep it fast.\nprotected final static int[] _icLatin1 = CharTypes.getInputCodeLatin1();\n\n// White-space processing is done all the time, pre-fetch as well\nprivate final static int[] _icWS = CharTypes.getInputCodeWS();\n\n/*\n/**********************************************************\n/* Configuration\n/**********************************************************\n*/\n\n/**\n* Codec used for data binding when (if) requested; typically full\n* <code>ObjectMapper</code>, but that abstract is not part of core\n* package.\n*/\nprotected ObjectCodec _objectCodec;\n\n/**\n* Symbol table that contains field names encountered so far\n*/\nfinal protected BytesToNameCanonicalizer _symbols;\n\n/*\n/**********************************************************\n/* Parsing state\n/**********************************************************\n*/\n\n/**\n* Temporary buffer used for name parsing.\n*/\nprotected int[] _quadBuffer = new int[16];\n\n/**\n* Flag that indicates that the current token has not yet\n* been fully processed, and needs to be finished for\n* some access (or skipped to obtain the next token)\n*/\nprotected boolean _tokenIncomplete = false;\n\n/**\n* Temporary storage for partially parsed name bytes.\n*/\nprivate int _quad1;\n\n/*\n/**********************************************************\n/* Input buffering (from former 'StreamBasedParserBase')\n/**********************************************************\n*/\n\nprotected InputStream _inputStream;\n\n/*\n/**********************************************************\n/* Current input data\n/**********************************************************\n*/\n\n/**\n* Current buffer from which data is read; generally data is read into\n* buffer from input source, but in some cases pre-loaded buffer\n* is handed to the parser.\n*/\nprotected byte[] _inputBuffer;\n\n/**\n* Flag that indicates whether the input buffer is recycable (and\n* needs to be returned to recycler once we are done) or not.\n*<p>\n* If it is not, it also means that parser can NOT modify underlying\n* buffer.\n*/\nprotected boolean _bufferRecyclable;\n\n/*\n/**********************************************************\n/* Life-cycle\n/**********************************************************\n*/\n\npublic UTF8StreamJsonParser(IOContext ctxt, int features, InputStream in,\nObjectCodec codec, BytesToNameCanonicalizer sym,\nbyte[] inputBuffer, int start, int end,\nboolean bufferRecyclable)\n{\nsuper(ctxt, features);\n_inputStream = in;\n_objectCodec = codec;\n_symbols = sym;\n_inputBuffer = inputBuffer;\n_inputPtr = start;\n_inputEnd = end;\n// If we have offset, need to omit that from byte offset, so:\n_bufferRecyclable = bufferRecyclable;\n}",
+            "method_id": 3,
+            "loc": 104
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.json.ByteSourceJsonBootstrapper:detectEncoding()Lcom/fasterxml/jackson/core/JsonEncoding;",
+            "method_body": "public JsonEncoding detectEncoding()\nthrows IOException, JsonParseException\n{\nboolean foundEncoding = false;\n\n// First things first: BOM handling\n/* Note: we can require 4 bytes to be read, since no\n* combination of BOM + valid JSON content can have\n* shorter length (shortest valid JSON content is single\n* digit char, but BOMs are chosen such that combination\n* is always at least 4 chars long)\n*/\nif (ensureLoaded(4)) {\nint quad =  (_inputBuffer[_inputPtr] << 24)\n| ((_inputBuffer[_inputPtr+1] & 0xFF) << 16)\n| ((_inputBuffer[_inputPtr+2] & 0xFF) << 8)\n| (_inputBuffer[_inputPtr+3] & 0xFF);\n\nif (handleBOM(quad)) {\nfoundEncoding = true;\n} else {\n/* If no BOM, need to auto-detect based on first char;\n* this works since it must be 7-bit ascii (wrt. unicode\n* compatible encodings, only ones JSON can be transferred\n* over)\n*/\n// UTF-32?\nif (checkUTF32(quad)) {\nfoundEncoding = true;\n} else if (checkUTF16(quad >>> 16)) {\nfoundEncoding = true;\n}\n}\n} else if (ensureLoaded(2)) {\nint i16 = ((_inputBuffer[_inputPtr] & 0xFF) << 8)\n| (_inputBuffer[_inputPtr+1] & 0xFF);\nif (checkUTF16(i16)) {\nfoundEncoding = true;\n}\n}\n\nJsonEncoding enc;\n\n/* Not found yet? As per specs, this means it must be UTF-8. */\nif (!foundEncoding) {\nenc = JsonEncoding.UTF8;\n} else {\nswitch (_bytesPerChar) {\ncase 1:\nenc = JsonEncoding.UTF8;\nbreak;\ncase 2:\nenc = _bigEndian ? JsonEncoding.UTF16_BE : JsonEncoding.UTF16_LE;\nbreak;\ncase 4:\nenc = _bigEndian ? JsonEncoding.UTF32_BE : JsonEncoding.UTF32_LE;\nbreak;\ndefault:\nthrow new RuntimeException(\"Internal error\"); // should never get here\n}\n}\n_context.setEncoding(enc);\nreturn enc;\n}",
+            "method_id": 4,
+            "loc": 64
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.util.TextBuffer:<clinit>()V",
+            "method_body": "final static char[] NO_CHARS = new char[0];\n\n/**\n* Let's start with sizable but not huge buffer, will grow as necessary\n*/\nfinal static int MIN_SEGMENT_LEN = 1000;\n\n/**\n* Let's limit maximum segment length to something sensible\n* like 256k\n*/\nfinal static int MAX_SEGMENT_LEN = 0x40000;\n\n/*\n/**********************************************************\n/* Configuration:\n/**********************************************************\n*/\n\nprivate final BufferRecycler _allocator;\n\n/*\n/**********************************************************\n/* Shared input buffers\n/**********************************************************\n*/\n\n/**\n* Shared input buffer; stored here in case some input can be returned\n* as is, without being copied to collector's own buffers. Note that\n* this is read-only for this Object.\n*/\nprivate char[] _inputBuffer;\n\n/**\n* Character offset of first char in input buffer; -1 to indicate\n* that input buffer currently does not contain any useful char data\n*/\nprivate int _inputStart;\n\nprivate int _inputLen;\n\n/*\n/**********************************************************\n/* Aggregation segments (when not using input buf)\n/**********************************************************\n*/\n\n/**\n* List of segments prior to currently active segment.\n*/\nprivate ArrayList<char[]> _segments;\n\n/**\n* Flag that indicates whether _seqments is non-empty\n*/\nprivate boolean _hasSegments = false;\n\n// // // Currently used segment; not (yet) contained in _seqments\n\n/**\n* Amount of characters in segments in {@link _segments}",
+            "method_id": 5,
+            "loc": 62
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.CharsToNameCanonicalizer:<clinit>()V",
+            "method_body": "public final static int HASH_MULT = 33;\n\n/**\n* Default initial table size. Shouldn't be miniscule (as there's\n* cost to both array realloc and rehashing), but let's keep\n* it reasonably small nonetheless. For systems that properly\n* reuse factories it doesn't matter either way; but when\n* recreating factories often, initial overhead may dominate.\n*/\nprotected static final int DEFAULT_TABLE_SIZE = 64;\n\n/**\n* Let's not expand symbol tables past some maximum size;\n* this should protected against OOMEs caused by large documents\n* with uniquer (~= random) names.\n*/\nprotected static final int MAX_TABLE_SIZE = 0x10000; // 64k entries == 256k mem\n\n/**\n* Let's only share reasonably sized symbol tables. Max size set to 3/4 of 16k;\n* this corresponds to 64k main hash index. This should allow for enough distinct\n* names for almost any case.\n*/\nfinal static int MAX_ENTRIES_FOR_REUSE = 12000;\n\n/**\n* Also: to thwart attacks based on hash collisions (which may or may not\n* be cheap to calculate), we will need to detect \"too long\"\n* collision chains. Let's start with static value of 255 entries\n* for the longest legal chain.\n*<p>\n* Note: longest chain we have been able to produce without malicious\n* intent has been 38 (with \"com.fasterxml.jackson.core.main.TestWithTonsaSymbols\");\n* our setting should be reasonable here.\n*\n* @since 2.1\n*/\nfinal static int MAX_COLL_CHAIN_LENGTH = 255;\n\n/**\n* And to support reduce likelihood of accidental collisons causing\n* exceptions, let's prevent reuse of tables with long collision\n* overflow lists as well.\n*\n* @since 2.1\n*/\nfinal static int MAX_COLL_CHAIN_FOR_REUSE  = 63;\n\nfinal static CharsToNameCanonicalizer sBootstrapSymbolTable;\nstatic {\nsBootstrapSymbolTable = new CharsToNameCanonicalizer();\n}",
+            "method_id": 6,
+            "loc": 52
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.json.UTF8StreamJsonParser:_nextTokenNotInObject(I)Lcom/fasterxml/jackson/core/JsonToken;",
+            "method_body": "private final JsonToken _nextTokenNotInObject(int i)\nthrows IOException, JsonParseException\n{\nif (i == INT_QUOTE) {\n_tokenIncomplete = true;\nreturn (_currToken = JsonToken.VALUE_STRING);\n}\nswitch (i) {\ncase '[':\n_parsingContext = _parsingContext.createChildArrayContext(_tokenInputRow, _tokenInputCol);\nreturn (_currToken = JsonToken.START_ARRAY);\ncase '{':\n_parsingContext = _parsingContext.createChildObjectContext(_tokenInputRow, _tokenInputCol);\nreturn (_currToken = JsonToken.START_OBJECT);\ncase ']':\ncase '}':\n// Error: neither is valid at this point; valid closers have\n// been handled earlier\n_reportUnexpectedChar(i, \"expected a value\");\ncase 't':\n_matchToken(\"true\", 1);\nreturn (_currToken = JsonToken.VALUE_TRUE);\ncase 'f':\n_matchToken(\"false\", 1);\nreturn (_currToken = JsonToken.VALUE_FALSE);\ncase 'n':\n_matchToken(\"null\", 1);\nreturn (_currToken = JsonToken.VALUE_NULL);\ncase '-':\n/* Should we have separate handling for plus? Although\n* it is not allowed per se, it may be erroneously used,\n* and could be indicate by a more specific error message.\n*/\ncase '0':\ncase '1':\ncase '2':\ncase '3':\ncase '4':\ncase '5':\ncase '6':\ncase '7':\ncase '8':\ncase '9':\nreturn (_currToken = _parseNumber(i));\n}\nreturn (_currToken = _handleUnexpectedValue(i));\n}",
+            "method_id": 7,
+            "loc": 47
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.json.UTF8StreamJsonParser:nextToken()Lcom/fasterxml/jackson/core/JsonToken;",
+            "method_body": "public JsonToken nextToken()\nthrows IOException, JsonParseException\n{\n_numTypesValid = NR_UNKNOWN;\n/* First: field names are special -- we will always tokenize\n* (part of) value along with field name to simplify\n* state handling. If so, can and need to use secondary token:\n*/\nif (_currToken == JsonToken.FIELD_NAME) {\nreturn _nextAfterName();\n}\nif (_tokenIncomplete) {\n_skipString(); // only strings can be partial\n}\n\nint i = _skipWSOrEnd();\nif (i < 0) { // end-of-input\n/* 19-Feb-2009, tatu: Should actually close/release things\n*    like input source, symbol table and recyclable buffers now.\n*/\nclose();\nreturn (_currToken = null);\n}\n\n/* First, need to ensure we know the starting location of token\n* after skipping leading white space\n*/\n_tokenInputTotal = _currInputProcessed + _inputPtr - 1;\n_tokenInputRow = _currInputRow;\n_tokenInputCol = _inputPtr - _currInputRowStart - 1;\n\n// finally: clear any data retained so far\n_binaryValue = null;\n\n// Closing scope?\nif (i == INT_RBRACKET) {\nif (!_parsingContext.inArray()) {\n_reportMismatchedEndMarker(i, '}');\n}\n_parsingContext = _parsingContext.getParent();\nreturn (_currToken = JsonToken.END_ARRAY);\n}",
+            "method_id": 8,
+            "loc": 42
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.json.UTF8StreamJsonParser:_skipWSOrEnd()I",
+            "method_body": "private final int _skipWSOrEnd() throws IOException\n{\nfinal int[] codes = _icWS;\nwhile ((_inputPtr < _inputEnd) || loadMore()) {\nfinal int i = _inputBuffer[_inputPtr++] & 0xFF;\nswitch (codes[i]) {\ncase 0: // done!\nreturn i;\ncase 1: // skip\ncontinue;\ncase 2: // 2-byte UTF\n_skipUtf8_2(i);\nbreak;\ncase 3: // 3-byte UTF\n_skipUtf8_3(i);\nbreak;\ncase 4: // 4-byte UTF\n_skipUtf8_4(i);\nbreak;\ncase INT_LF:\n++_currInputRow;\n_currInputRowStart = _inputPtr;\nbreak;\ncase INT_CR:\n_skipCR();\nbreak;\ncase '/':\n_skipComment();\nbreak;\ncase '#':\nif (!_skipYAMLComment()) {\nreturn i;\n}\nbreak;\ndefault: // e.g. -1\n_reportInvalidChar(i);\n}\n}\n// We ran out of input...\n_handleEOF();\nreturn -1;\n}",
+            "method_id": 9,
+            "loc": 42
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonLocation:<clinit>()V",
+            "method_body": "private static final long serialVersionUID = 1L;\n\n/**\n* Shared immutable \"N/A location\" that can be returned to indicate\n* that no location information is available\n*/\npublic final static JsonLocation NA = new JsonLocation(\"N/A\", -1L, -1L, -1, -1);\n\nfinal long _totalBytes;\nfinal long _totalChars;\n\nfinal int _lineNr;\nfinal int _columnNr;\n\n/**\n* Displayable description for input source: file path, URL.\n*<p>\n* NOTE: <code>transient</code> since 2.2 so that Location itself is Serializable.\n*/\nfinal transient Object _sourceRef;\n\npublic JsonLocation(Object srcRef, long totalChars, int lineNr, int colNr)\n{\n/* Unfortunately, none of legal encodings are straight single-byte\n* encodings. Could determine offset for UTF-16/UTF-32, but the\n* most important one is UTF-8...\n* so for now, we'll just not report any real byte count\n*/\nthis(srcRef, -1L, totalChars, lineNr, colNr);\n}",
+            "method_id": 10,
+            "loc": 30
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonFactory:<clinit>()V",
+            "method_body": "public final static String FORMAT_NAME_JSON = \"JSON\";\n\n/**\n* Bitfield (set of flags) of all factory features that are enabled by default.\n*/\nprotected final static int DEFAULT_FACTORY_FEATURE_FLAGS = JsonFactory.Feature.collectDefaults();\n\n/**\n* Bitfield (set of flags) of all parser features that are enabled\n* by default.\n*/\nprotected final static int DEFAULT_PARSER_FEATURE_FLAGS = JsonParser.Feature.collectDefaults();\n\n/**\n* Bitfield (set of flags) of all generator features that are enabled\n* by default.\n*/\nprotected final static int DEFAULT_GENERATOR_FEATURE_FLAGS = JsonGenerator.Feature.collectDefaults();\n\nprivate final static SerializableString DEFAULT_ROOT_VALUE_SEPARATOR = DefaultPrettyPrinter.DEFAULT_ROOT_VALUE_SEPARATOR;\n\n/*\n/**********************************************************\n/* Buffer, symbol table management\n/**********************************************************\n*/\n\n/**\n* This <code>ThreadLocal</code> contains a {@link java.lang.ref.SoftReference}",
+            "method_id": 11,
+            "loc": 29
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.util.BufferRecycler$ByteBufferType:<clinit>()V",
+            "method_body": "public final static int DEFAULT_WRITE_CONCAT_BUFFER_LEN = 2000;\n\npublic enum ByteBufferType {\nREAD_IO_BUFFER(4000)\n/**\n* Buffer used for temporarily storing encoded content; used\n* for example by UTF-8 encoding writer\n*/\n,WRITE_ENCODING_BUFFER(4000)\n\n/**\n* Buffer used for temporarily concatenating output; used for\n* example when requesting output as byte array.\n*/\n,WRITE_CONCAT_BUFFER(2000)\n\n/**\n* Buffer used for concatenating binary data that is either being\n* encoded as base64 output, or decoded from base64 input.\n*\n* @since 2.1\n*/\n,BASE64_CODEC_BUFFER(2000)\n;\n\nprotected final int size;\n\nByteBufferType(int size) { this.size = size; }\n}",
+            "method_id": 12,
+            "loc": 29
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonToken:<init>(Ljava/lang/String;ILjava/lang/String;I)V",
+            "method_body": "JsonToken(String token, int id)\n{\nif (token == null) {\n_serialized = null;\n_serializedChars = null;\n_serializedBytes = null;\n} else {\n_serialized = token;\n_serializedChars = token.toCharArray();\n// It's all in ascii, can just case...\nint len = _serializedChars.length;\n_serializedBytes = new byte[len];\nfor (int i = 0; i < len; ++i) {\n_serializedBytes[i] = (byte) _serializedChars[i];\n}\n}\n_id = id;\n\n_isBoolean = (id == JsonTokenId.ID_FALSE || id == JsonTokenId.ID_TRUE);\n_isNumber = (id == JsonTokenId.ID_NUMBER_INT || id == JsonTokenId.ID_NUMBER_FLOAT);\n\n_isStructStart = (id == JsonTokenId.ID_START_OBJECT || id == JsonTokenId.ID_START_ARRAY);\n_isStructEnd = (id == JsonTokenId.ID_END_OBJECT || id == JsonTokenId.ID_END_ARRAY);\n\n_isScalar = !_isStructStart && !_isStructEnd\n&& (id != JsonTokenId.ID_FIELD_NAME)\n&& (id != JsonTokenId.ID_NOT_AVAILABLE);\n}",
+            "method_id": 13,
+            "loc": 28
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.util.DefaultPrettyPrinter:<clinit>()V",
+            "method_body": "private static final long serialVersionUID = -5512586643324525213L;\n\n/**\n* Constant that specifies default \"root-level\" separator to use between\n* root values: a single space character.\n*\n* @since 2.1\n*/\npublic final static SerializedString DEFAULT_ROOT_VALUE_SEPARATOR = new SerializedString(\" \");\n\n/**\n* Interface that defines objects that can produce indentation used\n* to separate object entries and array values. Indentation in this\n* context just means insertion of white space, independent of whether\n* linefeeds are output.\n*/\npublic interface Indenter\n{\nvoid writeIndentation(JsonGenerator jg, int level)\nthrows IOException, JsonGenerationException;\n\n/**\n* @return True if indenter is considered inline (does not add linefeeds),\n*   false otherwise\n*/\nboolean isInline();\n}",
+            "method_id": 14,
+            "loc": 27
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.BytesToNameCanonicalizer:<init>(Lcom/fasterxml/jackson/core/sym/BytesToNameCanonicalizer;ZILcom/fasterxml/jackson/core/sym/BytesToNameCanonicalizer$TableInfo;)V",
+            "method_body": "private BytesToNameCanonicalizer(BytesToNameCanonicalizer parent, boolean intern, int seed,\nTableInfo state)\n{\n_parent = parent;\n_hashSeed = seed;\n_intern = intern;\n_tableInfo = null; // not used by child tables\n\n// Then copy shared state\n_count = state.count;\n_mainHashMask = state.mainHashMask;\n_mainHash = state.mainHash;\n_mainNames = state.mainNames;\n_collList = state.collList;\n_collCount = state.collCount;\n_collEnd = state.collEnd;\n_longestCollisionList = state.longestCollisionList;\n\n// and then set other state to reflect sharing status\n_needRehash = false;\n_mainHashShared = true;\n_mainNamesShared = true;\n_collListShared = true;\n}",
+            "method_id": 15,
+            "loc": 24
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.CharsToNameCanonicalizer:<init>(Lcom/fasterxml/jackson/core/sym/CharsToNameCanonicalizer;ZZ[Ljava/lang/String;[Lcom/fasterxml/jackson/core/sym/CharsToNameCanonicalizer$Bucket;III)V",
+            "method_body": "private CharsToNameCanonicalizer(CharsToNameCanonicalizer parent,\nboolean canonicalize, boolean intern,\nString[] symbols, Bucket[] buckets, int size,\nint hashSeed, int longestColl)\n{\n_parent = parent;\n_canonicalize = canonicalize;\n_intern = intern;\n\n_symbols = symbols;\n_buckets = buckets;\n_size = size;\n_hashSeed = hashSeed;\n// Hard-coded fill factor, 75%\nint arrayLen = (symbols.length);\n_sizeThreshold = _thresholdSize(arrayLen);\n_indexMask =  (arrayLen - 1);\n_longestCollisionList = longestColl;\n\n// Need to make copies of arrays, if/when adding new entries\n_dirty = false;\n}",
+            "method_id": 16,
+            "loc": 22
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.BytesToNameCanonicalizer:<init>(IZI)V",
+            "method_body": "private BytesToNameCanonicalizer(int hashSize, boolean intern, int seed)\n{\n_parent = null;\n_hashSeed = seed;\n_intern = intern;\n// Sanity check: let's now allow hash sizes below certain minimum value\nif (hashSize < MIN_HASH_SIZE) {\nhashSize = MIN_HASH_SIZE;\n} else {\n/* Also; size must be 2^N; otherwise hash algorithm won't\n* work... so let's just pad it up, if so\n*/\nif ((hashSize & (hashSize - 1)) != 0) { // only true if it's 2^N\nint curr = MIN_HASH_SIZE;\nwhile (curr < hashSize) {\ncurr += curr;\n}\nhashSize = curr;\n}\n}\n_tableInfo = new AtomicReference<TableInfo>(initTableInfo(hashSize));\n}",
+            "method_id": 17,
+            "loc": 22
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.json.ByteSourceJsonBootstrapper:constructParser(ILcom/fasterxml/jackson/core/ObjectCodec;Lcom/fasterxml/jackson/core/sym/BytesToNameCanonicalizer;Lcom/fasterxml/jackson/core/sym/CharsToNameCanonicalizer;ZZ)Lcom/fasterxml/jackson/core/JsonParser;",
+            "method_body": "public JsonParser constructParser(int parserFeatures, ObjectCodec codec,\nBytesToNameCanonicalizer rootByteSymbols, CharsToNameCanonicalizer rootCharSymbols,\nboolean canonicalize, boolean intern)\nthrows IOException\n{\nJsonEncoding enc = detectEncoding();\n\nif (enc == JsonEncoding.UTF8) {\n/* and without canonicalization, byte-based approach is not performance; just use std UTF-8 reader\n* (which is ok for larger input; not so hot for smaller; but this is not a common case)\n*/\nif (canonicalize) {\nBytesToNameCanonicalizer can = rootByteSymbols.makeChild(canonicalize, intern);\nreturn new UTF8StreamJsonParser(_context, parserFeatures, _in, codec, can, _inputBuffer, _inputPtr, _inputEnd, _bufferRecyclable);\n}\n}\nreturn new ReaderBasedJsonParser(_context, parserFeatures, constructReader(), codec,\nrootCharSymbols.makeChild(canonicalize, intern));\n}",
+            "method_id": 18,
+            "loc": 19
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.json.UTF8StreamJsonParser:<init>(Lcom/fasterxml/jackson/core/io/IOContext;ILjava/io/InputStream;Lcom/fasterxml/jackson/core/ObjectCodec;Lcom/fasterxml/jackson/core/sym/BytesToNameCanonicalizer;[BIIZ)V",
+            "method_body": "public UTF8StreamJsonParser(IOContext ctxt, int features, InputStream in,\nObjectCodec codec, BytesToNameCanonicalizer sym,\nbyte[] inputBuffer, int start, int end,\nboolean bufferRecyclable)\n{\nsuper(ctxt, features);\n_inputStream = in;\n_objectCodec = codec;\n_symbols = sym;\n_inputBuffer = inputBuffer;\n_inputPtr = start;\n_inputEnd = end;\n// If we have offset, need to omit that from byte offset, so:\n_bufferRecyclable = bufferRecyclable;\n}",
+            "method_id": 19,
+            "loc": 15
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonFactory:createParser([BII)Lcom/fasterxml/jackson/core/JsonParser;",
+            "method_body": "public JsonParser createParser(byte[] data, int offset, int len)\nthrows IOException, JsonParseException\n{\nIOContext ctxt = _createContext(data, true);\n// [JACKSON-512]: allow wrapping with InputDecorator\nif (_inputDecorator != null) {\nInputStream in = _inputDecorator.decorate(ctxt, data, offset, len);\nif (in != null) {\nreturn _createParser(in, ctxt);\n}\n}\nreturn _createParser(data, offset, len, ctxt);\n}",
+            "method_id": 20,
+            "loc": 13
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.BytesToNameCanonicalizer:initTableInfo(I)Lcom/fasterxml/jackson/core/sym/BytesToNameCanonicalizer$TableInfo;",
+            "method_body": "private TableInfo initTableInfo(int hashSize)\n{\nreturn new TableInfo(0, // count\nhashSize - 1, // mainHashMask\nnew int[hashSize], // mainHash\nnew Name[hashSize], // mainNames\nnull, // collList\n0, // collCount,\n0, // collEnd\n0 // longestCollisionList\n);\n}",
+            "method_id": 21,
+            "loc": 12
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.BytesToNameCanonicalizer$TableInfo:<init>(II[I[Lcom/fasterxml/jackson/core/sym/Name;[Lcom/fasterxml/jackson/core/sym/BytesToNameCanonicalizer$Bucket;III)V",
+            "method_body": "public TableInfo(int count, int mainHashMask, int[] mainHash, Name[] mainNames,\nBucket[] collList, int collCount, int collEnd, int longestCollisionList)\n{\nthis.count = count;\nthis.mainHashMask = mainHashMask;\nthis.mainHash = mainHash;\nthis.mainNames = mainNames;\nthis.collList = collList;\nthis.collCount = collCount;\nthis.collEnd = collEnd;\nthis.longestCollisionList = longestCollisionList;\n}",
+            "method_id": 22,
+            "loc": 12
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.json.JsonReadContext:createChildObjectContext(II)Lcom/fasterxml/jackson/core/json/JsonReadContext;",
+            "method_body": "public JsonReadContext createChildObjectContext(int lineNr, int colNr)\n{\nJsonReadContext ctxt = _child;\nif (ctxt == null) {\n_child = ctxt = new JsonReadContext(this,\n(_dups == null) ? null : _dups.child(),\nTYPE_OBJECT, lineNr, colNr);\nreturn ctxt;\n}\nctxt.reset(TYPE_OBJECT, lineNr, colNr);\nreturn ctxt;\n}",
+            "method_id": 23,
+            "loc": 12
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonFactory:_getBufferRecycler()Lcom/fasterxml/jackson/core/util/BufferRecycler;",
+            "method_body": "public BufferRecycler _getBufferRecycler()\n{\nSoftReference<BufferRecycler> ref = _recyclerRef.get();\nBufferRecycler br = (ref == null) ? null : ref.get();\n\nif (br == null) {\nbr = new BufferRecycler();\n_recyclerRef.set(new SoftReference<BufferRecycler>(br));\n}\nreturn br;\n}",
+            "method_id": 24,
+            "loc": 11
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.CharsToNameCanonicalizer:<init>()V",
+            "method_body": "private CharsToNameCanonicalizer()\n{\n// these settings don't really matter for the bootstrap instance\n_canonicalize = true;\n_intern = true;\n// And we'll also set flags so no copying of buckets is needed:\n_dirty = true;\n_hashSeed = 0;\n_longestCollisionList = 0;\ninitTables(DEFAULT_TABLE_SIZE);\n}",
+            "method_id": 25,
+            "loc": 11
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.CharsToNameCanonicalizer:initTables(I)V",
+            "method_body": "private void initTables(int initialSize)\n{\n_symbols = new String[initialSize];\n_buckets = new Bucket[initialSize >> 1];\n// Mask is easy to calc for powers of two.\n_indexMask = initialSize - 1;\n_size = 0;\n_longestCollisionList = 0;\n// Hard-coded fill factor is 75%\n_sizeThreshold = _thresholdSize(initialSize);\n}",
+            "method_id": 26,
+            "loc": 11
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.base.ParserBase:<init>(Lcom/fasterxml/jackson/core/io/IOContext;I)V",
+            "method_body": "protected ParserBase(IOContext ctxt, int features)\n{\nsuper();\n_features = features;\n_ioContext = ctxt;\n_textBuffer = ctxt.constructTextBuffer();\nDupDetector dups = Feature.STRICT_DUPLICATE_DETECTION.enabledIn(features)\n? DupDetector.rootDetector(this) : null;\nJsonReadContext readCtxt = JsonReadContext.createRootContext(dups);\n_parsingContext = readCtxt;\n}",
+            "method_id": 27,
+            "loc": 11
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.json.JsonReadContext:<init>(Lcom/fasterxml/jackson/core/json/JsonReadContext;Lcom/fasterxml/jackson/core/json/DupDetector;III)V",
+            "method_body": "public JsonReadContext(JsonReadContext parent, DupDetector dups,\nint type, int lineNr, int colNr)\n{\nsuper();\n_parent = parent;\n_dups = dups;\n_type = type;\n_lineNr = lineNr;\n_columnNr = colNr;\n_index = -1;\n}",
+            "method_id": 28,
+            "loc": 11
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.json.ByteSourceJsonBootstrapper:<init>(Lcom/fasterxml/jackson/core/io/IOContext;[BII)V",
+            "method_body": "public ByteSourceJsonBootstrapper(IOContext ctxt, byte[] inputBuffer, int inputStart, int inputLen)\n{\n_context = ctxt;\n_in = null;\n_inputBuffer = inputBuffer;\n_inputPtr = inputStart;\n_inputEnd = (inputStart + inputLen);\n// Need to offset this for correct location info\n_inputProcessed = -inputStart;\n_bufferRecyclable = false;\n}",
+            "method_id": 29,
+            "loc": 11
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.CharsToNameCanonicalizer:createRoot()Lcom/fasterxml/jackson/core/sym/CharsToNameCanonicalizer;",
+            "method_body": "public static CharsToNameCanonicalizer createRoot()\n{\n/* [Issue-21]: Need to use a variable seed, to thwart hash-collision\n* based attacks.\n*/\nlong now = System.currentTimeMillis();\n// ensure it's not 0; and might as well require to be odd so:\nint seed = (((int) now) + ((int) (now >>> 32))) | 1;\nreturn createRoot(seed);\n}",
+            "method_id": 30,
+            "loc": 10
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.BytesToNameCanonicalizer:createRoot()Lcom/fasterxml/jackson/core/sym/BytesToNameCanonicalizer;",
+            "method_body": "public static BytesToNameCanonicalizer createRoot()\n{\n/* [Issue-21]: Need to use a variable seed, to thwart hash-collision\n* based attacks.\n*/\nlong now = System.currentTimeMillis();\n// ensure it's not 0; and might as well require to be odd so:\nint seed = (((int) now) + ((int) (now >>> 32))) | 1;\nreturn createRoot(seed);\n}",
+            "method_id": 31,
+            "loc": 10
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonFactory$Feature:collectDefaults()I",
+            "method_body": "public static int collectDefaults()\n{\nint flags = 0;\nfor (Feature f : values()) {\nif (f.enabledByDefault()) {\nflags |= f.getMask();\n}\n}\nreturn flags;\n}",
+            "method_id": 32,
+            "loc": 10
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonParser$Feature:collectDefaults()I",
+            "method_body": "public static int collectDefaults()\n{\nint flags = 0;\nfor (Feature f : values()) {\nif (f.enabledByDefault()) {\nflags |= f.getMask();\n}\n}\nreturn flags;\n}",
+            "method_id": 33,
+            "loc": 10
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonGenerator$Feature:collectDefaults()I",
+            "method_body": "public static int collectDefaults()\n{\nint flags = 0;\nfor (Feature f : values()) {\nif (f.enabledByDefault()) {\nflags |= f.getMask();\n}\n}\nreturn flags;\n}",
+            "method_id": 34,
+            "loc": 10
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.io.CharTypes:<clinit>()V",
+            "method_body": "private final static char[] HEX_CHARS = \"0123456789ABCDEF\".toCharArray();\nprivate final static byte[] HEX_BYTES;\nstatic {\nint len = HEX_CHARS.length;\nHEX_BYTES = new byte[len];\nfor (int i = 0; i < len; ++i) {\nHEX_BYTES[i] = (byte) HEX_CHARS[i];\n}\n}",
+            "method_id": 35,
+            "loc": 9
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.json.JsonReadContext:expectComma()Z",
+            "method_body": "public boolean expectComma()\n{\n/* Assumption here is that we will be getting a value (at least\n* before calling this method again), and\n* so will auto-increment index to avoid having to do another call\n*/\nint ix = ++_index; // starts from -1\nreturn (_type != TYPE_ROOT && ix > 0);\n}",
+            "method_id": 36,
+            "loc": 9
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonLocation:<init>(Ljava/lang/Object;JJII)V",
+            "method_body": "public JsonLocation(Object sourceRef, long totalBytes, long totalChars,\nint lineNr, int columnNr)\n{\n_sourceRef = sourceRef;\n_totalBytes = totalBytes;\n_totalChars = totalChars;\n_lineNr = lineNr;\n_columnNr = columnNr;\n}",
+            "method_id": 37,
+            "loc": 9
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonFactory:<init>(Lcom/fasterxml/jackson/core/JsonFactory;Lcom/fasterxml/jackson/core/ObjectCodec;)V",
+            "method_body": "final protected static ThreadLocal<SoftReference<BufferRecycler>> _recyclerRef\nprotected final transient CharsToNameCanonicalizer _rootCharSymbols = CharsToNameCanonicalizer.createRoot();\nprotected final transient BytesToNameCanonicalizer _rootByteSymbols = BytesToNameCanonicalizer.createRoot();\nprotected int _factoryFeatures = DEFAULT_FACTORY_FEATURE_FLAGS;\nprotected int _parserFeatures = DEFAULT_PARSER_FEATURE_FLAGS;\nprotected int _generatorFeatures = DEFAULT_GENERATOR_FEATURE_FLAGS;\nprotected SerializableString _rootValueSeparator = DEFAULT_ROOT_VALUE_SEPARATOR;\npublic JsonFactory() { this((ObjectCodec) null); }",
+            "method_id": 38,
+            "loc": 8
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonFactory:_createParser([BIILcom/fasterxml/jackson/core/io/IOContext;)Lcom/fasterxml/jackson/core/JsonParser;",
+            "method_body": "protected JsonParser _createParser(byte[] data, int offset, int len, IOContext ctxt)\nthrows IOException, JsonParseException\n{\nreturn new ByteSourceJsonBootstrapper(ctxt, data, offset, len).constructParser(_parserFeatures,\n_objectCodec, _rootByteSymbols, _rootCharSymbols,\nisEnabled(JsonFactory.Feature.CANONICALIZE_FIELD_NAMES),\nisEnabled(JsonFactory.Feature.INTERN_FIELD_NAMES));\n}",
+            "method_id": 39,
+            "loc": 8
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.json.UTF8StreamJsonParser:getTokenLocation()Lcom/fasterxml/jackson/core/JsonLocation;",
+            "method_body": "public JsonLocation getTokenLocation()\n{\nreturn new JsonLocation(_ioContext.getSourceReference(),\ngetTokenCharacterOffset(), -1L, // bytes, chars\ngetTokenLineNr(),\ngetTokenColumnNr());\n}",
+            "method_id": 40,
+            "loc": 7
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.io.SerializedString:<init>(Ljava/lang/String;)V",
+            "method_body": "public SerializedString(String v) {\nif (v == null) {\nthrow new IllegalStateException(\"Null String illegal for SerializedString\");\n}\n_value = v;\n}",
+            "method_id": 41,
+            "loc": 6
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.io.IOContext:<init>(Lcom/fasterxml/jackson/core/util/BufferRecycler;Ljava/lang/Object;Z)V",
+            "method_body": "public IOContext(BufferRecycler br, Object sourceRef, boolean managedResource)\n{\n_bufferRecycler = br;\n_sourceRef = sourceRef;\n_managedResource = managedResource;\n}",
+            "method_id": 42,
+            "loc": 6
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonEncoding:<init>(Ljava/lang/String;ILjava/lang/String;ZI)V",
+            "method_body": "JsonEncoding(String javaName, boolean bigEndian, int bits)\n{\n_javaName = javaName;\n_bigEndian = bigEndian;\n_bits = bits;\n}",
+            "method_id": 43,
+            "loc": 6
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.CharsToNameCanonicalizer:makeOrphan(I)Lcom/fasterxml/jackson/core/sym/CharsToNameCanonicalizer;",
+            "method_body": "private CharsToNameCanonicalizer makeOrphan(int seed)\n{\nreturn new CharsToNameCanonicalizer(null, true, true,\n_symbols, _buckets, _size, seed, _longestCollisionList);\n}",
+            "method_id": 44,
+            "loc": 5
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.BytesToNameCanonicalizer:makeChild(ZZ)Lcom/fasterxml/jackson/core/sym/BytesToNameCanonicalizer;",
+            "method_body": "public BytesToNameCanonicalizer makeChild(boolean canonicalize,\nboolean intern)\n{\nreturn new BytesToNameCanonicalizer(this, intern, _hashSeed, _tableInfo.get());\n}",
+            "method_id": 45,
+            "loc": 5
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.base.ParserBase:getTokenColumnNr()I",
+            "method_body": "public int getTokenColumnNr() {\n// note: value of -1 means \"not available\"; otherwise convert from 0-based to 1-based\nint col = _tokenInputCol;\nreturn (col < 0) ? col : (col + 1);\n}",
+            "method_id": 46,
+            "loc": 5
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonFactory:_createContext(Ljava/lang/Object;Z)Lcom/fasterxml/jackson/core/io/IOContext;",
+            "method_body": "protected IOContext _createContext(Object srcRef, boolean resourceManaged)\n{\nreturn new IOContext(_getBufferRecycler(), srcRef, resourceManaged);\n}",
+            "method_id": 47,
+            "loc": 4
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonFactory$Feature:<init>(Ljava/lang/String;IZ)V",
+            "method_body": "private Feature(boolean defaultState)\n{\n_defaultState = defaultState;\n}",
+            "method_id": 48,
+            "loc": 4
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonParser$Feature:<init>(Ljava/lang/String;IZ)V",
+            "method_body": "private Feature(boolean defaultState) {\n_mask = (1 << ordinal());\n_defaultState = defaultState;\n}",
+            "method_id": 49,
+            "loc": 4
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonGenerator$Feature:<init>(Ljava/lang/String;IZ)V",
+            "method_body": "private Feature(boolean defaultState) {\n_mask = (1 << ordinal());\n_defaultState = defaultState;\n}",
+            "method_id": 50,
+            "loc": 4
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.util.TextBuffer:<init>(Lcom/fasterxml/jackson/core/util/BufferRecycler;)V",
+            "method_body": "public TextBuffer(BufferRecycler allocator)\n{\n_allocator = allocator;\n}",
+            "method_id": 51,
+            "loc": 4
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonLocation:getByteOffset()J",
+            "method_body": "public long getByteOffset()\n{\nreturn _totalBytes;\n}",
+            "method_id": 52,
+            "loc": 4
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.CharsToNameCanonicalizer:createRoot(I)Lcom/fasterxml/jackson/core/sym/CharsToNameCanonicalizer;",
+            "method_body": "protected static CharsToNameCanonicalizer createRoot(int hashSeed) {\nreturn sBootstrapSymbolTable.makeOrphan(hashSeed);\n}",
+            "method_id": 53,
+            "loc": 3
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.BytesToNameCanonicalizer:createRoot(I)Lcom/fasterxml/jackson/core/sym/BytesToNameCanonicalizer;",
+            "method_body": "protected static BytesToNameCanonicalizer createRoot(int hashSeed) {\nreturn new BytesToNameCanonicalizer(DEFAULT_TABLE_SIZE, true, hashSeed);\n}",
+            "method_id": 54,
+            "loc": 3
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonFactory:isEnabled(Lcom/fasterxml/jackson/core/JsonFactory$Feature;)Z",
+            "method_body": "public final boolean isEnabled(JsonFactory.Feature f) {\nreturn (_factoryFeatures & f.getMask()) != 0;\n}",
+            "method_id": 55,
+            "loc": 3
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.CharsToNameCanonicalizer:_thresholdSize(I)I",
+            "method_body": "private static int _thresholdSize(int hashAreaSize) {\nreturn hashAreaSize - (hashAreaSize >> 2);\n}",
+            "method_id": 56,
+            "loc": 3
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.io.IOContext:setEncoding(Lcom/fasterxml/jackson/core/JsonEncoding;)V",
+            "method_body": "public void setEncoding(JsonEncoding enc) {\n_encoding = enc;\n}",
+            "method_id": 57,
+            "loc": 3
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.io.IOContext:constructTextBuffer()Lcom/fasterxml/jackson/core/util/TextBuffer;",
+            "method_body": "public TextBuffer constructTextBuffer() {\nreturn new TextBuffer(_bufferRecycler);\n}",
+            "method_id": 58,
+            "loc": 3
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.json.JsonReadContext:createRootContext(Lcom/fasterxml/jackson/core/json/DupDetector;)Lcom/fasterxml/jackson/core/json/JsonReadContext;",
+            "method_body": "public static JsonReadContext createRootContext(DupDetector dups) {\nreturn new JsonReadContext(null, dups, TYPE_ROOT, 1, 0);\n}",
+            "method_id": 59,
+            "loc": 3
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonFactory:<init>()V",
+            "method_body": "public JsonFactory() { this((ObjectCodec) null); }\npublic JsonFactory() { this((ObjectCodec) null); }",
+            "method_id": 60,
+            "loc": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.util.BufferRecycler:<init>()V",
+            "method_body": "public BufferRecycler() { }\npublic BufferRecycler() { }",
+            "method_id": 61,
+            "loc": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonFactory$Feature:getMask()I",
+            "method_body": "public int getMask() { return (1 << ordinal()); }\npublic int getMask() { return (1 << ordinal()); }",
+            "method_id": 62,
+            "loc": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonFactory:<init>(Lcom/fasterxml/jackson/core/ObjectCodec;)V",
+            "method_body": "public JsonFactory(ObjectCodec oc) { _objectCodec = oc; }\npublic JsonFactory(ObjectCodec oc) { _objectCodec = oc; }",
+            "method_id": 63,
+            "loc": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonFactory$Feature:enabledByDefault()Z",
+            "method_body": "public boolean enabledByDefault() { return _defaultState; }\npublic boolean enabledByDefault() { return _defaultState; }",
+            "method_id": 64,
+            "loc": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonParser$Feature:enabledByDefault()Z",
+            "method_body": "public boolean enabledByDefault() { return _defaultState; }\npublic boolean enabledByDefault() { return _defaultState; }",
+            "method_id": 65,
+            "loc": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonParser$Feature:enabledIn(I)Z",
+            "method_body": "public boolean enabledIn(int flags) { return (flags & _mask) != 0; }\npublic boolean enabledIn(int flags) { return (flags & _mask) != 0; }",
+            "method_id": 66,
+            "loc": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonParser$Feature:getMask()I",
+            "method_body": "public int getMask() { return (1 << ordinal()); }\npublic int getMask() { return (1 << ordinal()); }",
+            "method_id": 67,
+            "loc": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonGenerator$Feature:enabledByDefault()Z",
+            "method_body": "public boolean enabledByDefault() { return _defaultState; }\npublic boolean enabledByDefault() { return _defaultState; }",
+            "method_id": 68,
+            "loc": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonGenerator$Feature:getMask()I",
+            "method_body": "public int getMask() { return _mask; }\npublic int getMask() { return _mask; }",
+            "method_id": 69,
+            "loc": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.io.IOContext:getSourceReference()Ljava/lang/Object;",
+            "method_body": "public Object getSourceReference() { return _sourceRef; }\npublic Object getSourceReference() { return _sourceRef; }",
+            "method_id": 70,
+            "loc": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.util.BufferRecycler$ByteBufferType:<init>(Ljava/lang/String;II)V",
+            "method_body": "ByteBufferType(int size) { this.size = size; }\nByteBufferType(int size) { this.size = size; }",
+            "method_id": 71,
+            "loc": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.util.BufferRecycler$CharBufferType:<init>(Ljava/lang/String;II)V",
+            "method_body": "CharBufferType(int size) { this.size = size; }\nCharBufferType(int size) { this.size = size; }",
+            "method_id": 72,
+            "loc": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.io.CharTypes:getInputCodeLatin1()[I",
+            "method_body": "public static int[] getInputCodeLatin1() { return sInputCodes; }\npublic static int[] getInputCodeLatin1() { return sInputCodes; }",
+            "method_id": 73,
+            "loc": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.io.CharTypes:getInputCodeUtf8()[I",
+            "method_body": "public static int[] getInputCodeUtf8() { return sInputCodesUTF8; }\npublic static int[] getInputCodeUtf8() { return sInputCodesUTF8; }",
+            "method_id": 74,
+            "loc": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.io.CharTypes:getInputCodeWS()[I",
+            "method_body": "public static int[] getInputCodeWS() { return sInputCodesWS; }\npublic static int[] getInputCodeWS() { return sInputCodesWS; }",
+            "method_id": 75,
+            "loc": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonStreamContext:<init>()V",
+            "method_body": "protected JsonStreamContext() { }\nprotected JsonStreamContext() { }",
+            "method_id": 76,
+            "loc": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonStreamContext:inObject()Z",
+            "method_body": "public final boolean inObject() { return _type == TYPE_OBJECT; }\npublic final boolean inObject() { return _type == TYPE_OBJECT; }",
+            "method_id": 77,
+            "loc": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonParser:<init>()V",
+            "method_body": "protected JsonParser() { }\nprotected JsonParser() { }",
+            "method_id": 78,
+            "loc": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.base.ParserMinimalBase:<init>()V",
+            "method_body": "protected ParserMinimalBase() { }\nprotected ParserMinimalBase() { }",
+            "method_id": 79,
+            "loc": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.base.ParserBase:getTokenCharacterOffset()J",
+            "method_body": "public long getTokenCharacterOffset() { return _tokenInputTotal; }\npublic long getTokenCharacterOffset() { return _tokenInputTotal; }",
+            "method_id": 80,
+            "loc": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.base.ParserBase:getTokenLineNr()I",
+            "method_body": "public int getTokenLineNr() { return _tokenInputRow; }\npublic int getTokenLineNr() { return _tokenInputRow; }",
+            "method_id": 81,
+            "loc": 2
+        }
+    ]
+}

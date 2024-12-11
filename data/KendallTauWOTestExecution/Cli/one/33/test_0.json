@@ -1,0 +1,79 @@
+{
+    "bug_id": 33,
+    "test_id": 0,
+    "test_name": "org.apache.commons.cli.HelpFormatterTest.testIndentedHeaderAndFooter",
+    "test_body": "public void testIndentedHeaderAndFooter()\n{\n// related to CLI-207\nOptions options = new Options();\nHelpFormatter formatter = new HelpFormatter();\nString header = \"  Header1\\n  Header2\";\nString footer = \"  Footer1\\n  Footer2\";\nStringWriter out = new StringWriter();\nformatter.printHelp(new PrintWriter(out), 80, \"foobar\", header, options, 2, 2, footer, true);\nassertEquals(\n\"usage: foobar\" + EOL +\n\"  Header1\" + EOL +\n\"  Header2\" + EOL +\n\"\" + EOL +\n\"  Footer1\" + EOL +\n\"  Footer2\" + EOL\n, out.toString());\n}\n",
+    "stack_trace": "junit.framework.ComparisonFailure: expected:<...e: foobar\nHeader1\n[  Header2\n\nFooter1\n]Footer2\n> but was:<...e: foobar\nHeader1\n[Header2\n\nFooter1\n]Footer2\n>\nat junit.framework.Assert.assertEquals(Assert.java:100)\nat junit.framework.Assert.assertEquals(Assert.java:107)\nat junit.framework.TestCase.assertEquals(TestCase.java:269)\nat org.apache.commons.cli.HelpFormatterTest.testIndentedHeaderAndFooter(HelpFormatterTest.java:441)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.cli.HelpFormatter:<init>()V",
+            "method_body": "public static final int DEFAULT_WIDTH = 74;\npublic int defaultWidth = DEFAULT_WIDTH;\npublic int defaultLeftPad = DEFAULT_LEFT_PAD;\npublic int defaultDescPad = DEFAULT_DESC_PAD;\npublic String defaultSyntaxPrefix = DEFAULT_SYNTAX_PREFIX;\npublic String defaultNewLine = System.getProperty(\"line.separator\");\npublic String defaultOptPrefix = DEFAULT_OPT_PREFIX;\npublic String defaultLongOptPrefix = DEFAULT_LONG_OPT_PREFIX;\nprivate String longOptSeparator = DEFAULT_LONG_OPT_SEPARATOR;\npublic String defaultArgName = DEFAULT_ARG_NAME;\nprotected Comparator optionComparator = new OptionComparator();\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.cli.HelpFormatter:printWrapped(Ljava/io/PrintWriter;IILjava/lang/String;)V",
+            "method_body": "public void printWrapped(PrintWriter pw, int width, int nextLineTabStop, String text)\n{\nStringBuffer sb = new StringBuffer(text.length());\n\nrenderWrappedText(sb, width, nextLineTabStop, text);\npw.println(sb.toString());\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.cli.Options:getOptions()Ljava/util/Collection;",
+            "method_body": "public Collection getOptions()\n{\nreturn Collections.unmodifiableCollection(helpOptions());\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.cli.Options:helpOptions()Ljava/util/List;",
+            "method_body": "List helpOptions()\n{\nreturn new ArrayList(shortOpts.values());\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.cli.HelpFormatter:findWrapPos(Ljava/lang/String;II)I",
+            "method_body": "protected int findWrapPos(String text, int width, int startPos)\n{\nint pos;\n\n// the line ends before the max wrap pos or a new line char found\nif (((pos = text.indexOf('\\n', startPos)) != -1 && pos <= width)\n|| ((pos = text.indexOf('\\t', startPos)) != -1 && pos <= width))\n{\nreturn pos + 1;\n}\nelse if (startPos + width >= text.length())\n{\nreturn -1;\n}\n\n\n// look for the last whitespace character before startPos+width\npos = startPos + width;\n\nchar c;\n\nwhile ((pos >= startPos) && ((c = text.charAt(pos)) != ' ')\n&& (c != '\\n') && (c != '\\r'))\n{\n--pos;\n}\n\n// if we found it - just return\nif (pos > startPos)\n{\nreturn pos;\n}\n\n// if we didn't find one, simply chop at startPos+width\npos = startPos + width;\n\nreturn pos == text.length() ? -1 : pos;\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.cli.HelpFormatter:rtrim(Ljava/lang/String;)Ljava/lang/String;",
+            "method_body": "protected String rtrim(String s)\n{\nif ((s == null) || (s.length() == 0))\n{\nreturn s;\n}\n\nint pos = s.length();\n\nwhile ((pos > 0) && Character.isWhitespace(s.charAt(pos - 1)))\n{\n--pos;\n}\n\nreturn s.substring(0, pos);\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.cli.HelpFormatter:createPadding(I)Ljava/lang/String;",
+            "method_body": "protected String createPadding(int len)\n{\nchar[] padding = new char[len];\nArrays.fill(padding, ' ');\n\nreturn new String(padding);\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.cli.HelpFormatter:getOptionComparator()Ljava/util/Comparator;",
+            "method_body": "public Comparator getOptionComparator()\n{\nreturn optionComparator;\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.cli.HelpFormatter:printHelp(Ljava/io/PrintWriter;ILjava/lang/String;Ljava/lang/String;Lorg/apache/commons/cli/Options;IILjava/lang/String;Z)V",
+            "method_body": "public void printHelp(PrintWriter pw, int width, String cmdLineSyntax,\nString header, Options options, int leftPad,\nint descPad, String footer, boolean autoUsage)\n{\nif ((cmdLineSyntax == null) || (cmdLineSyntax.length() == 0))\n{\nthrow new IllegalArgumentException(\"cmdLineSyntax not provided\");\n}\n\nif (autoUsage)\n{\nprintUsage(pw, width, cmdLineSyntax, options);\n}\nelse\n{\nprintUsage(pw, width, cmdLineSyntax);\n}\n\nif ((header != null) && (header.trim().length() > 0))\n{\nprintWrapped(pw, width, header);\n}\n\nprintOptions(pw, width, options, leftPad, descPad);\n\nif ((footer != null) && (footer.trim().length() > 0))\n{\nprintWrapped(pw, width, footer);\n}\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.cli.HelpFormatter:printUsage(Ljava/io/PrintWriter;ILjava/lang/String;Lorg/apache/commons/cli/Options;)V",
+            "method_body": "public void printUsage(PrintWriter pw, int width, String app, Options options)\n{\n// initialise the string buffer\nStringBuffer buff = new StringBuffer(defaultSyntaxPrefix).append(app).append(\" \");\n\n// create a list for processed option groups\nfinal Collection processedGroups = new ArrayList();\n\n// temp variable\nOption option;\n\nList optList = new ArrayList(options.getOptions());\nCollections.sort(optList, getOptionComparator());\n// iterate over the options\nfor (Iterator i = optList.iterator(); i.hasNext();)\n{\n// get the next Option\noption = (Option) i.next();\n\n// check if the option is part of an OptionGroup\nOptionGroup group = options.getOptionGroup(option);\n\n// if the option is part of a group\nif (group != null)\n{\n// and if the group has not already been processed\nif (!processedGroups.contains(group))\n{\n// add the group to the processed list\nprocessedGroups.add(group);\n\n\n// add the usage clause\nappendOptionGroup(buff, group);\n}\n\n// otherwise the option was displayed in the group\n// previously so ignore it.\n}\n\n// if the Option is not part of an OptionGroup\nelse\n{\nappendOption(buff, option, option.isRequired());\n}\n\nif (i.hasNext())\n{\nbuff.append(\" \");\n}\n}\n\n\n// call printWrapped\nprintWrapped(pw, width, buff.toString().indexOf(' ') + 1, buff.toString());\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.cli.HelpFormatter:printOptions(Ljava/io/PrintWriter;ILorg/apache/commons/cli/Options;II)V",
+            "method_body": "public void printOptions(PrintWriter pw, int width, Options options,\nint leftPad, int descPad)\n{\nStringBuffer sb = new StringBuffer();\n\nrenderOptions(sb, width, options, leftPad, descPad);\npw.println(sb.toString());\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.apache.commons.cli.HelpFormatter:printWrapped(Ljava/io/PrintWriter;ILjava/lang/String;)V",
+            "method_body": "public void printWrapped(PrintWriter pw, int width, String text)\n{\nprintWrapped(pw, width, 0, text);\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.apache.commons.cli.HelpFormatter:renderOptions(Ljava/lang/StringBuffer;ILorg/apache/commons/cli/Options;II)Ljava/lang/StringBuffer;",
+            "method_body": "protected StringBuffer renderOptions(StringBuffer sb, int width, Options options, int leftPad, int descPad)\n{\nfinal String lpad = createPadding(leftPad);\nfinal String dpad = createPadding(descPad);\n\n// first create list containing only <lpad>-a,--aaa where\n// -a is opt and --aaa is long opt; in parallel look for\n// the longest opt string this list will be then used to\n// sort options ascending\nint max = 0;\nStringBuffer optBuf;\nList prefixList = new ArrayList();\n\nList optList = options.helpOptions();\n\nCollections.sort(optList, getOptionComparator());\n\nfor (Iterator i = optList.iterator(); i.hasNext();)\n{\nOption option = (Option) i.next();\noptBuf = new StringBuffer();\n\nif (option.getOpt() == null)\n{\noptBuf.append(lpad).append(\"   \" + defaultLongOptPrefix).append(option.getLongOpt());\n}\nelse\n{\noptBuf.append(lpad).append(defaultOptPrefix).append(option.getOpt());\n\nif (option.hasLongOpt())\n{\noptBuf.append(',').append(defaultLongOptPrefix).append(option.getLongOpt());\n}\n}\n\nif (option.hasArg())\n{\nString argName = option.getArgName();\nif (argName != null && argName.length() == 0)\n{\n// if the option has a blank argname\noptBuf.append(' ');\n}\nelse\n{\noptBuf.append(option.hasLongOpt() ? longOptSeparator : \" \");\noptBuf.append(\"<\").append(argName != null ? option.getArgName() : getArgName()).append(\">\");\n}\n}\n\nprefixList.add(optBuf);\nmax = (optBuf.length() > max) ? optBuf.length() : max;\n}\n\nint x = 0;\n\nfor (Iterator i = optList.iterator(); i.hasNext();)\n{\nOption option = (Option) i.next();\noptBuf = new StringBuffer(prefixList.get(x++).toString());\n\nif (optBuf.length() < max)\n{\noptBuf.append(createPadding(max - optBuf.length()));\n}\n\noptBuf.append(dpad);\n\nint nextLineTabStop = max + descPad;\n\nif (option.getDescription() != null)\n{\noptBuf.append(option.getDescription());\n}\n\nrenderWrappedText(sb, width, nextLineTabStop, optBuf.toString());\n\nif (i.hasNext())\n{\nsb.append(defaultNewLine);\n}\n}\n\nreturn sb;\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.apache.commons.cli.HelpFormatter:renderWrappedText(Ljava/lang/StringBuffer;IILjava/lang/String;)Ljava/lang/StringBuffer;",
+            "method_body": "protected StringBuffer renderWrappedText(StringBuffer sb, int width,\nint nextLineTabStop, String text)\n{\nint pos = findWrapPos(text, width, 0);\n\nif (pos == -1)\n{\nsb.append(rtrim(text));\n\nreturn sb;\n}\nsb.append(rtrim(text.substring(0, pos))).append(defaultNewLine);\n\nif (nextLineTabStop >= width)\n{\n// stops infinite loop happening\nnextLineTabStop = 1;\n}\n\n// all following lines must be padded with nextLineTabStop space characters\nfinal String padding = createPadding(nextLineTabStop);\n\nwhile (true)\n{\ntext = padding + text.substring(pos).trim();\npos = findWrapPos(text, width, 0);\n\nif (pos == -1)\n{\nsb.append(text);\n\nreturn sb;\n}\n\nif ((text.length() > width) && (pos == nextLineTabStop - 1))\n{\npos = width;\n}\n\nsb.append(rtrim(text.substring(0, pos))).append(defaultNewLine);\n}\n}",
+            "method_id": 13
+        }
+    ]
+}

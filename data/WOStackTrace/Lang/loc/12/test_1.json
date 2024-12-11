@@ -1,0 +1,15 @@
+{
+    "bug_id": 12,
+    "test_id": 1,
+    "test_name": "org.apache.commons.lang3.RandomStringUtilsTest.testLANG805",
+    "test_body": "public void testLANG805() {\nlong seed = System.currentTimeMillis();\nassertEquals(\"aaa\", RandomStringUtils.random(3,0,0,false,false,new char[]{'a'},new Random(seed)));\n}\n",
+    "stack_trace": "java.lang.ArrayIndexOutOfBoundsException: 1859709389\nat org.apache.commons.lang3.RandomStringUtils.random(RandomStringUtils.java:248)\nat org.apache.commons.lang3.RandomStringUtilsTest.testLANG805(RandomStringUtilsTest.java:130)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.lang3.RandomStringUtils:random(IIIZZ[CLjava/util/Random;)Ljava/lang/String;",
+            "method_body": "public static String random(int count, int start, int end, boolean letters, boolean numbers,\nchar[] chars, Random random) {\nif (count == 0) {\nreturn \"\";\n} else if (count < 0) {\nthrow new IllegalArgumentException(\"Requested random string length \" + count + \" is less than 0.\");\n}\n\nif (start == 0 && end == 0) {\nif (!letters && !numbers) {\nend = Integer.MAX_VALUE;\n} else {\nend = 'z' + 1;\nstart = ' ';\n}\n}\n\nchar[] buffer = new char[count];\nint gap = end - start;\n\nwhile (count-- != 0) {\nchar ch;\nif (chars == null) {\nch = (char) (random.nextInt(gap) + start);\n} else {\nch = chars[random.nextInt(gap) + start];\n}\nif (letters && Character.isLetter(ch)\n|| numbers && Character.isDigit(ch)\n|| !letters && !numbers) {\nif(ch >= 56320 && ch <= 57343) {\nif(count == 0) {\ncount++;\n} else {\n// low surrogate, insert high surrogate after putting it in\nbuffer[count] = ch;\ncount--;\nbuffer[count] = (char) (55296 + random.nextInt(128));\n}\n} else if(ch >= 55296 && ch <= 56191) {\nif(count == 0) {\ncount++;\n} else {\n// high surrogate, insert low surrogate before putting it in\nbuffer[count] = (char) (56320 + random.nextInt(128));\ncount--;\nbuffer[count] = ch;\n}\n} else if(ch >= 56192 && ch <= 56319) {\n// private high surrogate, no effing clue, so skip it\ncount++;\n} else {\nbuffer[count] = ch;\n}\n} else {\ncount++;\n}\n}\nreturn new String(buffer);\n}",
+            "method_id": 0,
+            "loc": 60
+        }
+    ]
+}

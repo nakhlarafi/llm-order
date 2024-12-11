@@ -1,0 +1,254 @@
+{
+    "bug_id": 66,
+    "test_id": 0,
+    "test_name": "org.apache.commons.math.optimization.univariate.BrentOptimizerTest.testQuinticMinStatistics",
+    "test_body": "public void testQuinticMinStatistics() throws MathException {\n// The function has local minima at -0.27195613 and 0.82221643.\nUnivariateRealFunction f = new QuinticFunction();\nUnivariateRealOptimizer minimizer = new BrentOptimizer();\nminimizer.setRelativeAccuracy(1e-10);\nminimizer.setAbsoluteAccuracy(1e-11);\nfinal DescriptiveStatistics[] stat = new DescriptiveStatistics[3];\nfor (int i = 0; i < stat.length; i++) {\nstat[i] = new DescriptiveStatistics();\n}\nfinal double min = -0.75;\nfinal double max = 0.25;\nfinal int nSamples = 200;\nfinal double delta = (max - min) / nSamples;\nfor (int i = 0; i < nSamples; i++) {\nfinal double start = min + i * delta;\nstat[0].addValue(minimizer.optimize(f, GoalType.MINIMIZE, min, max, start));\nstat[1].addValue(minimizer.getIterationCount());\nstat[2].addValue(minimizer.getEvaluations());\n}\nfinal double meanOptValue = stat[0].getMean();\nfinal double medianIter = stat[1].getPercentile(50);\nfinal double medianEval = stat[2].getPercentile(50);\nassertTrue(meanOptValue > -0.27195612812 && meanOptValue < -0.27195612811);\nassertEquals(medianIter, 17, Math.ulp(1d));\nassertEquals(medianEval, 18, Math.ulp(1d));\n}\n",
+    "stack_trace": "junit.framework.AssertionFailedError: expected:<1880.5> but was:<18.0>\nat org.junit.Assert.fail(Assert.java:88)\nat org.junit.Assert.failNotEquals(Assert.java:743)\nat org.junit.Assert.assertEquals(Assert.java:494)\nat org.junit.Assert.assertEquals(Assert.java:592)\nat org.apache.commons.math.optimization.univariate.BrentOptimizerTest.testQuinticMinStatistics(BrentOptimizerTest.java:114)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.math.ConvergingAlgorithmImpl:getRelativeAccuracy()D",
+            "method_body": "public double getRelativeAccuracy() {\nreturn relativeAccuracy;\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.univariate.AbstractUnivariateRealOptimizer:getEvaluations()I",
+            "method_body": "public int getEvaluations() {\nreturn evaluations;\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.DescriptiveStatistics:apply(Lorg/apache/commons/math/stat/descriptive/UnivariateStatistic;)D",
+            "method_body": "public double apply(UnivariateStatistic stat) {\nreturn stat.evaluate(eDA.getInternalValues(), eDA.start(), eDA.getNumElements());\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.univariate.AbstractUnivariateRealOptimizer:computeObjectiveValue(Lorg/apache/commons/math/analysis/UnivariateRealFunction;D)D",
+            "method_body": "protected double computeObjectiveValue(final UnivariateRealFunction f,\nfinal double point)\nthrows FunctionEvaluationException {\nif (++evaluations > maxEvaluations) {\nthrow new FunctionEvaluationException(new MaxEvaluationsExceededException(maxEvaluations),\npoint);\n}\nreturn f.value(point);\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.ConvergingAlgorithmImpl:getAbsoluteAccuracy()D",
+            "method_body": "public double getAbsoluteAccuracy() {\nreturn absoluteAccuracy;\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.rank.Percentile:evaluate([DII)D",
+            "method_body": "public double evaluate( final double[] values, final int start, final int length) {\nreturn evaluate(values, start, length, quantile);\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.ResizableDoubleArray:getInternalValues()[D",
+            "method_body": "public synchronized double[] getInternalValues() {\nreturn internalArray;\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.univariate.AbstractUnivariateRealOptimizer:clearResult()V",
+            "method_body": "protected final void clearResult() {\nthis.resultComputed = false;\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.ResizableDoubleArray:start()I",
+            "method_body": "public synchronized int start() {\nreturn startIndex;\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.math.ConvergingAlgorithmImpl:setAbsoluteAccuracy(D)V",
+            "method_body": "public void setAbsoluteAccuracy(double accuracy) {\nabsoluteAccuracy = accuracy;\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.AbstractUnivariateStatistic:test([DII)Z",
+            "method_body": "public abstract UnivariateStatistic copy();\n\n/**\n* This method is used by <code>evaluate(double[], int, int)</code> methods\n* to verify that the input parameters designate a subarray of positive length.\n* <p>\n* <ul>\n* <li>returns <code>true</code> iff the parameters designate a subarray of\n* positive length</li>\n* <li>throws <code>IllegalArgumentException</code> if the array is null or\n* or the indices are invalid</li>\n* <li>returns <code>false</li> if the array is non-null, but\n* <code>length</code> is 0.\n* </ul></p>\n*\n* @param values the input array\n* @param begin index of the first array element to include\n* @param length the number of elements to include\n* @return true if the parameters are valid and designate a subarray of positive length\n* @throws IllegalArgumentException if the indices are invalid or the array is null\n*/\nprotected boolean test(\nfinal double[] values,\nfinal int begin,\nfinal int length) {\n\nif (values == null) {\nthrow MathRuntimeException.createIllegalArgumentException(LocalizedFormats.NULL_INPUT_ARRAY);\n}\n\nif (begin < 0) {\nthrow MathRuntimeException.createIllegalArgumentException(\nLocalizedFormats.NEGATIVE_START_POSITION, begin);\n}\n\nif (length < 0) {\nthrow MathRuntimeException.createIllegalArgumentException(\nLocalizedFormats.NEGATIVE_LENGTH, length);\n}\n\nif (begin + length > values.length) {\nthrow MathRuntimeException.createIllegalArgumentException(\nLocalizedFormats.SUBARRAY_ENDS_AFTER_ARRAY_END);\n}\n\nif (length == 0) {\nreturn false;\n}\n\nreturn true;\n\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.apache.commons.math.ConvergingAlgorithmImpl:setRelativeAccuracy(D)V",
+            "method_body": "public void setRelativeAccuracy(double accuracy) {\nrelativeAccuracy = accuracy;\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.ResizableDoubleArray:shouldContract()Z",
+            "method_body": "private synchronized boolean shouldContract() {\nif (expansionMode == MULTIPLICATIVE_MODE) {\nreturn (internalArray.length / ((float) numElements)) > contractionCriteria;\n} else {\nreturn (internalArray.length - numElements) > contractionCriteria;\n}\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.ResizableDoubleArray:getNumElements()I",
+            "method_body": "public synchronized int getNumElements() {\nreturn numElements;\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.univariate.AbstractUnivariateRealOptimizer:setMaxEvaluations(I)V",
+            "method_body": "public void setMaxEvaluations(int maxEvaluations) {\nthis.maxEvaluations = maxEvaluations;\n}",
+            "method_id": 14
+        },
+        {
+            "method_signature": "org.apache.commons.math.ConvergingAlgorithmImpl:getIterationCount()I",
+            "method_body": "public int getIterationCount() {\nreturn iterationCount;\n}",
+            "method_id": 15
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.univariate.AbstractUnivariateRealOptimizer:setResult(DDI)V",
+            "method_body": "protected final void setResult(final double x, final double fx,\nfinal int iterationCount) {\nthis.result         = x;\nthis.functionValue  = fx;\nthis.iterationCount = iterationCount;\nthis.resultComputed = true;\n}",
+            "method_id": 16
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.summary.Sum:evaluate([DII)D",
+            "method_body": "public double evaluate(final double[] values, final int begin, final int length) {\ndouble sum = Double.NaN;\nif (test(values, begin, length)) {\nsum = 0.0;\nfor (int i = begin; i < begin + length; i++) {\nsum += values[i];\n}\n}\nreturn sum;\n}",
+            "method_id": 17
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.univariate.BrentOptimizer:localMin(Lorg/apache/commons/math/analysis/UnivariateRealFunction;Lorg/apache/commons/math/optimization/GoalType;DDDDD)D",
+            "method_body": "private double localMin(boolean isMinim,\nif (t <= 0) {\ndouble a, b;\n} else {\na = hi;\nb = lo;\ndouble d = 0;\ndouble e = 0;\ndouble fx = computeObjectiveValue(f, x);\nif (goalType == GoalType.MAXIMIZE) {\nfx = -fx;\n}\n\nint count = 0;\ndouble m = 0.5 * (a + b);\nfinal double tol1 = eps * Math.abs(x) + t;\nfinal double tol2 = 2 * tol1;\n\n// Check stopping criterion.\ndouble q = 0;\ndouble r = 0;\ndouble u = 0;\n\nif (Math.abs(e) > tol1) { // Fit parabola.\nr = (x - w) * (fx - fv);\np = (x - v) * q - (x - w) * r;\nq = 2 * (q - r);\n\nif (q > 0) {\np = -p;\nq = -q;\n}\nr = e;\nif (p > q * (a - x)\n&& p < q * (b - x)\n// Parabolic interpolation step.\n// f must not be evaluated too close to a or b.\nif (u - a < tol2\nd = tol1;\nd = -tol1;\n}\n} else {\ne = a - x;\n}\n}\n// Golden section step.\ne = a - x;\n}\n}\n// Update by at least \"tol1\".\n} else {\nu = x - tol1;\n}\nu = x + d;\ndouble fu = computeObjectiveValue(f, u);\n}\n\n} else {\na = x;\n}\nfv = fw;\nfw = fx;\nx = u;\nfx = fu;\n} else {\nif (u < x) {\na = u;\nb = u;\n}\n|| w == x) {\nfv = fw;\nfw = fu;\n} else if (fu <= fv\n|| v == x\n|| v == w) {\nv = u;\n}\n} else { // termination\n}\n++count;\n}\n}",
+            "method_id": 18
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.rank.Percentile:evaluate([DIID)D",
+            "method_body": "public double evaluate(final double[] values, final int begin,\nfinal int length, final double p) {\n\ntest(values, begin, length);\n\nif ((p > 100) || (p <= 0)) {\nthrow MathRuntimeException.createIllegalArgumentException(\nLocalizedFormats.OUT_OF_BOUNDS_QUANTILE_VALUE, p);\n}\nif (length == 0) {\nreturn Double.NaN;\n}\nif (length == 1) {\nreturn values[begin]; // always return single value for n = 1\n}\ndouble n = length;\ndouble pos = p * (n + 1) / 100;\ndouble fpos = Math.floor(pos);\nint intPos = (int) fpos;\ndouble dif = pos - fpos;\ndouble[] sorted = new double[length];\nSystem.arraycopy(values, begin, sorted, 0, length);\nArrays.sort(sorted);\n\nif (pos < 1) {\nreturn sorted[0];\n}\nif (pos >= n) {\nreturn sorted[length - 1];\n}\ndouble lower = sorted[intPos - 1];\ndouble upper = sorted[intPos];\nreturn lower + dif * (upper - lower);\n}",
+            "method_id": 19
+        },
+        {
+            "method_signature": "org.apache.commons.math.ConvergingAlgorithmImpl:<init>(ID)V",
+            "method_body": "protected ConvergingAlgorithmImpl(final int defaultMaximalIterationCount,\nfinal double defaultAbsoluteAccuracy) {\nthis.defaultAbsoluteAccuracy = defaultAbsoluteAccuracy;\nthis.defaultRelativeAccuracy = 1.0e-14;\nthis.absoluteAccuracy = defaultAbsoluteAccuracy;\nthis.relativeAccuracy = defaultRelativeAccuracy;\nthis.defaultMaximalIterationCount = defaultMaximalIterationCount;\nthis.maximalIterationCount = defaultMaximalIterationCount;\nthis.iterationCount = 0;\n}",
+            "method_id": 20
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.moment.Mean:evaluate([DII)D",
+            "method_body": "public double evaluate(final double[] values,final int begin, final int length) {\nif (test(values, begin, length)) {\nSum sum = new Sum();\ndouble sampleSize = length;\n\n// Compute initial estimate using definitional formula\ndouble xbar = sum.evaluate(values, begin, length) / sampleSize;\n\n// Compute correction factor in second pass\ndouble correction = 0;\nfor (int i = begin; i < begin + length; i++) {\ncorrection += values[i] - xbar;\n}\nreturn xbar + (correction/sampleSize);\n}\nreturn Double.NaN;\n}",
+            "method_id": 21
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.univariate.AbstractUnivariateRealOptimizer:<init>(ID)V",
+            "method_body": "protected AbstractUnivariateRealOptimizer(final int defaultMaximalIterationCount,\nsuper(defaultMaximalIterationCount, defaultAbsoluteAccuracy);\nresultComputed = false;\nsetMaxEvaluations(Integer.MAX_VALUE);\n}",
+            "method_id": 22
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.DescriptiveStatistics:getPercentile(D)D",
+            "method_body": "public double getPercentile(double p) {\nif (percentileImpl instanceof Percentile) {\n((Percentile) percentileImpl).setQuantile(p);\n} else {\ntry {\npercentileImpl.getClass().getMethod(SET_QUANTILE_METHOD_NAME,\nnew Class[] {Double.TYPE}).invoke(percentileImpl,\nnew Object[] {Double.valueOf(p)});\n} catch (NoSuchMethodException e1) { // Setter guard should prevent\nthrow MathRuntimeException.createIllegalArgumentException(\nLocalizedFormats.PERCENTILE_IMPLEMENTATION_UNSUPPORTED_METHOD,\npercentileImpl.getClass().getName(), SET_QUANTILE_METHOD_NAME);\n} catch (IllegalAccessException e2) {\nthrow MathRuntimeException.createIllegalArgumentException(\nLocalizedFormats.PERCENTILE_IMPLEMENTATION_CANNOT_ACCESS_METHOD,\nSET_QUANTILE_METHOD_NAME, percentileImpl.getClass().getName());\n} catch (InvocationTargetException e3) {\nthrow MathRuntimeException.createIllegalArgumentException(e3.getCause());\n}\n}\nreturn apply(percentileImpl);\n}",
+            "method_id": 23
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.DescriptiveStatistics:getMean()D",
+            "method_body": "public double getMean() {\nreturn apply(meanImpl);\n}",
+            "method_id": 24
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.ResizableDoubleArray:addElement(D)V",
+            "method_body": "public synchronized void addElement(double value) {\nnumElements++;\nif ((startIndex + numElements) > internalArray.length) {\nexpand();\n}\ninternalArray[startIndex + (numElements - 1)] = value;\nif (shouldContract()) {\ncontract();\n}\n}",
+            "method_id": 25
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.ResizableDoubleArray:contract()V",
+            "method_body": "public synchronized void contract() {\ndouble[] tempArray = new double[numElements + 1];\n\n// Copy and swap - copy only the element array from the src array.\nSystem.arraycopy(internalArray, startIndex, tempArray, 0, numElements);\ninternalArray = tempArray;\n\n// Reset the start index to zero\nstartIndex = 0;\n}",
+            "method_id": 26
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.ResizableDoubleArray:expand()V",
+            "method_body": "protected synchronized void expand() {\n\n// notice the use of Math.ceil(), this guarantees that we will always\n// have an array of at least currentSize + 1.   Assume that the\n// current initial capacity is 1 and the expansion factor\n// is 1.000000000000000001.  The newly calculated size will be\n// rounded up to 2 after the multiplication is performed.\nint newSize = 0;\nif (expansionMode == MULTIPLICATIVE_MODE) {\nnewSize = (int) Math.ceil(internalArray.length * expansionFactor);\n} else {\nnewSize = internalArray.length + Math.round(expansionFactor);\n}\ndouble[] tempArray = new double[newSize];\n\n// Copy and swap\nSystem.arraycopy(internalArray, 0, tempArray, 0, internalArray.length);\ninternalArray = tempArray;\n}",
+            "method_id": 27
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.DescriptiveStatistics:addValue(D)V",
+            "method_body": "public void addValue(double v) {\nif (windowSize != INFINITE_WINDOW) {\nif (getN() == windowSize) {\neDA.addElementRolling(v);\n} else if (getN() < windowSize) {\neDA.addElement(v);\n}\n} else {\neDA.addElement(v);\n}\n}",
+            "method_id": 28
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.summary.Sum:<init>()V",
+            "method_body": "public Sum() {\nn = 0;\nvalue = Double.NaN;\n}",
+            "method_id": 29
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.summary.SumOfSquares:<init>()V",
+            "method_body": "public SumOfSquares() {\nn = 0;\nvalue = Double.NaN;\n}",
+            "method_id": 30
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.moment.Variance:<init>()V",
+            "method_body": "public Variance() {\nmoment = new SecondMoment();\n}",
+            "method_id": 31
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.moment.Skewness:<init>()V",
+            "method_body": "public Skewness() {\nincMoment = true;\nmoment = new ThirdMoment();\n}",
+            "method_id": 32
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.rank.Percentile:setQuantile(D)V",
+            "method_body": "public void setQuantile(final double p) {\nif (p <= 0 || p > 100) {\nthrow MathRuntimeException.createIllegalArgumentException(\nLocalizedFormats.OUT_OF_BOUNDS_QUANTILE_VALUE, p);\n}\nquantile = p;\n}",
+            "method_id": 33
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.rank.Percentile:<init>(D)V",
+            "method_body": "public Percentile(final double p) {\nsetQuantile(p);\n}",
+            "method_id": 34
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.rank.Percentile:<init>()V",
+            "method_body": "public Percentile() {\nthis(50.0);\n}",
+            "method_id": 35
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.rank.Min:<init>()V",
+            "method_body": "public Min() {\nn = 0;\nvalue = Double.NaN;\n}",
+            "method_id": 36
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.rank.Max:<init>()V",
+            "method_body": "public Max() {\nn = 0;\nvalue = Double.NaN;\n}",
+            "method_id": 37
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.moment.SecondMoment:<init>()V",
+            "method_body": "public SecondMoment() {\nsuper();\nm2 = Double.NaN;\n}",
+            "method_id": 38
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.moment.ThirdMoment:<init>()V",
+            "method_body": "public ThirdMoment() {\nsuper();\nm3 = Double.NaN;\nnDevSq = Double.NaN;\n}",
+            "method_id": 39
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.moment.FourthMoment:<init>()V",
+            "method_body": "public FourthMoment() {\nsuper();\nm4 = Double.NaN;\n}",
+            "method_id": 40
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.moment.Kurtosis:<init>()V",
+            "method_body": "public Kurtosis() {\nincMoment = true;\nmoment = new FourthMoment();\n}",
+            "method_id": 41
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.summary.SumOfLogs:<init>()V",
+            "method_body": "public SumOfLogs() {\nvalue = 0d;\nn = 0;\n}",
+            "method_id": 42
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.moment.GeometricMean:<init>()V",
+            "method_body": "public GeometricMean() {\nsumOfLogs = new SumOfLogs();\n}",
+            "method_id": 43
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.moment.FirstMoment:<init>()V",
+            "method_body": "public FirstMoment() {\nn = 0;\nm1 = Double.NaN;\ndev = Double.NaN;\nnDev = Double.NaN;\n}",
+            "method_id": 44
+        },
+        {
+            "method_signature": "org.apache.commons.math.stat.descriptive.moment.Mean:<init>()V",
+            "method_body": "public Mean() {\nincMoment = true;\nmoment = new FirstMoment();\n}",
+            "method_id": 45
+        },
+        {
+            "method_signature": "org.apache.commons.math.util.ResizableDoubleArray:<init>()V",
+            "method_body": "public ResizableDoubleArray() {\ninternalArray = new double[initialCapacity];\n}",
+            "method_id": 46
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.univariate.BrentOptimizer:optimize(Lorg/apache/commons/math/analysis/UnivariateRealFunction;Lorg/apache/commons/math/optimization/GoalType;DDD)D",
+            "method_body": "public double optimize(final UnivariateRealFunction f, final GoalType goalType, final double min, final double max, final double startValue) throws MaxIterationsExceededException, FunctionEvaluationException {\nclearResult();\nreturn localMin(getGoalType() == GoalType.MINIMIZE,\nf, goalType, min, startValue, max,\ngetRelativeAccuracy(), getAbsoluteAccuracy());\n}",
+            "method_id": 47
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.univariate.BrentOptimizer:<init>()V",
+            "method_body": "public BrentOptimizer() {\nsetMaxEvaluations(Integer.MAX_VALUE);\nsetMaximalIterationCount(100);\nsetAbsoluteAccuracy(1E-10);\nsetRelativeAccuracy(1.0e-14);\n}",
+            "method_id": 48
+        }
+    ]
+}

@@ -1,0 +1,129 @@
+{
+    "bug_id": 10,
+    "test_id": 3,
+    "test_name": "com.fasterxml.jackson.core.sym.TestSymbolTables.testShortNameCollisionsDirectNew",
+    "test_body": "public void testShortNameCollisionsDirectNew() throws IOException\n{\nfinal int COUNT = 700;\n{\nByteQuadsCanonicalizer symbols =\nByteQuadsCanonicalizer.createRoot(333).makeChild(JsonFactory.Feature.collectDefaults());\nfor (int i = 0; i < COUNT; ++i) {\nString id = String.valueOf((char) i);\nint[] quads = calcQuads(id.getBytes(\"UTF-8\"));\nsymbols.addName(id, quads, quads.length);\n}\nassertEquals(COUNT, symbols.size());\nassertEquals(1024, symbols.bucketCount());\n// Primary is good, but secondary spills cluster in nasty way...\nassertEquals(564, symbols.primaryCount());\nassertEquals(122, symbols.secondaryCount());\nassertEquals(14, symbols.tertiaryCount());\nassertEquals(0, symbols.spilloverCount());\nassertEquals(COUNT,\nsymbols.primaryCount() + symbols.secondaryCount() + symbols.tertiaryCount() + symbols.spilloverCount());\n}\n}\n",
+    "stack_trace": "junit.framework.AssertionFailedError: expected:<1024> but was:<2048>\nat junit.framework.Assert.fail(Assert.java:57)\nat junit.framework.Assert.failNotEquals(Assert.java:329)\nat junit.framework.Assert.assertEquals(Assert.java:78)\nat junit.framework.Assert.assertEquals(Assert.java:234)\nat junit.framework.Assert.assertEquals(Assert.java:241)\nat junit.framework.TestCase.assertEquals(TestCase.java:409)\nat com.fasterxml.jackson.core.sym.TestSymbolTables.testShortNameCollisionsDirectNew(TestSymbolTables.java:473)",
+    "covered_methods": [
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer:nukeSymbols(Z)V",
+            "method_body": "private void nukeSymbols(boolean fill) {\n_count = 0;\n// reset spill-over to empty (starting at 7/8 of hash area)\n_spilloverEnd = _spilloverStart();\n// and long name area to empty, starting immediately after hash area\n_longNameOffset = _hashSize << 3;\nif (fill) {\nArrays.fill(_hashArea, 0);\nArrays.fill(_names, null);\n}\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer:size()I",
+            "method_body": "public int size()\n{\nif (_tableInfo != null) { // root table\nreturn _tableInfo.get().count;\n}\n// nope, child table\nreturn _count;\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer$TableInfo:<init>(III[I[Ljava/lang/String;II)V",
+            "method_body": "public TableInfo(int size, int count, int tertiaryShift,\nint[] mainHash, String[] names, int spilloverEnd, int longNameOffset)\n{\nthis.size = size;\nthis.count = count;\nthis.tertiaryShift = tertiaryShift;\nthis.mainHash = mainHash;\nthis.names = names;\nthis.spilloverEnd = spilloverEnd;\nthis.longNameOffset = longNameOffset;\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonFactory$Feature:getMask()I",
+            "method_body": "public int getMask() { return (1 << ordinal()); }\npublic int getMask() { return (1 << ordinal()); }",
+            "method_id": 3
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer:_verifySharing()V",
+            "method_body": "private void _verifySharing()\n{\nif (_hashShared) {\n_hashArea = Arrays.copyOf(_hashArea, _hashArea.length);\n_names = Arrays.copyOf(_names, _names.length);\n_hashShared = false;\n}\nif (_needRehash) {\nrehash();\n}\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer:<init>(Lcom/fasterxml/jackson/core/sym/ByteQuadsCanonicalizer;ZIZLcom/fasterxml/jackson/core/sym/ByteQuadsCanonicalizer$TableInfo;)V",
+            "method_body": "private ByteQuadsCanonicalizer(ByteQuadsCanonicalizer parent, boolean intern,\nint seed, boolean failOnDoS, TableInfo state)\n{\n_parent = parent;\n_seed = seed;\n_intern = intern;\n_failOnDoS = failOnDoS;\n_tableInfo = null; // not used by child tables\n\n// Then copy shared state\n_count = state.count;\n_hashSize = state.size;\n_secondaryStart = _hashSize << 2; // right after primary area\n_tertiaryStart = _secondaryStart + (_secondaryStart >> 1); // right after secondary\n_tertiaryShift = state.tertiaryShift;\n\n_hashArea = state.mainHash;\n_names = state.names;\n\n_spilloverEnd = state.spilloverEnd;\n_longNameOffset = state.longNameOffset;\n\n// and then set other state to reflect sharing status\n_needRehash = false;\n_hashShared = true;\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer:_calcOffset(I)I",
+            "method_body": "private final int _calcOffset(int hash)\n{\n// NOTE: simple for initial impl, but we may want to interleave it a bit\n// in near future\n// So: first, hash into primary hash index\nint ix = hash & (_hashSize-1);\n// keeping in mind we have 4 ints per entry\nreturn (ix << 2);\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.util.InternCache:intern(Ljava/lang/String;)Ljava/lang/String;",
+            "method_body": "public String intern(String input) {\nString result = get(input);\nif (result != null) { return result; }\n\n/* 18-Sep-2013, tatu: We used to use LinkedHashMap, which has simple LRU\n*   method. No such functionality exists with CHM; and let's use simplest\n*   possible limitation: just clear all contents. This because otherwise\n*   we are simply likely to keep on clearing same, commonly used entries.\n*/\nif (size() >= MAX_ENTRIES) {\n/* Not incorrect wrt well-known double-locking anti-pattern because underlying\n* storage gives close enough answer to real one here; and we are\n* more concerned with flooding than starvation.\n*/\nsynchronized (lock) {\nif (size() >= MAX_ENTRIES) {\nclear();\n}\n}\n}\nresult = input.intern();\nput(result, result);\nreturn result;\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonFactory$Feature:collectDefaults()I",
+            "method_body": "public static int collectDefaults() {\nint flags = 0;\nfor (Feature f : values()) {\nif (f.enabledByDefault()) { flags |= f.getMask(); }\n}\nreturn flags;\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.util.InternCache:<init>()V",
+            "method_body": "private InternCache() { super(MAX_ENTRIES, 0.8f, 4); }\nprivate InternCache() { super(MAX_ENTRIES, 0.8f, 4); }",
+            "method_id": 9
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer:_verifyNeedForRehash()V",
+            "method_body": "private void _verifyNeedForRehash() {\n// Yes if above 80%, or above 50% AND have ~1% spill-overs\nif (_count > (_hashSize >> 1)) { // over 50%\nint spillCount = (_spilloverEnd - _spilloverStart()) >> 2;\nif ((spillCount > (1 + _count >> 7))\n|| (_count > (_hashSize * 0.80))) {\n_needRehash = true;\n}\n}\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer$TableInfo:createInitial(I)Lcom/fasterxml/jackson/core/sym/ByteQuadsCanonicalizer$TableInfo;",
+            "method_body": "public static TableInfo createInitial(int sz) {\nint hashAreaSize = sz << 3;\nint tertShift = _calcTertiaryShift(sz);\n\nreturn new TableInfo(sz, // hashSize\n0, // count\ntertShift,\nnew int[hashAreaSize], // mainHash, 2x slots, 4 ints per slot\nnew String[sz << 1], // names == 2x slots\nhashAreaSize - sz, // at 7/8 of the total area\nhashAreaSize // longNameOffset, immediately after main hashes\n);\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer:rehash()V",
+            "method_body": "private void rehash()\n{\n_needRehash = false;\n// Note: since we'll make copies, no need to unshare, can just mark as such:\n_hashShared = false;\n\n// And then we can first deal with the main hash area. Since we are expanding\n// linearly (double up), we know there'll be no collisions during this phase.\nfinal int[] oldHashArea = _hashArea;\nfinal String[] oldNames = _names;\nfinal int oldSize = _hashSize;\nfinal int oldCount = _count;\nfinal int newSize = oldSize + oldSize;\nfinal int oldEnd = _spilloverEnd;\n\n/* 13-Mar-2010, tatu: Let's guard against OOME that could be caused by\n*    large documents with unique (or mostly so) names\n*/\nif (newSize > MAX_T_SIZE) {\nnukeSymbols(true);\nreturn;\n}\n// double up main hash area, but do not expand long-name area:\n_hashArea = new int[oldHashArea.length + (oldSize<<3)];\n_hashSize = newSize;\n_secondaryStart = (newSize << 2); // 4 ints per entry\n_tertiaryStart = _secondaryStart + (_secondaryStart >> 1); // right after secondary\n_tertiaryShift = _calcTertiaryShift(newSize);\n\n// and simply double up name array\n_names = new String[oldNames.length << 1];\nnukeSymbols(false);\n\n// Plus we can scan only through the primary hash area, looking for non-empty\n// slots, without worrying about ordering. This should never reduce priority\n// of existing entries: primaries remain primaries; however, due to increased\n// space, secondaries may become primaries etc\n\nint copyCount = 0;\nint[] q = new int[16];\nfor (int offset = 0, end = oldEnd; offset < end; offset += 4) {\nint len = oldHashArea[offset+3];\nif (len == 0) { // empty slot, skip\ncontinue;\n}\n++copyCount;\nString name = oldNames[offset>>2];\nswitch (len) {\ncase 1:\nq[0] = oldHashArea[offset];\naddName(name, q, 1);\nbreak;\ncase 2:\nq[0] = oldHashArea[offset];\nq[1] = oldHashArea[offset+1];\naddName(name, q, 2);\nbreak;\ncase 3:\nq[0] = oldHashArea[offset];\nq[1] = oldHashArea[offset+1];\nq[2] = oldHashArea[offset+2];\naddName(name, q, 3);\nbreak;\ndefault:\nif (len > q.length) {\nq = new int[len];\n}\n// #0 is hash, #1 offset\nint qoff = oldHashArea[offset+1];\nSystem.arraycopy(oldHashArea, qoff, q, 0, len);\naddName(name, q, len);\nbreak;\n}\n}\n\n// Sanity checks: since corruption difficult to detect, assert explicitly\n// with production code\nif (copyCount != oldCount) {\nthrow new IllegalStateException(\"Failed rehash(): old count=\"+oldCount+\", copyCount=\"+copyCount);\n}\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer:_findOffsetForAdd(I)I",
+            "method_body": "private int _findOffsetForAdd(int hash)\n{\n// first, check the primary:\nint offset = _calcOffset(hash);\nfinal int[] hashArea = _hashArea;\nif (hashArea[offset+3] == 0) {\n//System.err.printf(\" PRImary slot #%d, hash %X\\n\", (offset>>2), hash & 0x7F);\nreturn offset;\n}\n// then secondary\nint offset2 = _secondaryStart + ((offset >> 3) << 2);\nif (hashArea[offset2+3] == 0) {\n//System.err.printf(\" SECondary slot #%d (start x%X), hash %X\\n\",(offset >> 3), _secondaryStart, (hash & 0x7F));\nreturn offset2;\n}\n// if not, tertiary?\n\noffset2 = _tertiaryStart + ((offset >> (_tertiaryShift + 2)) << _tertiaryShift);\nfinal int bucketSize = (1 << _tertiaryShift);\nfor (int end = offset2 + bucketSize; offset2 < end; offset2 += 4) {\nif (hashArea[offset2+3] == 0) {\n//System.err.printf(\" TERtiary slot x%X (from x%X, start x%X), hash %X.\\n\", offset2, ((offset >> (_tertiaryShift + 2)) << _tertiaryShift), _tertiaryStart, (hash & 0x7F));\nreturn offset2;\n}\n}\n\n// and if even tertiary full, append at the end of spill area\noffset = _spilloverEnd;\n_spilloverEnd += 4;\n\n//System.err.printf(\" SPIll-over at x%X; start x%X; end x%X, hash %X\\n\", offset, _spilloverStart(), _hashArea.length, (hash & 0x7F));\n\n// one caveat: in the unlikely event if spill-over filling up,\n// check if that could be considered a DoS attack; handle appropriately\n// (NOTE: approximate for now; we could verify details if that becomes necessary)\n/* 31-Jul-2015, tatu: Note that spillover area does NOT end at end of array,\n*   since \"long names\" area follows. Instead, need to calculate from hash size.\n*/\nif (_spilloverEnd >= hashArea.length) {\nif (_failOnDoS) {\n_reportTooManyCollisions();\n}\n// and if we didn't fail, we'll simply force rehash for next add\n// (which, in turn, may double up or nuke contents, depending on size etc)\n_needRehash = true;\n}\nreturn offset;\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer:createRoot(I)Lcom/fasterxml/jackson/core/sym/ByteQuadsCanonicalizer;",
+            "method_body": "protected static ByteQuadsCanonicalizer createRoot(int seed) {\nreturn new ByteQuadsCanonicalizer(DEFAULT_T_SIZE, true, seed, true);\n}",
+            "method_id": 14
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.util.InternCache:<clinit>()V",
+            "method_body": "private final static int MAX_ENTRIES = 180;\n\npublic final static InternCache instance = new InternCache();\n\n/**\n* As minor optimization let's try to avoid \"flush storms\",\n* cases where multiple threads might try to concurrently\n* flush the map.\n*/\nprivate final Object lock = new Object();\n\nprivate InternCache() { super(MAX_ENTRIES, 0.8f, 4); }",
+            "method_id": 15
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonFactory$Feature:enabledByDefault()Z",
+            "method_body": "public boolean enabledByDefault() { return _defaultState; }\npublic boolean enabledByDefault() { return _defaultState; }",
+            "method_id": 16
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer:_spilloverStart()I",
+            "method_body": "private final int _spilloverStart() {\n// we'll need slot at 1.75x of hashSize, but with 4-ints per slot.\n// So basically multiply by 7\nint offset = _hashSize;\nreturn (offset << 3) - offset;\n}",
+            "method_id": 17
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer:bucketCount()I",
+            "method_body": "public int bucketCount() { return _hashSize; }\npublic int bucketCount() { return _hashSize; }",
+            "method_id": 18
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer:<init>(IZIZ)V",
+            "method_body": "private ByteQuadsCanonicalizer(int sz, boolean intern, int seed, boolean failOnDoS) {\n_parent = null;\n_seed = seed;\n_intern = intern;\n_failOnDoS = failOnDoS;\n// Sanity check: let's now allow hash sizes below certain minimum value\nif (sz < MIN_HASH_SIZE) {\nsz = MIN_HASH_SIZE;\n} else {\n// Also; size must be 2^N; otherwise hash algorithm won't\n// work... so let's just pad it up, if so\nif ((sz & (sz - 1)) != 0) { // only true if it's 2^N\nint curr = MIN_HASH_SIZE;\nwhile (curr < sz) {\ncurr += curr;\n}\nsz = curr;\n}\n}\n_tableInfo = new AtomicReference<TableInfo>(TableInfo.createInitial(sz));\n}",
+            "method_id": 19
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonFactory$Feature:<init>(Ljava/lang/String;IZ)V",
+            "method_body": "private Feature(boolean defaultState) { _defaultState = defaultState; }\nprivate Feature(boolean defaultState) { _defaultState = defaultState; }",
+            "method_id": 20
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer:calcHash(I)I",
+            "method_body": "public int calcHash(int q1)\n{\nint hash = q1 ^ _seed;\n/* 29-Mar-2015, tatu: Earlier used 15 + 9 right shifts, which worked ok\n*    except for one specific problem case: numbers. So needed to make sure\n*    that all 4 least-significant bits participate in hash. Couple of ways\n*    to work it out, but this is the simplest, fast and seems to do ok.\n*/\nhash += (hash >>> 16); // to xor hi- and low- 16-bits\nhash ^= (hash >>> 12);\nreturn hash;\n}",
+            "method_id": 21
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer:makeChild(I)Lcom/fasterxml/jackson/core/sym/ByteQuadsCanonicalizer;",
+            "method_body": "public ByteQuadsCanonicalizer makeChild(int flags) {\nreturn new ByteQuadsCanonicalizer(this,\nJsonFactory.Feature.INTERN_FIELD_NAMES.enabledIn(flags),\n_seed,\nJsonFactory.Feature.FAIL_ON_SYMBOL_HASH_OVERFLOW.enabledIn(flags),\n_tableInfo.get());\n}",
+            "method_id": 22
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.JsonFactory$Feature:enabledIn(I)Z",
+            "method_body": "public boolean enabledIn(int flags) { return (flags & getMask()) != 0; }\npublic boolean enabledIn(int flags) { return (flags & getMask()) != 0; }",
+            "method_id": 23
+        }
+    ]
+}

@@ -1,0 +1,34 @@
+{
+    "bug_id": 12,
+    "test_id": 0,
+    "test_name": "org.apache.commons.lang3.RandomStringUtilsTest.testExceptions",
+    "test_body": "public void testExceptions() {\nfinal char[] DUMMY = new char[]{'a'}; // valid char array\ntry {\nRandomStringUtils.random(-1);\nfail();\n} catch (IllegalArgumentException ex) {}\ntry {\nRandomStringUtils.random(-1, true, true);\nfail();\n} catch (IllegalArgumentException ex) {}\ntry {\nRandomStringUtils.random(-1, DUMMY);\nfail();\n} catch (IllegalArgumentException ex) {}\ntry {\nRandomStringUtils.random(1, new char[0]); // must not provide empty array => IAE\nfail();\n} catch (IllegalArgumentException ex) {}\ntry {\nRandomStringUtils.random(-1, \"\");\nfail();\n} catch (IllegalArgumentException ex) {}\ntry {\nRandomStringUtils.random(-1, (String)null);\nfail();\n} catch (IllegalArgumentException ex) {}\ntry {\nRandomStringUtils.random(-1, 'a', 'z', false, false);\nfail();\n} catch (IllegalArgumentException ex) {}\ntry {\nRandomStringUtils.random(-1, 'a', 'z', false, false, DUMMY);\nfail();\n} catch (IllegalArgumentException ex) {}\ntry {\nRandomStringUtils.random(-1, 'a', 'z', false, false, DUMMY, new Random());\nfail();\n} catch (IllegalArgumentException ex) {}\n}\n",
+    "stack_trace": "java.lang.ArrayIndexOutOfBoundsException: 1171399597\nat org.apache.commons.lang3.RandomStringUtils.random(RandomStringUtils.java:248)\nat org.apache.commons.lang3.RandomStringUtils.random(RandomStringUtils.java:321)\nat org.apache.commons.lang3.RandomStringUtilsTest.testExceptions(RandomStringUtilsTest.java:148)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.lang3.RandomStringUtils:random(IIIZZ[CLjava/util/Random;)Ljava/lang/String;",
+            "method_body": "public static String random(int count, int start, int end, boolean letters, boolean numbers,\nchar[] chars, Random random) {\nif (count == 0) {\nreturn \"\";\n} else if (count < 0) {\nthrow new IllegalArgumentException(\"Requested random string length \" + count + \" is less than 0.\");\n}\n\nif (start == 0 && end == 0) {\nif (!letters && !numbers) {\nend = Integer.MAX_VALUE;\n} else {\nend = 'z' + 1;\nstart = ' ';\n}\n}\n\nchar[] buffer = new char[count];\nint gap = end - start;\n\nwhile (count-- != 0) {\nchar ch;\nif (chars == null) {\nch = (char) (random.nextInt(gap) + start);\n} else {\nch = chars[random.nextInt(gap) + start];\n}\nif (letters && Character.isLetter(ch)\n|| numbers && Character.isDigit(ch)\n|| !letters && !numbers) {\nif(ch >= 56320 && ch <= 57343) {\nif(count == 0) {\ncount++;\n} else {\n// low surrogate, insert high surrogate after putting it in\nbuffer[count] = ch;\ncount--;\nbuffer[count] = (char) (55296 + random.nextInt(128));\n}\n} else if(ch >= 55296 && ch <= 56191) {\nif(count == 0) {\ncount++;\n} else {\n// high surrogate, insert low surrogate before putting it in\nbuffer[count] = (char) (56320 + random.nextInt(128));\ncount--;\nbuffer[count] = ch;\n}\n} else if(ch >= 56192 && ch <= 56319) {\n// private high surrogate, no effing clue, so skip it\ncount++;\n} else {\nbuffer[count] = ch;\n}\n} else {\ncount++;\n}\n}\nreturn new String(buffer);\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.RandomStringUtils:random(I[C)Ljava/lang/String;",
+            "method_body": "public static String random(int count, char... chars) {\nif (chars == null) {\nreturn random(count, 0, 0, false, false, null, RANDOM);\n}\nreturn random(count, 0, chars.length, false, false, chars, RANDOM);\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.RandomStringUtils:random(IIIZZ)Ljava/lang/String;",
+            "method_body": "public static String random(int count, int start, int end, boolean letters, boolean numbers) {\nreturn random(count, start, end, letters, numbers, null, RANDOM);\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.RandomStringUtils:random(IZZ)Ljava/lang/String;",
+            "method_body": "public static String random(int count, boolean letters, boolean numbers) {\nreturn random(count, 0, 0, letters, numbers);\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.RandomStringUtils:random(I)Ljava/lang/String;",
+            "method_body": "public static String random(int count) {\nreturn random(count, false, false);\n}",
+            "method_id": 4
+        }
+    ]
+}

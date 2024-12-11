@@ -1,0 +1,769 @@
+{
+    "bug_id": 20,
+    "test_id": 2,
+    "test_name": "org.mockitousage.constructor.CreatingMocksWithConstructorTest.can_create_mock_with_constructor",
+    "test_body": "public void can_create_mock_with_constructor() {\nMessage mock = mock(Message.class, withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));\n//the message is a part of state of the mocked type that gets initialized in constructor\nassertEquals(\"hey!\", mock.getMessage());\n}\n",
+    "stack_trace": "junit.framework.ComparisonFailure: expected:<hey!> but was:<null>\nat junit.framework.Assert.assertEquals(Assert.java:100)\nat junit.framework.Assert.assertEquals(Assert.java:107)\nat org.mockitousage.constructor.CreatingMocksWithConstructorTest.can_create_mock_with_constructor(CreatingMocksWithConstructorTest.java:34)",
+    "covered_methods": [
+        {
+            "method_signature": "org.mockito.MockitoAnnotations:initMocks(Ljava/lang/Object;)V",
+            "method_body": "public static void initMocks(Object testClass) {\nif (testClass == null) {\nthrow new MockitoException(\"testClass cannot be null. For info how to use @Mock annotations see examples in javadoc for MockitoAnnotations class\");\n}\n\nAnnotationEngine annotationEngine = new GlobalConfiguration().getAnnotationEngine();\nClass<?> clazz = testClass.getClass();\n\n//below can be removed later, when we get read rid of deprecated stuff\nif (annotationEngine.getClass() != new DefaultMockitoConfiguration().getAnnotationEngine().getClass()) {\n//this means user has his own annotation engine and we have to respect that.\n//we will do annotation processing the old way so that we are backwards compatible\nwhile (clazz != Object.class) {\nscanDeprecatedWay(annotationEngine, testClass, clazz);\nclazz = clazz.getSuperclass();\n}\n}\n\n//anyway act 'the new' way\nannotationEngine.process(testClass.getClass(), testClass);\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.GlobalConfiguration:getAnnotationEngine()Lorg/mockito/configuration/AnnotationEngine;",
+            "method_body": "public AnnotationEngine getAnnotationEngine() {\nreturn GLOBAL_CONFIGURATION.get().getAnnotationEngine();\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.mockito.configuration.DefaultMockitoConfiguration:getAnnotationEngine()Lorg/mockito/configuration/AnnotationEngine;",
+            "method_body": "public AnnotationEngine getAnnotationEngine() {\nreturn new InjectingAnnotationEngine();\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.mockito.Mockito:withSettings()Lorg/mockito/MockSettings;",
+            "method_body": "public static MockSettings withSettings() {\nreturn new MockSettingsImpl().defaultAnswer(RETURNS_DEFAULTS);\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.mockito.internal.util.MockCreationValidator:validateConstructorUse(ZLorg/mockito/mock/SerializableMode;)V",
+            "method_body": "public void validateConstructorUse(boolean usingConstructor, SerializableMode mode) {\nif (usingConstructor && mode == SerializableMode.ACROSS_CLASSLOADERS) {\nnew Reporter().usingConstructorWithFancySerializable(mode);\n}\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.mockito.MockitoAnnotations:scanDeprecatedWay(Lorg/mockito/configuration/AnnotationEngine;Ljava/lang/Object;Ljava/lang/Class;)V",
+            "method_body": "static void scanDeprecatedWay(AnnotationEngine annotationEngine, Object testClass, Class<?> clazz) {\nField[] fields = clazz.getDeclaredFields();\n\nfor (Field field : fields) {\nprocessAnnotationDeprecatedWay(annotationEngine, testClass, field);\n}\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.mockito.internal.MockitoCore:mock(Ljava/lang/Class;Lorg/mockito/MockSettings;)Ljava/lang/Object;",
+            "method_body": "public <T> T mock(Class<T> typeToMock, MockSettings settings) {\nif (!MockSettingsImpl.class.isInstance(settings)) {\nthrow new IllegalArgumentException(\n\"Unexpected implementation of '\" + settings.getClass().getCanonicalName() + \"'\\n\"\n+ \"At the moment, you cannot provide your own implementations that class.\");\n}\nMockSettingsImpl impl = MockSettingsImpl.class.cast(settings);\nMockCreationSettings<T> creationSettings = impl.confirm(typeToMock);\nT mock = mockUtil.createMock(creationSettings);\nmockingProgress.mockingStarted(mock, typeToMock);\nreturn mock;\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.MockSettingsImpl:validatedSettings(Ljava/lang/Class;Lorg/mockito/internal/creation/settings/CreationSettings;)Lorg/mockito/internal/creation/settings/CreationSettings;",
+            "method_body": "private static <T> CreationSettings<T> validatedSettings(Class<T> typeToMock, CreationSettings<T> source) {\nMockCreationValidator validator = new MockCreationValidator();\n\nvalidator.validateType(typeToMock);\nvalidator.validateExtraInterfaces(typeToMock, source.getExtraInterfaces());\nvalidator.validateMockedType(typeToMock, source.getSpiedInstance());\n\n//TODO SF - add this validation and also add missing coverage\n//        validator.validateDelegatedInstance(classToMock, settings.getDelegatedInstance());\n\nvalidator.validateSerializable(typeToMock, source.isSerializable());\nvalidator.validateConstructorUse(source.isUsingConstructor(), source.getSerializableMode());\n\n//TODO SF - I don't think we really need CreationSettings type\nCreationSettings<T> settings = new CreationSettings<T>(source);\nsettings.setMockName(new MockNameImpl(source.getName(), typeToMock));\nsettings.setTypeToMock(typeToMock);\nsettings.setExtraInterfaces(prepareExtraInterfaces(source));\nreturn settings;\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.mockito.internal.util.MockUtil:createMock(Lorg/mockito/mock/MockCreationSettings;)Ljava/lang/Object;",
+            "method_body": "public <T> T createMock(MockCreationSettings<T> settings) {\nMockHandler mockHandler = new MockHandlerFactory().create(settings);\n\nT mock = mockMaker.createMock(settings, mockHandler);\n\nObject spiedInstance = settings.getSpiedInstance();\nif (spiedInstance != null) {\nnew LenientCopyTool().copyToMock(spiedInstance, mock);\n}\n\nreturn mock;\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.mockito.internal.handler.MockHandlerFactory:create(Lorg/mockito/mock/MockCreationSettings;)Lorg/mockito/internal/InternalMockHandler;",
+            "method_body": "public InternalMockHandler create(MockCreationSettings settings) {\nInternalMockHandler handler = new MockHandlerImpl(settings);\nInternalMockHandler nullResultGuardian = new NullResultGuardian(handler);\nInternalMockHandler notifier = new InvocationNotifierHandler(nullResultGuardian, settings);\n\nreturn notifier;\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.MockSettingsImpl:prepareExtraInterfaces(Lorg/mockito/internal/creation/settings/CreationSettings;)Ljava/util/Set;",
+            "method_body": "private static Set<Class> prepareExtraInterfaces(CreationSettings settings) {\nSet<Class> interfaces = new HashSet<Class>(settings.getExtraInterfaces());\nif(settings.isSerializable()) {\ninterfaces.add(Serializable.class);\n}\nreturn interfaces;\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.MockSettingsImpl:defaultAnswer(Lorg/mockito/stubbing/Answer;)Lorg/mockito/MockSettings;",
+            "method_body": "public MockSettings defaultAnswer(Answer defaultAnswer) {\nthis.defaultAnswer = defaultAnswer;\nif (defaultAnswer == null) {\nnew Reporter().defaultAnswerDoesNotAcceptNullParameter();\n}\nreturn this;\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.mockito.internal.util.MockCreationValidator:validateMockedType(Ljava/lang/Class;Ljava/lang/Object;)V",
+            "method_body": "public void validateMockedType(Class classToMock, Object spiedInstance) {\nif (classToMock == null || spiedInstance == null) {\nreturn;\n}\nif (!classToMock.equals(spiedInstance.getClass())) {\nnew Reporter().mockedTypeIsInconsistentWithSpiedInstanceType(classToMock, spiedInstance);\n}\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.ByteBuddyMockMaker:createMock(Lorg/mockito/mock/MockCreationSettings;Lorg/mockito/invocation/MockHandler;)Ljava/lang/Object;",
+            "method_body": "public <T> T createMock(MockCreationSettings<T> settings, MockHandler handler) {\nif (settings.getSerializableMode() == SerializableMode.ACROSS_CLASSLOADERS) {\nthrow new MockitoException(\"Serialization across classloaders not yet supported with ByteBuddyMockMaker\");\n}\nClass<? extends T> mockedProxyType = cachingMockBytecodeGenerator.get(\nsettings.getTypeToMock(),\nsettings.getExtraInterfaces()\n);\nT mockInstance = null;\ntry {\nmockInstance = classInstantiator.instantiate(mockedProxyType);\nMockMethodInterceptor.MockAccess mockAccess = (MockMethodInterceptor.MockAccess) mockInstance;\nmockAccess.setMockitoInterceptor(new MockMethodInterceptor(asInternalMockHandler(handler), settings));\n\nreturn ensureMockIsAssignableToMockedType(settings, mockInstance);\n} catch (ClassCastException cce) {\nthrow new MockitoException(join(\n\"ClassCastException occurred while creating the mockito mock :\",\n\"  class to mock : \" + describeClass(mockedProxyType),\n\"  created class : \" + describeClass(settings.getTypeToMock()),\n\"  proxy instance class : \" + describeClass(mockInstance),\n\"  instance creation by : \" + classInstantiator.getClass().getSimpleName(),\n\"\",\n\"You might experience classloading issues, please ask the mockito mailing-list.\",\n\"\"\n),cce);\n} catch (org.mockito.internal.creation.instance.InstantiationException e) {\nthrow new MockitoException(\"Unable to create mock instance of type '\" + mockedProxyType.getSuperclass().getSimpleName() + \"'\", e);\n}\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.settings.CreationSettings:<init>(Lorg/mockito/internal/creation/settings/CreationSettings;)V",
+            "method_body": "public CreationSettings(CreationSettings copy) {\nthis.typeToMock = copy.typeToMock;\nthis.extraInterfaces = copy.extraInterfaces;\nthis.name = copy.name;\nthis.spiedInstance = copy.spiedInstance;\nthis.defaultAnswer = copy.defaultAnswer;\nthis.mockName = copy.mockName;\nthis.serializableMode = copy.serializableMode;\nthis.invocationListeners = copy.invocationListeners;\nthis.stubOnly = copy.stubOnly;\nthis.useConstructor = copy.isUsingConstructor();\nthis.outerClassInstance = copy.getOuterClassInstance();\n}",
+            "method_id": 14
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.settings.CreationSettings:setTypeToMock(Ljava/lang/Class;)Lorg/mockito/internal/creation/settings/CreationSettings;",
+            "method_body": "public CreationSettings<T> setTypeToMock(Class<T> typeToMock) {\nthis.typeToMock = typeToMock;\nreturn this;\n}",
+            "method_id": 15
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.settings.CreationSettings:setExtraInterfaces(Ljava/util/Set;)Lorg/mockito/internal/creation/settings/CreationSettings;",
+            "method_body": "public CreationSettings<T> setExtraInterfaces(Set<Class> extraInterfaces) {\nthis.extraInterfaces = extraInterfaces;\nreturn this;\n}",
+            "method_id": 16
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.settings.CreationSettings:setMockName(Lorg/mockito/mock/MockName;)Lorg/mockito/internal/creation/settings/CreationSettings;",
+            "method_body": "public CreationSettings<T> setMockName(MockName mockName) {\nthis.mockName = mockName;\nreturn this;\n}",
+            "method_id": 17
+        },
+        {
+            "method_signature": "org.mockito.Mockito:mock(Ljava/lang/Class;Lorg/mockito/MockSettings;)Ljava/lang/Object;",
+            "method_body": "public static <T> T mock(Class<T> classToMock, MockSettings mockSettings) {\nreturn MOCKITO_CORE.mock(classToMock, mockSettings);\n}",
+            "method_id": 18
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.settings.CreationSettings:getExtraInterfaces()Ljava/util/Set;",
+            "method_body": "public Set<Class> getExtraInterfaces() {\nreturn extraInterfaces;\n}",
+            "method_id": 19
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.settings.CreationSettings:getName()Ljava/lang/String;",
+            "method_body": "public String getName() {\nreturn name;\n}",
+            "method_id": 20
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.settings.CreationSettings:getSpiedInstance()Ljava/lang/Object;",
+            "method_body": "public Object getSpiedInstance() {\nreturn spiedInstance;\n}",
+            "method_id": 21
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.settings.CreationSettings:getSerializableMode()Lorg/mockito/mock/SerializableMode;",
+            "method_body": "public SerializableMode getSerializableMode() {\nreturn serializableMode;\n}",
+            "method_id": 22
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.settings.CreationSettings:isSerializable()Z",
+            "method_body": "public boolean isSerializable() {\nreturn serializableMode != SerializableMode.NONE;\n}",
+            "method_id": 23
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.MockSettingsImpl:confirm(Ljava/lang/Class;)Lorg/mockito/mock/MockCreationSettings;",
+            "method_body": "public MockCreationSettings<T> confirm(Class<T> typeToMock) {\nreturn validatedSettings(typeToMock, this);\n}",
+            "method_id": 24
+        },
+        {
+            "method_signature": "org.mockito.internal.util.MockUtil:isTypeMockable(Ljava/lang/Class;)Z",
+            "method_body": "public boolean isTypeMockable(Class<?> type) {\nreturn !type.isPrimitive() && !Modifier.isFinal(type.getModifiers());\n}",
+            "method_id": 25
+        },
+        {
+            "method_signature": "org.mockito.internal.util.MockCreationValidator:validateExtraInterfaces(Ljava/lang/Class;Ljava/util/Collection;)V",
+            "method_body": "public void validateExtraInterfaces(Class classToMock, Collection<Class> extraInterfaces) {\nif (extraInterfaces == null) {\nreturn;\n}\n\nfor (Class i : extraInterfaces) {\nif (classToMock == i) {\nnew Reporter().extraInterfacesCannotContainMockedType(classToMock);\n}\n}\n}",
+            "method_id": 26
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.ByteBuddyMockMaker:ensureMockIsAssignableToMockedType(Lorg/mockito/mock/MockCreationSettings;Ljava/lang/Object;)Ljava/lang/Object;",
+            "method_body": "private <T> T ensureMockIsAssignableToMockedType(MockCreationSettings<T> settings, T mock) {\n// Force explicit cast to mocked type here, instead of\n// relying on the JVM to implicitly cast on the client call site.\n// This allows us to catch the ClassCastException earlier\nClass<T> typeToMock = settings.getTypeToMock();\nreturn typeToMock.cast(mock);\n}",
+            "method_id": 27
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.GlobalConfiguration:<init>()V",
+            "method_body": "public GlobalConfiguration() {\n//Configuration should be loaded only once but I cannot really test it\nif (GLOBAL_CONFIGURATION.get() == null) {\nGLOBAL_CONFIGURATION.set(createConfig());\n}\n}",
+            "method_id": 28
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.ByteBuddyMockMaker:asInternalMockHandler(Lorg/mockito/invocation/MockHandler;)Lorg/mockito/internal/InternalMockHandler;",
+            "method_body": "private static InternalMockHandler asInternalMockHandler(MockHandler handler) {\nif (!(handler instanceof InternalMockHandler)) {\nthrow new MockitoException(join(\n\"At the moment you cannot provide own implementations of MockHandler.\",\n\"Please see the javadocs for the MockMaker interface.\",\n\"\"\n));\n}\nreturn (InternalMockHandler) handler;\n}",
+            "method_id": 29
+        },
+        {
+            "method_signature": "org.mockito.internal.util.MockNameImpl:<init>(Ljava/lang/String;Ljava/lang/Class;)V",
+            "method_body": "public MockNameImpl(String mockName, Class classToMock) {\nif (mockName == null) {\nthis.mockName = toInstanceName(classToMock);\nthis.defaultName = true;\n} else {\nthis.mockName = mockName;\n}\n}",
+            "method_id": 30
+        },
+        {
+            "method_signature": "org.mockito.internal.util.MockCreationValidator:validateType(Ljava/lang/Class;)V",
+            "method_body": "public void validateType(Class classToMock) {\nif (!mockUtil.isTypeMockable(classToMock)) {\nnew Reporter().cannotMockFinalClass(classToMock);\n}\n}",
+            "method_id": 31
+        },
+        {
+            "method_signature": "org.mockito.internal.util.MockCreationValidator:validateSerializable(Ljava/lang/Class;Z)V",
+            "method_body": "public void validateSerializable(Class classToMock, boolean serializable) {\n// We can't catch all the errors with this piece of code\n// Having a **superclass that do not implements Serializable** might fail as well when serialized\n// Though it might prevent issues when mockito is mocking a class without superclass.\nif(serializable\n&& !classToMock.isInterface()\n&& !(Serializable.class.isAssignableFrom(classToMock))\n&& Constructors.noArgConstructorOf(classToMock) == null\n) {\nnew Reporter().serializableWontWorkForObjectsThatDontImplementSerializable(classToMock);\n}\n}",
+            "method_id": 32
+        },
+        {
+            "method_signature": "org.mockito.internal.handler.MockHandlerImpl:<init>(Lorg/mockito/mock/MockCreationSettings;)V",
+            "method_body": "public MockHandlerImpl(MockCreationSettings mockSettings) {\nthis.mockSettings = mockSettings;\nthis.mockingProgress = new ThreadSafeMockingProgress();\nthis.matchersBinder = new MatchersBinder();\nthis.invocationContainerImpl = new InvocationContainerImpl(mockingProgress, mockSettings);\n}",
+            "method_id": 33
+        },
+        {
+            "method_signature": "org.mockito.internal.handler.InvocationNotifierHandler:<init>(Lorg/mockito/internal/InternalMockHandler;Lorg/mockito/mock/MockCreationSettings;)V",
+            "method_body": "public InvocationNotifierHandler(InternalMockHandler<T> mockHandler, MockCreationSettings settings) {\nthis.mockHandler = mockHandler;\nthis.invocationListeners = settings.getInvocationListeners();\n}",
+            "method_id": 34
+        },
+        {
+            "method_signature": "org.mockito.internal.handler.NullResultGuardian:<init>(Lorg/mockito/internal/InternalMockHandler;)V",
+            "method_body": "public NullResultGuardian(InternalMockHandler delegate) {\nthis.delegate = delegate;\n}",
+            "method_id": 35
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.MockSettingsImpl:useConstructor()Lorg/mockito/MockSettings;",
+            "method_body": "public MockSettings useConstructor() {\nthis.useConstructor = true;\nreturn this;\n}",
+            "method_id": 36
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.InterceptedInvocation$SuperMethod$FromCallable:isInvokable()Z",
+            "method_body": "public boolean isInvokable() {\nreturn true;\n}",
+            "method_id": 37
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.InterceptedInvocation$SuperMethod$FromCallable:invoke()Ljava/lang/Object;",
+            "method_body": "public Object invoke() throws Throwable {\ntry {\nreturn callable.call();\n} catch (Throwable t) {\nnew ConditionalStackTraceFilter().filter(t);\nthrow t;\n}\n}",
+            "method_id": 38
+        },
+        {
+            "method_signature": "org.mockito.internal.stubbing.answers.CallsRealMethods:answer(Lorg/mockito/invocation/InvocationOnMock;)Ljava/lang/Object;",
+            "method_body": "public Object answer(InvocationOnMock invocation) throws Throwable {\nif (Modifier.isAbstract(invocation.getMethod().getModifiers())) {\nreturn RETURNS_DEFAULTS.answer(invocation);\n}\nreturn invocation.callRealMethod();\n}",
+            "method_id": 39
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.InterceptedInvocation:callRealMethod()Ljava/lang/Object;",
+            "method_body": "public Object callRealMethod() throws Throwable {\nif (!superMethod.isInvokable()) {\nnew Reporter().cannotCallAbstractRealMethod();\n}\nreturn superMethod.invoke();\n}",
+            "method_id": 40
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.MockMethodInterceptor:interceptSuperCallable(Ljava/lang/Object;Ljava/lang/reflect/Method;[Ljava/lang/Object;Ljava/util/concurrent/Callable;)Ljava/lang/Object;",
+            "method_body": "public Object interceptSuperCallable(@This Object mock,\n@Origin(cacheMethod = true) Method invokedMethod,\n@AllArguments Object[] arguments,\n@SuperCall(serializableProxy = true) Callable<?> superCall) throws Throwable {\nreturn doIntercept(\nmock,\ninvokedMethod,\narguments,\nnew InterceptedInvocation.SuperMethod.FromCallable(superCall)\n);\n}",
+            "method_id": 41
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.InterceptedInvocation$SuperMethod$FromCallable:<init>(Ljava/util/concurrent/Callable;)V",
+            "method_body": "public FromCallable(Callable<?> callable) {\nthis.callable = callable;\n}",
+            "method_id": 42
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.ClassInstantiator$UsingObjenesis:instantiate(Ljava/lang/Class;)Ljava/lang/Object;",
+            "method_body": "<T> T instantiate(Class<T> type);\n\nstatic class UsingObjenesis implements ClassInstantiator {\n\nprivate final Objenesis objenesis;\n\npublic UsingObjenesis(boolean useClassCache) {\nthis.objenesis = new ObjenesisStd(useClassCache);\n}\n\npublic <T> T instantiate(Class<T> type) {\nreturn objenesis.newInstance(type);\n}\n}",
+            "method_id": 43
+        },
+        {
+            "method_signature": "org.mockito.internal.progress.ThreadSafeMockingProgress:mockingStarted(Ljava/lang/Object;Ljava/lang/Class;)V",
+            "method_body": "public void mockingStarted(Object mock, Class classToMock) {\nthreadSafely().mockingStarted(mock, classToMock);\n}",
+            "method_id": 44
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.settings.CreationSettings:getTypeToMock()Ljava/lang/Class;",
+            "method_body": "public Class<T> getTypeToMock() {\nreturn typeToMock;\n}",
+            "method_id": 45
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.settings.CreationSettings:getInvocationListeners()Ljava/util/List;",
+            "method_body": "public List<InvocationListener> getInvocationListeners() {\nreturn invocationListeners;\n}",
+            "method_id": 46
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.settings.CreationSettings:isStubOnly()Z",
+            "method_body": "public boolean isStubOnly() {\nreturn stubOnly;\n}",
+            "method_id": 47
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.MockSettingsImpl:getOuterClassInstance()Ljava/lang/Object;",
+            "method_body": "public Object getOuterClassInstance() {\nreturn outerClassInstance;\n}",
+            "method_id": 48
+        },
+        {
+            "method_signature": "org.mockito.internal.stubbing.InvocationContainerImpl:<init>(Lorg/mockito/internal/progress/MockingProgress;Lorg/mockito/mock/MockCreationSettings;)V",
+            "method_body": "public InvocationContainerImpl(MockingProgress mockingProgress, MockCreationSettings mockSettings) {\nthis.mockingProgress = mockingProgress;\nthis.registeredInvocations = createRegisteredInvocations(mockSettings);\n}",
+            "method_id": 49
+        },
+        {
+            "method_signature": "org.mockito.internal.stubbing.InvocationContainerImpl:createRegisteredInvocations(Lorg/mockito/mock/MockCreationSettings;)Lorg/mockito/internal/verification/RegisteredInvocations;",
+            "method_body": "private RegisteredInvocations createRegisteredInvocations(MockCreationSettings mockSettings) {\nreturn mockSettings.isStubOnly()\n? new SingleRegisteredInvocation()\n: new DefaultRegisteredInvocations();\n}",
+            "method_id": 50
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.MockMethodInterceptor:<init>(Lorg/mockito/internal/InternalMockHandler;Lorg/mockito/mock/MockCreationSettings;)V",
+            "method_body": "public MockMethodInterceptor(InternalMockHandler handler, MockCreationSettings mockCreationSettings) {\nthis.handler = handler;\nthis.mockCreationSettings = mockCreationSettings;\nacrossJVMSerializationFeature = new AcrossJVMSerializationFeature();\n}",
+            "method_id": 51
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.CachingMockBytecodeGenerator:get(Ljava/lang/Class;Ljava/util/Set;)Ljava/lang/Class;",
+            "method_body": "public <T> Class<? extends T> get(final Class<T> mockedType, final Set<Class> interfaces) {\navoidingClassLeakCacheLock.lock();\ntry {\n\nClass generatedMockClass = mockCachePerClassLoaderOf(mockedType).getOrGenerateMockClass(\nmockedType,\ninterfaces\n);\n\nreturn generatedMockClass;\n} finally {\navoidingClassLeakCacheLock.unlock();\n}\n}",
+            "method_id": 52
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.CachingMockBytecodeGenerator:mockCachePerClassLoaderOf(Ljava/lang/Class;)Lorg/mockito/internal/creation/bytebuddy/CachingMockBytecodeGenerator$CachedBytecodeGenerator;",
+            "method_body": "private <T> CachedBytecodeGenerator mockCachePerClassLoaderOf(Class<T> mockedType) {\nif (!avoidingClassLeakageCache.containsKey(mockedType.getClassLoader())) {\navoidingClassLeakageCache.put(\nmockedType.getClassLoader(),\nnew CachedBytecodeGenerator(mockBytecodeGenerator)\n);\n}\nreturn avoidingClassLeakageCache.get(mockedType.getClassLoader());\n}",
+            "method_id": 53
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.MockBytecodeGenerator:generateMockClass(Ljava/lang/Class;Ljava/util/Set;)Ljava/lang/Class;",
+            "method_body": "public <T> Class<? extends T> generateMockClass(Class<T> mockedType, Set<Class> interfaces) {\nDynamicType.Builder<T> builder = byteBuddy.subclass(mockedType, ConstructorStrategy.Default.IMITATE_SUPER_TYPE)\n.name(nameFor(mockedType))\n.implement(interfaces.toArray(new Class<?>[interfaces.size()]))\n.method(any()).intercept(MethodDelegation\n.toInstanceField(MockMethodInterceptor.class, \"mockitoInterceptor\")\n.filter(isDeclaredBy(MockMethodInterceptor.class)))\n.implement(MockMethodInterceptor.MockAccess.class).intercept(FieldAccessor.ofBeanProperty())\n.method(isHashCode()).intercept(MethodDelegation.to(MockMethodInterceptor.ForHashCode.class))\n.method(isEquals()).intercept(MethodDelegation.to(MockMethodInterceptor.ForEquals.class))\n.defineField(\"serialVersionUID\", long.class, Ownership.STATIC, Visibility.PRIVATE, FieldManifestation.FINAL).value(42L);\n//            if (acrossClassLoaderSerialization) {\n//                builder = builder.implement(AcrossJVMSerializationFeature.AcrossJVMMockitoMockSerializable.class)\n//                        .intercept(MethodDelegation.to(MethodInterceptor.ForWriteReplace.class));\n//            }\nClass<?>[] allMockedTypes = new Class<?>[interfaces.size() + 1];\nallMockedTypes[0] = mockedType;\n//            System.arraycopy(interfaces.toArray(), 0, allMockedTypes, 1, interfaces.size());\nint index = 1;\nfor (Class<?> type : interfaces) {\nallMockedTypes[index++] = type;\n}\nreturn builder.make()\n.load(SearchingClassLoader.combineLoadersOf(allMockedTypes), ClassLoadingStrategy.Default.INJECTION)\n.getLoaded();\n}",
+            "method_id": 54
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.MockBytecodeGenerator:nameFor(Ljava/lang/Class;)Ljava/lang/String;",
+            "method_body": "private String nameFor(Class<?> type) {\nString typeName = type.getName();\nif (typeName.startsWith(\"java.\") || (type.getPackage() != null && type.getPackage().isSealed())) {\ntypeName = \"codegen.\" + typeName;\n}\nreturn String.format(\"%s$%s$%d\", typeName, \"MockitoMock\", Math.abs(random.nextInt()));\n}",
+            "method_id": 55
+        },
+        {
+            "method_signature": "org.mockito.internal.progress.MockingProgressImpl:mockingStarted(Ljava/lang/Object;Ljava/lang/Class;)V",
+            "method_body": "public void mockingStarted(Object mock, Class classToMock) {\nif (listener instanceof MockingStartedListener) {\n((MockingStartedListener) listener).mockingStarted(mock, classToMock);\n}\nvalidateMostStuff();\n}",
+            "method_id": 56
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.MockSettingsImpl:isUsingConstructor()Z",
+            "method_body": "public boolean isUsingConstructor() {\nreturn useConstructor;\n}",
+            "method_id": 57
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.CachingMockBytecodeGenerator$CachedBytecodeGenerator:getOrGenerateMockClass(Ljava/lang/Class;Ljava/util/Set;)Ljava/lang/Class;",
+            "method_body": "public <T> Class getOrGenerateMockClass(Class<T> mockedType, Set<Class> interfaces) {\nMockKey mockKey = MockKey.of(mockedType, interfaces);\nClass generatedMockClass = null;\nWeakReference<Class> classWeakReference = generatedClassCache.get(mockKey);\nif(classWeakReference != null) {\ngeneratedMockClass = classWeakReference.get();\n}\nif(generatedMockClass == null) {\ngeneratedMockClass = generate(mockedType, interfaces);\n}\ngeneratedClassCache.put(mockKey, new WeakReference<Class>(generatedMockClass));\nreturn generatedMockClass;\n}",
+            "method_id": 58
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.CachingMockBytecodeGenerator$CachedBytecodeGenerator:generate(Ljava/lang/Class;Ljava/util/Set;)Ljava/lang/Class;",
+            "method_body": "private <T> Class<? extends T> generate(Class<T> mockedType, Set<Class> interfaces) {\ntry {\nreturn generator.generateMockClass(mockedType, interfaces);\n} catch (Exception bytecodeGenerationFailed) {\nthrow prettifyFailure(mockedType, bytecodeGenerationFailed);\n}\n}",
+            "method_id": 59
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.CachingMockBytecodeGenerator$CachedBytecodeGenerator$MockKey:<init>(Ljava/lang/Class;Ljava/util/Set;)V",
+            "method_body": "private MockKey(Class<T> mockedType, Set<Class> interfaces) {\nthis.mockedType = mockedType.getName();\nfor (Class anInterface : interfaces) {\ntypes.add(anInterface.getName());\n}\ntypes.add(this.mockedType);\n}",
+            "method_id": 60
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.CachingMockBytecodeGenerator$CachedBytecodeGenerator$MockKey:hashCode()I",
+            "method_body": "public int hashCode() {\nint result = mockedType.hashCode();\nresult = 31 * result + types.hashCode();\nreturn result;\n}",
+            "method_id": 61
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.CachingMockBytecodeGenerator$CachedBytecodeGenerator$MockKey:of(Ljava/lang/Class;Ljava/util/Set;)Lorg/mockito/internal/creation/bytebuddy/CachingMockBytecodeGenerator$CachedBytecodeGenerator$MockKey;",
+            "method_body": "public static <T> MockKey of(Class<T> mockedType, Set<Class> interfaces) {\nreturn new MockKey<T>(mockedType, interfaces);\n}",
+            "method_id": 62
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.MockSettingsImpl:getSpiedInstance()Ljava/lang/Object;",
+            "method_body": "public Object getSpiedInstance() {\nreturn spiedInstance;\n}",
+            "method_id": 63
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.MockSettingsImpl:getExtraInterfaces()Ljava/util/Set;",
+            "method_body": "public Set<Class> getExtraInterfaces() {\nreturn extraInterfaces;\n}",
+            "method_id": 64
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.util.SearchingClassLoader:combineLoadersOf([Ljava/lang/Class;)Ljava/lang/ClassLoader;",
+            "method_body": "public static ClassLoader combineLoadersOf(Class<?>... classes) {\nreturn combineLoadersOf(classes[0], classes);\n}",
+            "method_id": 65
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.util.SearchingClassLoader:combineLoadersOf(Ljava/lang/Class;[Ljava/lang/Class;)Ljava/lang/ClassLoader;",
+            "method_body": "private static ClassLoader combineLoadersOf(Class<?> first, Class<?>... others) {\nList<ClassLoader> loaders = new ArrayList<ClassLoader>();\n\naddIfNewElement(loaders, first.getClassLoader());\nfor (Class<?> c : others) {\naddIfNewElement(loaders, c.getClassLoader());\n}\n\n// To support Eclipse Plug-in tests.\n// In an Eclipse plug-in, we will not be on the system class loader\n// but in the class loader of the plug-in.\n//\n// Note: I've been unable to reproduce the error in the test suite.\naddIfNewElement(loaders, SearchingClassLoader.class.getClassLoader());\n\n// To support the Maven Surefire plugin.\n// Note: I've been unable to reproduce the error in the test suite.\naddIfNewElement(loaders, currentThread().getContextClassLoader());\n\n//Had to comment that out because it didn't work with in-container Spring tests\n//addIfNewElement(loaders, ClassLoader.getSystemClassLoader());\n\nreturn combine(loaders);\n}",
+            "method_id": 66
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.util.SearchingClassLoader:combine(Ljava/util/List;)Ljava/lang/ClassLoader;",
+            "method_body": "private static ClassLoader combine(List<ClassLoader> parentLoaders) {\nClassLoader loader = parentLoaders.get(parentLoaders.size()-1);\n\nfor (int i = parentLoaders.size()-2; i >= 0; i--) {\nloader = new SearchingClassLoader(parentLoaders.get(i), loader);\n}\n\nreturn loader;\n}",
+            "method_id": 67
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.util.SearchingClassLoader:addIfNewElement(Ljava/util/List;Ljava/lang/ClassLoader;)V",
+            "method_body": "private static void addIfNewElement(List<ClassLoader> loaders, ClassLoader c) {\nif (c != null && !loaders.contains(c)) {\nloaders.add(c);\n}\n}",
+            "method_id": 68
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.GlobalConfiguration:getIt()Lorg/mockito/configuration/IMockitoConfiguration;",
+            "method_body": "IMockitoConfiguration getIt() {\nreturn GLOBAL_CONFIGURATION.get();\n}",
+            "method_id": 69
+        },
+        {
+            "method_signature": "org.mockito.internal.progress.ThreadSafeMockingProgress:reset()V",
+            "method_body": "public void reset() {\nthreadSafely().reset();\n}",
+            "method_id": 70
+        },
+        {
+            "method_signature": "org.mockito.internal.progress.MockingProgressImpl:reset()V",
+            "method_body": "public void reset() {\nstubbingInProgress = null;\nverificationMode = null;\ngetArgumentMatcherStorage().reset();\n}",
+            "method_id": 71
+        },
+        {
+            "method_signature": "org.mockito.internal.progress.ArgumentMatcherStorageImpl:reset()V",
+            "method_body": "public void reset() {\nmatcherStack.clear();\n}",
+            "method_id": 72
+        },
+        {
+            "method_signature": "org.mockito.internal.util.MockNameImpl:toInstanceName(Ljava/lang/Class;)Ljava/lang/String;",
+            "method_body": "private static String toInstanceName(Class<?> clazz) {\nString className = clazz.getSimpleName();\nif (className.length() == 0) {\n//it's an anonymous class, let's get name from the parent\nclassName = clazz.getSuperclass().getSimpleName();\n}\n//lower case first letter\nreturn className.substring(0, 1).toLowerCase() + className.substring(1);\n}",
+            "method_id": 73
+        },
+        {
+            "method_signature": "org.mockito.internal.progress.ThreadSafeMockingProgress:resetOngoingStubbing()V",
+            "method_body": "public void resetOngoingStubbing() {\nthreadSafely().resetOngoingStubbing();\n}",
+            "method_id": 74
+        },
+        {
+            "method_signature": "org.mockito.internal.progress.MockingProgressImpl:resetOngoingStubbing()V",
+            "method_body": "public void resetOngoingStubbing() {\niOngoingStubbing = null;\n}",
+            "method_id": 75
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.InjectingAnnotationEngine:process(Ljava/lang/Class;Ljava/lang/Object;)V",
+            "method_body": "public void process(Class<?> clazz, Object testInstance) {\nprocessIndependentAnnotations(testInstance.getClass(), testInstance);\nprocessInjectMocks(testInstance.getClass(), testInstance);\n}",
+            "method_id": 76
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.InjectingAnnotationEngine:processInjectMocks(Ljava/lang/Class;Ljava/lang/Object;)V",
+            "method_body": "private void processInjectMocks(final Class<?> clazz, final Object testInstance) {\nClass<?> classContext = clazz;\nwhile (classContext != Object.class) {\ninjectMocks(testInstance);\nclassContext = classContext.getSuperclass();\n}\n}",
+            "method_id": 77
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.InjectingAnnotationEngine:processIndependentAnnotations(Ljava/lang/Class;Ljava/lang/Object;)V",
+            "method_body": "private void processIndependentAnnotations(final Class<?> clazz, final Object testInstance) {\nClass<?> classContext = clazz;\nwhile (classContext != Object.class) {\n//this will create @Mocks, @Captors, etc:\ndelegate.process(classContext, testInstance);\n//this will create @Spies:\nspyAnnotationEngine.process(classContext, testInstance);\n\nclassContext = classContext.getSuperclass();\n}\n}",
+            "method_id": 78
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.InjectingAnnotationEngine:injectMocks(Ljava/lang/Object;)V",
+            "method_body": "public void injectMocks(final Object testClassInstance) {\nClass<?> clazz = testClassInstance.getClass();\nSet<Field> mockDependentFields = new HashSet<Field>();\nSet<Object> mocks = newMockSafeHashSet();\n\nwhile (clazz != Object.class) {\nnew InjectMocksScanner(clazz).addTo(mockDependentFields);\nnew MockScanner(testClassInstance, clazz).addPreparedMocks(mocks);\nclazz = clazz.getSuperclass();\n}\n\nnew DefaultInjectionEngine().injectMocksOnFields(mockDependentFields, mocks, testClassInstance);\n}",
+            "method_id": 79
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.DefaultAnnotationEngine:process(Ljava/lang/Class;Ljava/lang/Object;)V",
+            "method_body": "public void process(Class<?> clazz, Object testInstance) {\nField[] fields = clazz.getDeclaredFields();\nfor (Field field : fields) {\nboolean alreadyAssigned = false;\nfor(Annotation annotation : field.getAnnotations()) {\nObject mock = createMockFor(annotation, field);\nif (mock != null) {\nthrowIfAlreadyAssigned(field, alreadyAssigned);\nalreadyAssigned = true;\ntry {\nnew FieldSetter(testInstance, field).set(mock);\n} catch (Exception e) {\nthrow new MockitoException(\"Problems setting field \" + field.getName() + \" annotated with \"\n+ annotation, e);\n}\n}\n}\n}\n}",
+            "method_id": 80
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.injection.scanner.InjectMocksScanner:<init>(Ljava/lang/Class;)V",
+            "method_body": "public InjectMocksScanner(Class<?> clazz) {\nthis.clazz = clazz;\n}",
+            "method_id": 81
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.injection.scanner.InjectMocksScanner:addTo(Ljava/util/Set;)V",
+            "method_body": "public void addTo(Set<Field> mockDependentFields) {\nmockDependentFields.addAll(scan());\n}",
+            "method_id": 82
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.injection.scanner.MockScanner:<init>(Ljava/lang/Object;Ljava/lang/Class;)V",
+            "method_body": "public MockScanner(Object instance, Class<?> clazz) {\nthis.instance = instance;\nthis.clazz = clazz;\n}",
+            "method_id": 83
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.injection.scanner.MockScanner:addPreparedMocks(Ljava/util/Set;)V",
+            "method_body": "public void addPreparedMocks(Set<Object> mocks) {\nmocks.addAll(scan());\n}",
+            "method_id": 84
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.injection.scanner.MockScanner:scan()Ljava/util/Set;",
+            "method_body": "private Set<Object> scan() {\nSet<Object> mocks = newMockSafeHashSet();\nfor (Field field : clazz.getDeclaredFields()) {\n// mock or spies only\nFieldReader fieldReader = new FieldReader(instance, field);\n\nObject mockInstance = preparedMock(fieldReader.read(), field);\nif (mockInstance != null) {\nmocks.add(mockInstance);\n}\n}\nreturn mocks;\n}",
+            "method_id": 85
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.DefaultInjectionEngine:injectMocksOnFields(Ljava/util/Set;Ljava/util/Set;Ljava/lang/Object;)V",
+            "method_body": "public void injectMocksOnFields(Set<Field> needingInjection, Set<Object> mocks, Object testClassInstance) {\nMockInjection.onFields(needingInjection, testClassInstance)\n.withMocks(mocks)\n.tryConstructorInjection()\n.tryPropertyOrFieldInjection()\n.handleSpyAnnotation()\n.apply();\n}",
+            "method_id": 86
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.injection.MockInjection$OngoingMockInjection:handleSpyAnnotation()Lorg/mockito/internal/configuration/injection/MockInjection$OngoingMockInjection;",
+            "method_body": "public OngoingMockInjection handleSpyAnnotation() {\npostInjectionStrategies.thenTry(new SpyOnInjectedFieldsHandler());\nreturn this;\n}",
+            "method_id": 87
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.DefaultAnnotationEngine:<init>()V",
+            "method_body": "public DefaultAnnotationEngine() {\nregisterAnnotationProcessor(Mock.class, new MockAnnotationProcessor());\nregisterAnnotationProcessor(MockitoAnnotations.Mock.class, new MockitoAnnotationsMockAnnotationProcessor());\nregisterAnnotationProcessor(Captor.class, new CaptorAnnotationProcessor());\n}",
+            "method_id": 88
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.DefaultAnnotationEngine:registerAnnotationProcessor(Ljava/lang/Class;Lorg/mockito/internal/configuration/FieldAnnotationProcessor;)V",
+            "method_body": "private <A extends Annotation> void registerAnnotationProcessor(Class<A> annotationClass, FieldAnnotationProcessor<A> fieldAnnotationProcessor) {\nannotationProcessorMap.put(annotationClass, fieldAnnotationProcessor);\n}",
+            "method_id": 89
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.injection.MockInjection:onFields(Ljava/util/Set;Ljava/lang/Object;)Lorg/mockito/internal/configuration/injection/MockInjection$OngoingMockInjection;",
+            "method_body": "public static OngoingMockInjection onFields(Set<Field> fields, Object ofInstance) {\nreturn new OngoingMockInjection(fields, ofInstance);\n}",
+            "method_id": 90
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.injection.MockInjection$OngoingMockInjection:tryConstructorInjection()Lorg/mockito/internal/configuration/injection/MockInjection$OngoingMockInjection;",
+            "method_body": "public OngoingMockInjection tryConstructorInjection() {\ninjectionStrategies.thenTry(new ConstructorInjection());\nreturn this;\n}",
+            "method_id": 91
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.injection.MockInjection$OngoingMockInjection:tryPropertyOrFieldInjection()Lorg/mockito/internal/configuration/injection/MockInjection$OngoingMockInjection;",
+            "method_body": "public OngoingMockInjection tryPropertyOrFieldInjection() {\ninjectionStrategies.thenTry(new PropertyAndSetterInjection());\nreturn this;\n}",
+            "method_id": 92
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.injection.filter.TypeBasedCandidateFilter:<init>(Lorg/mockito/internal/configuration/injection/filter/MockCandidateFilter;)V",
+            "method_body": "public TypeBasedCandidateFilter(MockCandidateFilter next) {\nthis.next = next;\n}",
+            "method_id": 93
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.injection.filter.NameBasedCandidateFilter:<init>(Lorg/mockito/internal/configuration/injection/filter/MockCandidateFilter;)V",
+            "method_body": "public NameBasedCandidateFilter(MockCandidateFilter next) {\nthis.next = next;\n}",
+            "method_id": 94
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.injection.MockInjection$OngoingMockInjection:apply()V",
+            "method_body": "public void apply() {\nfor (Field field : fields) {\ninjectionStrategies.process(field, fieldOwner, mocks);\npostInjectionStrategies.process(field, fieldOwner, mocks);\n}\n}",
+            "method_id": 95
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.injection.MockInjectionStrategy:thenTry(Lorg/mockito/internal/configuration/injection/MockInjectionStrategy;)Lorg/mockito/internal/configuration/injection/MockInjectionStrategy;",
+            "method_body": "public MockInjectionStrategy thenTry(MockInjectionStrategy strategy) {\nif(nextStrategy != null) {\nnextStrategy.thenTry(strategy);\n} else {\nnextStrategy = strategy;\n}\nreturn strategy;\n}",
+            "method_id": 96
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.injection.MockInjection$OngoingMockInjection:withMocks(Ljava/util/Set;)Lorg/mockito/internal/configuration/injection/MockInjection$OngoingMockInjection;",
+            "method_body": "public OngoingMockInjection withMocks(Set<Object> mocks) {\nthis.mocks.addAll(checkNotNull(mocks, \"mocks\"));\nreturn this;\n}",
+            "method_id": 97
+        },
+        {
+            "method_signature": "org.mockito.internal.util.collections.HashCodeAndEqualsSafeSet:addAll(Ljava/util/Collection;)Z",
+            "method_body": "public boolean addAll(Collection<?> mocks) {\nreturn backingHashSet.addAll(asWrappedMocks(mocks));\n}",
+            "method_id": 98
+        },
+        {
+            "method_signature": "org.mockito.internal.util.Checks:checkItemsNotNull(Ljava/lang/Iterable;Ljava/lang/String;)Ljava/lang/Iterable;",
+            "method_body": "public static <T extends Iterable> T checkItemsNotNull(T iterable, String checkedIterable) {\ncheckNotNull(iterable, checkedIterable);\nfor (Object item : iterable) {\ncheckNotNull(item, \"item in \" + checkedIterable);\n}\nreturn iterable;\n}",
+            "method_id": 99
+        },
+        {
+            "method_signature": "org.mockito.internal.util.collections.Sets:newMockSafeHashSet([Ljava/lang/Object;)Ljava/util/Set;",
+            "method_body": "public static Set<Object> newMockSafeHashSet(Object... mocks) {\nreturn HashCodeAndEqualsSafeSet.of(mocks);\n}",
+            "method_id": 100
+        },
+        {
+            "method_signature": "org.mockito.internal.util.collections.HashCodeAndEqualsSafeSet:iterator()Ljava/util/Iterator;",
+            "method_body": "public Iterator<Object> iterator() {\nreturn new Iterator<Object>() {\nprivate final Iterator<HashCodeAndEqualsMockWrapper> iterator = backingHashSet.iterator();\n\npublic boolean hasNext() {\nreturn iterator.hasNext();\n}\n\npublic Object next() {\nreturn iterator.next().get();\n}\n\npublic void remove() {\niterator.remove();\n}\n};\n}",
+            "method_id": 101
+        },
+        {
+            "method_signature": "org.mockito.internal.util.collections.HashCodeAndEqualsSafeSet$1:hasNext()Z",
+            "method_body": "public Iterator<Object> iterator() {\nreturn new Iterator<Object>() {\nprivate final Iterator<HashCodeAndEqualsMockWrapper> iterator = backingHashSet.iterator();\n\npublic boolean hasNext() {\nreturn iterator.hasNext();\n}\n\npublic Object next() {\nreturn iterator.next().get();\n}\n\npublic void remove() {\niterator.remove();\n}\n};\n}",
+            "method_id": 102
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.injection.MockInjection$OngoingMockInjection:<init>(Ljava/util/Set;Ljava/lang/Object;)V",
+            "method_body": "private OngoingMockInjection(Set<Field> fields, Object fieldOwner) {\nthis.fieldOwner = checkNotNull(fieldOwner, \"fieldOwner\");\nthis.fields.addAll(checkItemsNotNull(fields, \"fields\"));\n}",
+            "method_id": 103
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.injection.MockInjectionStrategy:nop()Lorg/mockito/internal/configuration/injection/MockInjectionStrategy;",
+            "method_body": "public static final MockInjectionStrategy nop() {\nreturn new MockInjectionStrategy() {\nprotected boolean processInjection(Field field, Object fieldOwner, Set<Object> mockCandidates) {\nreturn false;\n}\n};\n}",
+            "method_id": 104
+        },
+        {
+            "method_signature": "org.mockito.internal.util.collections.HashCodeAndEqualsSafeSet:of([Ljava/lang/Object;)Lorg/mockito/internal/util/collections/HashCodeAndEqualsSafeSet;",
+            "method_body": "public static HashCodeAndEqualsSafeSet of(Object... mocks) {\nreturn of(Arrays.asList(mocks));\n}",
+            "method_id": 105
+        },
+        {
+            "method_signature": "org.mockito.internal.util.collections.HashCodeAndEqualsSafeSet:of(Ljava/lang/Iterable;)Lorg/mockito/internal/util/collections/HashCodeAndEqualsSafeSet;",
+            "method_body": "public static HashCodeAndEqualsSafeSet of(Iterable<Object> objects) {\nHashCodeAndEqualsSafeSet hashCodeAndEqualsSafeSet = new HashCodeAndEqualsSafeSet();\nif (objects != null) {\nfor (Object mock : objects) {\nhashCodeAndEqualsSafeSet.add(mock);\n}\n}\nreturn hashCodeAndEqualsSafeSet;\n}",
+            "method_id": 106
+        },
+        {
+            "method_signature": "org.mockito.internal.progress.ThreadSafeMockingProgress:validateState()V",
+            "method_body": "public void validateState() {\nthreadSafely().validateState();\n}",
+            "method_id": 107
+        },
+        {
+            "method_signature": "org.mockito.internal.progress.MockingProgressImpl:validateState()V",
+            "method_body": "public void validateState() {\nvalidateMostStuff();\n\n//validate stubbing:\nif (stubbingInProgress != null) {\nLocation temp = stubbingInProgress;\nstubbingInProgress = null;\nreporter.unfinishedStubbing(temp);\n}\n}",
+            "method_id": 108
+        },
+        {
+            "method_signature": "org.mockito.internal.util.Checks:checkNotNull(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;",
+            "method_body": "public static <T> T checkNotNull(T value, String checkedValue) {\nif(value == null) {\nthrow new NullPointerException(checkedValue + \" should not be null\");\n}\nreturn value;\n}",
+            "method_id": 109
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.GlobalConfiguration:validate()V",
+            "method_body": "public static void validate() {\nnew GlobalConfiguration();\n}",
+            "method_id": 110
+        },
+        {
+            "method_signature": "org.mockito.internal.progress.ThreadSafeMockingProgress:threadSafely()Lorg/mockito/internal/progress/MockingProgress;",
+            "method_body": "static MockingProgress threadSafely() {\nif (mockingProgress.get() == null) {\nmockingProgress.set(new MockingProgressImpl());\n}\nreturn mockingProgress.get();\n}",
+            "method_id": 111
+        },
+        {
+            "method_signature": "org.mockito.internal.progress.MockingProgressImpl:validateMostStuff()V",
+            "method_body": "private void validateMostStuff() {\n//State is cool when GlobalConfiguration is already loaded\n//this cannot really be tested functionally because I cannot dynamically mess up org.mockito.configuration.MockitoConfiguration class\nGlobalConfiguration.validate();\n\nif (verificationMode != null) {\nLocation location = verificationMode.getLocation();\nverificationMode = null;\nreporter.unfinishedVerificationException(location);\n}\n\ngetArgumentMatcherStorage().validateState();\n}",
+            "method_id": 112
+        },
+        {
+            "method_signature": "org.mockito.internal.progress.MockingProgressImpl:getArgumentMatcherStorage()Lorg/mockito/internal/progress/ArgumentMatcherStorage;",
+            "method_body": "public ArgumentMatcherStorage getArgumentMatcherStorage() {\nreturn argumentMatcherStorage;\n}",
+            "method_id": 113
+        },
+        {
+            "method_signature": "org.mockito.internal.progress.ArgumentMatcherStorageImpl:validateState()V",
+            "method_body": "public void validateState() {\nif (!matcherStack.isEmpty()) {\nArrayList lastMatchers = new ArrayList<LocalizedMatcher>(matcherStack);\nmatcherStack.clear();\nnew Reporter().misplacedArgumentMatcher(lastMatchers);\n}\n}",
+            "method_id": 114
+        },
+        {
+            "method_signature": "org.mockito.Answers:answer(Lorg/mockito/invocation/InvocationOnMock;)Ljava/lang/Object;",
+            "method_body": "public Object answer(InvocationOnMock invocation) throws Throwable {\nreturn implementation.answer(invocation);\n}",
+            "method_id": 115
+        },
+        {
+            "method_signature": "org.mockito.internal.stubbing.InvocationContainerImpl:resetInvocationForPotentialStubbing(Lorg/mockito/internal/invocation/InvocationMatcher;)V",
+            "method_body": "public void resetInvocationForPotentialStubbing(InvocationMatcher invocationMatcher) {\nthis.invocationForStubbing = invocationMatcher;\n}",
+            "method_id": 116
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.settings.CreationSettings:getDefaultAnswer()Lorg/mockito/stubbing/Answer;",
+            "method_body": "public Answer<Object> getDefaultAnswer() {\nreturn defaultAnswer;\n}",
+            "method_id": 117
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.DelegatingMethod:getJavaMethod()Ljava/lang/reflect/Method;",
+            "method_body": "public Method getJavaMethod() {\nreturn method;\n}",
+            "method_id": 118
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.DelegatingMethod:isVarArgs()Z",
+            "method_body": "public boolean isVarArgs() {\nreturn method.isVarArgs();\n}",
+            "method_id": 119
+        },
+        {
+            "method_signature": "org.mockito.internal.progress.ThreadSafeMockingProgress:reportOngoingStubbing(Lorg/mockito/internal/progress/IOngoingStubbing;)V",
+            "method_body": "public void reportOngoingStubbing(IOngoingStubbing iOngoingStubbing) {\nthreadSafely().reportOngoingStubbing(iOngoingStubbing);\n}",
+            "method_id": 120
+        },
+        {
+            "method_signature": "org.mockito.internal.progress.MockingProgressImpl:reportOngoingStubbing(Lorg/mockito/internal/progress/IOngoingStubbing;)V",
+            "method_body": "public void reportOngoingStubbing(IOngoingStubbing iOngoingStubbing) {\nthis.iOngoingStubbing = iOngoingStubbing;\n}",
+            "method_id": 121
+        },
+        {
+            "method_signature": "org.mockito.internal.stubbing.OngoingStubbingImpl:<init>(Lorg/mockito/internal/stubbing/InvocationContainerImpl;)V",
+            "method_body": "public OngoingStubbingImpl(InvocationContainerImpl invocationContainerImpl) {\nthis.invocationContainerImpl = invocationContainerImpl;\n}",
+            "method_id": 122
+        },
+        {
+            "method_signature": "org.mockito.internal.handler.InvocationNotifierHandler:notifyMethodCall(Lorg/mockito/invocation/Invocation;Ljava/lang/Object;)V",
+            "method_body": "private void notifyMethodCall(Invocation invocation, Object returnValue) {\nfor (InvocationListener listener : invocationListeners) {\ntry {\nlistener.reportInvocation(new NotifiedMethodInvocationReport(invocation, returnValue));\n} catch(Throwable listenerThrowable) {\nnew Reporter().invocationListenerThrewException(listener, listenerThrowable);\n}\n}\n}",
+            "method_id": 123
+        },
+        {
+            "method_signature": "org.mockito.internal.stubbing.InvocationContainerImpl:findAnswerFor(Lorg/mockito/invocation/Invocation;)Lorg/mockito/internal/stubbing/StubbedInvocationMatcher;",
+            "method_body": "public StubbedInvocationMatcher findAnswerFor(Invocation invocation) {\nsynchronized (stubbed) {\nfor (StubbedInvocationMatcher s : stubbed) {\nif (s.matches(invocation)) {\ns.markStubUsed(invocation);\ninvocation.markStubbed(new StubInfoImpl(s));\nreturn s;\n}\n}\n}\n\nreturn null;\n}",
+            "method_id": 124
+        },
+        {
+            "method_signature": "org.mockito.internal.verification.DefaultRegisteredInvocations:add(Lorg/mockito/invocation/Invocation;)V",
+            "method_body": "public void add(Invocation invocation) {\nsynchronized (invocations) {\ninvocations.add(invocation);\n}\n}",
+            "method_id": 125
+        },
+        {
+            "method_signature": "org.mockito.internal.stubbing.InvocationContainerImpl:setInvocationForPotentialStubbing(Lorg/mockito/internal/invocation/InvocationMatcher;)V",
+            "method_body": "public void setInvocationForPotentialStubbing(InvocationMatcher invocation) {\nregisteredInvocations.add(invocation.getInvocation());\nthis.invocationForStubbing = invocation;\n}",
+            "method_id": 126
+        },
+        {
+            "method_signature": "org.mockito.internal.progress.ThreadSafeMockingProgress:pullVerificationMode()Lorg/mockito/verification/VerificationMode;",
+            "method_body": "public VerificationMode pullVerificationMode() {\nreturn threadSafely().pullVerificationMode();\n}",
+            "method_id": 127
+        },
+        {
+            "method_signature": "org.mockito.internal.progress.MockingProgressImpl:pullVerificationMode()Lorg/mockito/verification/VerificationMode;",
+            "method_body": "public VerificationMode pullVerificationMode() {\nif (verificationMode == null) {\nreturn null;\n}\n\nVerificationMode temp = verificationMode.getObject();\nverificationMode = null;\nreturn temp;\n}",
+            "method_id": 128
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.InterceptedInvocation:getMethod()Ljava/lang/reflect/Method;",
+            "method_body": "public Method getMethod() {\nreturn mockitoMethod.getJavaMethod();\n}",
+            "method_id": 129
+        },
+        {
+            "method_signature": "org.mockito.internal.progress.ArgumentMatcherStorageImpl:pullLocalizedMatchers()Ljava/util/List;",
+            "method_body": "public List<LocalizedMatcher> pullLocalizedMatchers() {\nif (matcherStack.isEmpty()) {\nreturn Collections.emptyList();\n}\n\nList<LocalizedMatcher> matchers = new ArrayList<LocalizedMatcher>(matcherStack);\nmatcherStack.clear();\nreturn (List) matchers;\n}",
+            "method_id": 130
+        },
+        {
+            "method_signature": "org.mockito.internal.invocation.MatchersBinder:bindMatchers(Lorg/mockito/internal/progress/ArgumentMatcherStorage;Lorg/mockito/invocation/Invocation;)Lorg/mockito/internal/invocation/InvocationMatcher;",
+            "method_body": "public InvocationMatcher bindMatchers(ArgumentMatcherStorage argumentMatcherStorage, Invocation invocation) {\nList<LocalizedMatcher> lastMatchers = argumentMatcherStorage.pullLocalizedMatchers();\nvalidateMatchers(invocation, lastMatchers);\n\nInvocationMatcher invocationWithMatchers = new InvocationMatcher(invocation, (List<Matcher>)(List) lastMatchers);\nreturn invocationWithMatchers;\n}",
+            "method_id": 131
+        },
+        {
+            "method_signature": "org.mockito.internal.invocation.MatchersBinder:validateMatchers(Lorg/mockito/invocation/Invocation;Ljava/util/List;)V",
+            "method_body": "private void validateMatchers(Invocation invocation, List<LocalizedMatcher> lastMatchers) {\nif (!lastMatchers.isEmpty()) {\nint recordedMatchersSize = lastMatchers.size();\nint expectedMatchersSize = invocation.getArguments().length;\nif (expectedMatchersSize != recordedMatchersSize) {\nnew Reporter().invalidUseOfMatchers(expectedMatchersSize, lastMatchers);\n}\n}\n}",
+            "method_id": 132
+        },
+        {
+            "method_signature": "org.mockito.internal.handler.NullResultGuardian:handle(Lorg/mockito/invocation/Invocation;)Ljava/lang/Object;",
+            "method_body": "public Object handle(Invocation invocation) throws Throwable {\nObject result = delegate.handle(invocation);\nClass<?> returnType = invocation.getMethod().getReturnType();\nif(result == null && returnType.isPrimitive()) {\n//primitive values cannot be null\nreturn new HandyReturnValues().returnFor(returnType);\n} else {\nreturn result;\n}\n}",
+            "method_id": 133
+        },
+        {
+            "method_signature": "org.mockito.internal.handler.InvocationNotifierHandler:handle(Lorg/mockito/invocation/Invocation;)Ljava/lang/Object;",
+            "method_body": "public Object handle(Invocation invocation) throws Throwable {\ntry {\nObject returnedValue = mockHandler.handle(invocation);\nnotifyMethodCall(invocation, returnedValue);\nreturn returnedValue;\n} catch (Throwable t){\nnotifyMethodCallException(invocation, t);\nthrow t;\n}\n}",
+            "method_id": 134
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.MockMethodInterceptor:doIntercept(Ljava/lang/Object;Ljava/lang/reflect/Method;[Ljava/lang/Object;Lorg/mockito/internal/creation/bytebuddy/InterceptedInvocation$SuperMethod;)Ljava/lang/Object;",
+            "method_body": "private Object doIntercept(Object mock,\nMethod invokedMethod,\nObject[] arguments,\nInterceptedInvocation.SuperMethod superMethod) throws Throwable {\nreturn handler.handle(new InterceptedInvocation(\nmock,\ncreateMockitoMethod(invokedMethod),\narguments,\nsuperMethod,\nSequenceNumber.next()\n));\n}",
+            "method_id": 135
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.MockMethodInterceptor:createMockitoMethod(Ljava/lang/reflect/Method;)Lorg/mockito/internal/invocation/MockitoMethod;",
+            "method_body": "private MockitoMethod createMockitoMethod(Method method) {\nif (mockCreationSettings.isSerializable()) {\nreturn new SerializableMethod(method);\n} else {\nreturn new DelegatingMethod(method);\n}\n}",
+            "method_id": 136
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.InterceptedInvocation:<init>(Ljava/lang/Object;Lorg/mockito/internal/invocation/MockitoMethod;[Ljava/lang/Object;Lorg/mockito/internal/creation/bytebuddy/InterceptedInvocation$SuperMethod;I)V",
+            "method_body": "public InterceptedInvocation(Object mock,\nMockitoMethod mockitoMethod,\nObject[] arguments,\nSuperMethod superMethod,\nint sequenceNumber) {\nthis.mock = mock;\nthis.mockitoMethod = mockitoMethod;\nthis.arguments = ArgumentsProcessor.expandVarArgs(mockitoMethod.isVarArgs(), arguments);\nthis.rawArguments = arguments;\nthis.superMethod = superMethod;\nthis.sequenceNumber = sequenceNumber;\nlocation = new LocationImpl();\n}",
+            "method_id": 137
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.bytebuddy.InterceptedInvocation:getArguments()[Ljava/lang/Object;",
+            "method_body": "public Object[] getArguments() {\nreturn arguments;\n}",
+            "method_id": 138
+        },
+        {
+            "method_signature": "org.mockito.internal.progress.SequenceNumber:next()I",
+            "method_body": "public static synchronized int next() {\nreturn sequenceNumber++;\n}",
+            "method_id": 139
+        },
+        {
+            "method_signature": "org.mockito.internal.handler.MockHandlerImpl:handle(Lorg/mockito/invocation/Invocation;)Ljava/lang/Object;",
+            "method_body": "public Object handle(Invocation invocation) throws Throwable {\nif (invocationContainerImpl.hasAnswersForStubbing()) {\n// stubbing voids with stubVoid() or doAnswer() style\nInvocationMatcher invocationMatcher = matchersBinder.bindMatchers(\nmockingProgress.getArgumentMatcherStorage(),\ninvocation\n);\ninvocationContainerImpl.setMethodForStubbing(invocationMatcher);\nreturn null;\n}\nVerificationMode verificationMode = mockingProgress.pullVerificationMode();\n\nInvocationMatcher invocationMatcher = matchersBinder.bindMatchers(\nmockingProgress.getArgumentMatcherStorage(),\ninvocation\n);\n\nmockingProgress.validateState();\n\n// if verificationMode is not null then someone is doing verify()\nif (verificationMode != null) {\n// We need to check if verification was started on the correct mock\n// - see VerifyingWithAnExtraCallToADifferentMockTest (bug 138)\nif (((MockAwareVerificationMode) verificationMode).getMock() == invocation.getMock()) {\nVerificationDataImpl data = createVerificationData(invocationContainerImpl, invocationMatcher);\nverificationMode.verify(data);\nreturn null;\n} else {\n// this means there is an invocation on a different mock. Re-adding verification mode\n// - see VerifyingWithAnExtraCallToADifferentMockTest (bug 138)\nmockingProgress.verificationStarted(verificationMode);\n}\n}\n\n// prepare invocation for stubbing\ninvocationContainerImpl.setInvocationForPotentialStubbing(invocationMatcher);\nOngoingStubbingImpl<T> ongoingStubbing = new OngoingStubbingImpl<T>(invocationContainerImpl);\nmockingProgress.reportOngoingStubbing(ongoingStubbing);\n\n// look for existing answer for this invocation\nStubbedInvocationMatcher stubbedInvocation = invocationContainerImpl.findAnswerFor(invocation);\n\nif (stubbedInvocation != null) {\nstubbedInvocation.captureArgumentsFrom(invocation);\nreturn stubbedInvocation.answer(invocation);\n} else {\nObject ret = mockSettings.getDefaultAnswer().answer(invocation);\n\n// redo setting invocation for potential stubbing in case of partial\n// mocks / spies.\n// Without it, the real method inside 'when' might have delegated\n// to other self method and overwrite the intended stubbed method\n// with a different one. The reset is required to avoid runtime exception that validates return type with stubbed method signature.\ninvocationContainerImpl.resetInvocationForPotentialStubbing(invocationMatcher);\nreturn ret;\n}\n}",
+            "method_id": 140
+        },
+        {
+            "method_signature": "org.mockito.internal.stubbing.InvocationContainerImpl:hasAnswersForStubbing()Z",
+            "method_body": "public boolean hasAnswersForStubbing() {\nreturn !answersForStubbing.isEmpty();\n}",
+            "method_id": 141
+        },
+        {
+            "method_signature": "org.mockito.internal.invocation.InvocationMatcher:getInvocation()Lorg/mockito/invocation/Invocation;",
+            "method_body": "public Invocation getInvocation() {\nreturn this.invocation;\n}",
+            "method_id": 142
+        },
+        {
+            "method_signature": "org.mockito.internal.creation.DelegatingMethod:<init>(Ljava/lang/reflect/Method;)V",
+            "method_body": "public DelegatingMethod(Method method) {\nassert method != null : \"Method cannot be null\";\nthis.method = method;\n}",
+            "method_id": 143
+        },
+        {
+            "method_signature": "org.mockito.internal.progress.ThreadSafeMockingProgress:getArgumentMatcherStorage()Lorg/mockito/internal/progress/ArgumentMatcherStorage;",
+            "method_body": "public ArgumentMatcherStorage getArgumentMatcherStorage() {\nreturn threadSafely().getArgumentMatcherStorage();\n}",
+            "method_id": 144
+        },
+        {
+            "method_signature": "org.mockito.internal.invocation.InvocationMatcher:<init>(Lorg/mockito/invocation/Invocation;Ljava/util/List;)V",
+            "method_body": "public InvocationMatcher(Invocation invocation, List<Matcher> matchers) {\nthis.invocation = invocation;\nif (matchers.isEmpty()) {\nthis.matchers = ArgumentsProcessor.argumentsToMatchers(invocation.getArguments());\n} else {\nthis.matchers = matchers;\n}\n}",
+            "method_id": 145
+        },
+        {
+            "method_signature": "org.mockito.internal.invocation.ArgumentsProcessor:argumentsToMatchers([Ljava/lang/Object;)Ljava/util/List;",
+            "method_body": "public static List<Matcher> argumentsToMatchers(Object[] arguments) {\nList<Matcher> matchers = new ArrayList<Matcher>(arguments.length);\nfor (Object arg : arguments) {\nif (arg != null && arg.getClass().isArray()) {\nmatchers.add(new ArrayEquals(arg));\n} else {\nmatchers.add(new Equals(arg));\n}\n}\nreturn matchers;\n}",
+            "method_id": 146
+        },
+        {
+            "method_signature": "org.mockito.internal.invocation.ArgumentsProcessor:expandVarArgs(Z[Ljava/lang/Object;)[Ljava/lang/Object;",
+            "method_body": "public static Object[] expandVarArgs(final boolean isVarArgs, final Object[] args) {\nif (!isVarArgs || new ArrayUtils().isEmpty(args) || args[args.length - 1] != null && !args[args.length - 1].getClass().isArray()) {\nreturn args == null ? new Object[0] : args;\n}\n\nfinal int nonVarArgsCount = args.length - 1;\nObject[] varArgs;\nif (args[nonVarArgsCount] == null) {\n// in case someone deliberately passed null varArg array\nvarArgs = new Object[] { null };\n} else {\nvarArgs = ArrayEquals.createObjectArray(args[nonVarArgsCount]);\n}\nfinal int varArgsCount = varArgs.length;\nObject[] newArgs = new Object[nonVarArgsCount + varArgsCount];\nSystem.arraycopy(args, 0, newArgs, 0, nonVarArgsCount);\nSystem.arraycopy(varArgs, 0, newArgs, nonVarArgsCount, varArgsCount);\nreturn newArgs;\n}",
+            "method_id": 147
+        },
+        {
+            "method_signature": "org.mockito.internal.debugging.LocationImpl:<init>()V",
+            "method_body": "public LocationImpl() {\nthis(new StackTraceFilter());\n}",
+            "method_id": 148
+        },
+        {
+            "method_signature": "org.mockito.internal.debugging.LocationImpl:<init>(Lorg/mockito/internal/exceptions/stacktrace/StackTraceFilter;)V",
+            "method_body": "public LocationImpl(StackTraceFilter stackTraceFilter) {\nthis.stackTraceFilter = stackTraceFilter;\nstackTraceHolder = new Throwable();\n}",
+            "method_id": 149
+        },
+        {
+            "method_signature": "org.mockito.internal.util.collections.HashCodeAndEqualsSafeSet$1:<init>(Lorg/mockito/internal/util/collections/HashCodeAndEqualsSafeSet;)V",
+            "method_body": "public Iterator<Object> iterator() {\nreturn new Iterator<Object>() {\nprivate final Iterator<HashCodeAndEqualsMockWrapper> iterator = backingHashSet.iterator();\nreturn iterator.hasNext();\nreturn iterator.next().get();\n}",
+            "method_id": 150
+        },
+        {
+            "method_signature": "org.mockito.internal.configuration.injection.MockInjectionStrategy$1:<init>()V",
+            "method_body": "public static final MockInjectionStrategy nop() {\nreturn new MockInjectionStrategy() {\n}",
+            "method_id": 151
+        }
+    ]
+}

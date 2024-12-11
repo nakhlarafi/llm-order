@@ -1,0 +1,184 @@
+{
+    "bug_id": 3,
+    "test_id": 0,
+    "test_name": "org.apache.commons.codec.language.DoubleMetaphone2Test.testDoubleMetaphoneAlternate",
+    "test_body": "public void testDoubleMetaphoneAlternate() {\nString value = null;\nfor (int i = 0; i < TEST_DATA.length; i++) {\nvalue = TEST_DATA[i][0];\nassertEquals(\"Test [\" + i + \"]=\" + value, TEST_DATA[i][2], doubleMetaphone.doubleMetaphone(value, true));\n}\n}\n",
+    "stack_trace": "junit.framework.ComparisonFailure: Test [19]=Angier expected:<AN[J]R> but was:<AN[K]R>\nat junit.framework.Assert.assertEquals(Assert.java:100)\nat junit.framework.TestCase.assertEquals(TestCase.java:261)\nat org.apache.commons.codec.language.DoubleMetaphone2Test.testDoubleMetaphoneAlternate(DoubleMetaphone2Test.java:84)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:isSilentStart(Ljava/lang/String;)Z",
+            "method_body": "private boolean isSilentStart(String value) {\nboolean result = false;\nfor (int i = 0; i < SILENT_START.length; i++) {\nif (value.startsWith(SILENT_START[i])) {\nresult = true;\nbreak;\n}\n}\nreturn result;\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:handleD(Ljava/lang/String;Lorg/apache/commons/codec/language/DoubleMetaphone$DoubleMetaphoneResult;I)I",
+            "method_body": "private int handleD(String value,\nDoubleMetaphoneResult result,\nint index) {\nif (contains(value, index, 2, \"DG\")) {\n//-- \"Edge\" --//\nif (contains(value, index + 2, 1, \"I\", \"E\", \"Y\")) {\nresult.append('J');\nindex += 3;\n//-- \"Edgar\" --//\n} else {\nresult.append(\"TK\");\nindex += 2;\n}\n} else if (contains(value, index, 2, \"DT\", \"DD\")) {\nresult.append('T');\nindex += 2;\n} else {\nresult.append('T');\nindex++;\n}\nreturn index;\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:handleG(Ljava/lang/String;Lorg/apache/commons/codec/language/DoubleMetaphone$DoubleMetaphoneResult;IZ)I",
+            "method_body": "private int handleG(String value,\nDoubleMetaphoneResult result,\nint index,\nboolean slavoGermanic) {\nif (charAt(value, index + 1) == 'H') {\nindex = handleGH(value, result, index);\n} else if (charAt(value, index + 1) == 'N') {\nif (index == 1 && isVowel(charAt(value, 0)) && !slavoGermanic) {\nresult.append(\"KN\", \"N\");\n} else if (!contains(value, index + 2, 2, \"EY\") &&\ncharAt(value, index + 1) != 'Y' && !slavoGermanic) {\nresult.append(\"N\", \"KN\");\n} else {\nresult.append(\"KN\");\n}\nindex = index + 2;\n} else if (contains(value, index + 1, 2, \"LI\") && !slavoGermanic) {\nresult.append(\"KL\", \"L\");\nindex += 2;\n} else if (index == 0 && (charAt(value, index + 1) == 'Y' || contains(value, index + 1, 2, ES_EP_EB_EL_EY_IB_IL_IN_IE_EI_ER))) {\n//-- -ges-, -gep-, -gel-, -gie- at beginning --//\nresult.append('K', 'J');\nindex += 2;\n} else if ((contains(value, index + 1, 2, \"ER\") ||\ncharAt(value, index + 1) == 'Y') &&\n!contains(value, 0, 6, \"DANGER\", \"RANGER\", \"MANGER\") &&\n!contains(value, index - 1, 1, \"E\", \"I\") &&\n!contains(value, index - 1, 3, \"RGY\", \"OGY\")) {\n//-- -ger-, -gy- --//\nresult.append('K', 'J');\nindex += 2;\n} else if (contains(value, index + 1, 1, \"E\", \"I\", \"Y\") ||\ncontains(value, index - 1, 4, \"AGGI\", \"OGGI\")) {\n//-- Italian \"biaggi\" --//\nif ((contains(value, 0 ,4, \"VAN \", \"VON \") || contains(value, 0, 3, \"SCH\")) || contains(value, index + 1, 2, \"ET\")) {\n//-- obvious germanic --//\nresult.append('K');\n} else if (contains(value, index + 1, 4, \"IER\")) {\nresult.append('J');\n} else {\nresult.append('J', 'K');\n}\nindex += 2;\n} else if (charAt(value, index + 1) == 'G') {\nindex += 2;\nresult.append('K');\n} else {\nindex++;\nresult.append('K');\n}\nreturn index;\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:handleAEIOUY(Ljava/lang/String;Lorg/apache/commons/codec/language/DoubleMetaphone$DoubleMetaphoneResult;I)I",
+            "method_body": "private int handleAEIOUY(String value, DoubleMetaphoneResult result, int\nindex) {\nif (index == 0) {\nresult.append('A');\n}\nreturn index + 1;\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone$DoubleMetaphoneResult:append(CC)V",
+            "method_body": "public void append(char primary, char alternate) {\nappendPrimary(primary);\nappendAlternate(alternate);\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone$DoubleMetaphoneResult:<init>(Lorg/apache/commons/codec/language/DoubleMetaphone;I)V",
+            "method_body": "public DoubleMetaphoneResult(int maxLength) {\nthis.maxLength = maxLength;\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:handleC(Ljava/lang/String;Lorg/apache/commons/codec/language/DoubleMetaphone$DoubleMetaphoneResult;I)I",
+            "method_body": "private int handleC(String value,\nDoubleMetaphoneResult result,\nint index) {\nif (conditionC0(value, index)) {  // very confusing, moved out\nresult.append('K');\nindex += 2;\n} else if (index == 0 && contains(value, index, 6, \"CAESAR\")) {\nresult.append('S');\nindex += 2;\n} else if (contains(value, index, 2, \"CH\")) {\nindex = handleCH(value, result, index);\n} else if (contains(value, index, 2, \"CZ\") &&\n!contains(value, index - 2, 4, \"WICZ\")) {\n//-- \"Czerny\" --//\nresult.append('S', 'X');\nindex += 2;\n} else if (contains(value, index + 1, 3, \"CIA\")) {\n//-- \"focaccia\" --//\nresult.append('X');\nindex += 3;\n} else if (contains(value, index, 2, \"CC\") &&\n!(index == 1 && charAt(value, 0) == 'M')) {\n//-- double \"cc\" but not \"McClelland\" --//\nreturn handleCC(value, result, index);\n} else if (contains(value, index, 2, \"CK\", \"CG\", \"CQ\")) {\nresult.append('K');\nindex += 2;\n} else if (contains(value, index, 2, \"CI\", \"CE\", \"CY\")) {\n//-- Italian vs. English --//\nif (contains(value, index, 3, \"CIO\", \"CIE\", \"CIA\")) {\nresult.append('S', 'X');\n} else {\nresult.append('S');\n}\nindex += 2;\n} else {\nresult.append('K');\nif (contains(value, index + 1, 2, \" C\", \" Q\", \" G\")) {\n//-- Mac Caffrey, Mac Gregor --//\nindex += 3;\n} else if (contains(value, index + 1, 1, \"C\", \"K\", \"Q\") &&\n!contains(value, index + 1, 2, \"CE\", \"CI\")) {\nindex += 2;\n} else {\nindex++;\n}\n}\n\nreturn index;\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone$DoubleMetaphoneResult:getAlternate()Ljava/lang/String;",
+            "method_body": "public String getAlternate() {\nreturn this.alternate.toString();\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:handleT(Ljava/lang/String;Lorg/apache/commons/codec/language/DoubleMetaphone$DoubleMetaphoneResult;I)I",
+            "method_body": "private int handleT(String value,\nDoubleMetaphoneResult result,\nint index) {\nif (contains(value, index, 4, \"TION\")) {\nresult.append('X');\nindex += 3;\n} else if (contains(value, index, 3, \"TIA\", \"TCH\")) {\nresult.append('X');\nindex += 3;\n} else if (contains(value, index, 2, \"TH\") || contains(value, index,\n3, \"TTH\")) {\nif (contains(value, index + 2, 2, \"OM\", \"AM\") ||\n//-- special case \"thomas\", \"thames\" or germanic --//\ncontains(value, 0, 4, \"VAN \", \"VON \") ||\ncontains(value, 0, 3, \"SCH\")) {\nresult.append('T');\n} else {\nresult.append('0', 'T');\n}\nindex += 2;\n} else {\nresult.append('T');\nindex = contains(value, index + 1, 1, \"T\", \"D\") ? index + 2 : index + 1;\n}\nreturn index;\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:handleW(Ljava/lang/String;Lorg/apache/commons/codec/language/DoubleMetaphone$DoubleMetaphoneResult;I)I",
+            "method_body": "private int handleW(String value,\nDoubleMetaphoneResult result,\nint index) {\nif (contains(value, index, 2, \"WR\")) {\n//-- can also be in middle of word --//\nresult.append('R');\nindex += 2;\n} else {\nif (index == 0 && (isVowel(charAt(value, index + 1)) ||\ncontains(value, index, 2, \"WH\"))) {\nif (isVowel(charAt(value, index + 1))) {\n//-- Wasserman should match Vasserman --//\nresult.append('A', 'F');\n} else {\n//-- need Uomo to match Womo --//\nresult.append('A');\n}\nindex++;\n} else if ((index == value.length() - 1 && isVowel(charAt(value, index - 1))) ||\ncontains(value, index - 1,\n5, \"EWSKI\", \"EWSKY\", \"OWSKI\", \"OWSKY\") ||\ncontains(value, 0, 3, \"SCH\")) {\n//-- Arnow should match Arnoff --//\nresult.appendAlternate('F');\nindex++;\n} else if (contains(value, index, 4, \"WICZ\", \"WITZ\")) {\n//-- Polish e.g. \"filipowicz\" --//\nresult.append(\"TS\", \"FX\");\nindex += 4;\n} else {\nindex++;\n}\n}\nreturn index;\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:<init>()V",
+            "method_body": "public DoubleMetaphone() {\nsuper();\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:doubleMetaphone(Ljava/lang/String;Z)Ljava/lang/String;",
+            "method_body": "public String doubleMetaphone(String value, boolean alternate) {\nvalue = cleanInput(value);\nif (value == null) {\nreturn null;\n}\n\nboolean slavoGermanic = isSlavoGermanic(value);\nint index = isSilentStart(value) ? 1 : 0;\n\nDoubleMetaphoneResult result = new DoubleMetaphoneResult(this.getMaxCodeLen());\n\nwhile (!result.isComplete() && index <= value.length() - 1) {\nswitch (value.charAt(index)) {\ncase 'A':\ncase 'E':\ncase 'I':\ncase 'O':\ncase 'U':\ncase 'Y':\nindex = handleAEIOUY(value, result, index);\nbreak;\ncase 'B':\nresult.append('P');\nindex = charAt(value, index + 1) == 'B' ? index + 2 : index + 1;\nbreak;\ncase '\\u00C7':\n// A C with a Cedilla\nresult.append('S');\nindex++;\nbreak;\ncase 'C':\nindex = handleC(value, result, index);\nbreak;\ncase 'D':\nindex = handleD(value, result, index);\nbreak;\ncase 'F':\nresult.append('F');\nindex = charAt(value, index + 1) == 'F' ? index + 2 : index + 1;\nbreak;\ncase 'G':\nindex = handleG(value, result, index, slavoGermanic);\nbreak;\ncase 'H':\nindex = handleH(value, result, index);\nbreak;\ncase 'J':\nindex = handleJ(value, result, index, slavoGermanic);\nbreak;\ncase 'K':\nresult.append('K');\nindex = charAt(value, index + 1) == 'K' ? index + 2 : index + 1;\nbreak;\ncase 'L':\nindex = handleL(value, result, index);\nbreak;\ncase 'M':\nresult.append('M');\nindex = conditionM0(value, index) ? index + 2 : index + 1;\nbreak;\ncase 'N':\nresult.append('N');\nindex = charAt(value, index + 1) == 'N' ? index + 2 : index + 1;\nbreak;\ncase '\\u00D1':\n// N with a tilde (spanish ene)\nresult.append('N');\nindex++;\nbreak;\ncase 'P':\nindex = handleP(value, result, index);\nbreak;\ncase 'Q':\nresult.append('K');\nindex = charAt(value, index + 1) == 'Q' ? index + 2 : index + 1;\nbreak;\ncase 'R':\nindex = handleR(value, result, index, slavoGermanic);\nbreak;\ncase 'S':\nindex = handleS(value, result, index, slavoGermanic);\nbreak;\ncase 'T':\nindex = handleT(value, result, index);\nbreak;\ncase 'V':\nresult.append('F');\nindex = charAt(value, index + 1) == 'V' ? index + 2 : index + 1;\nbreak;\ncase 'W':\nindex = handleW(value, result, index);\nbreak;\ncase 'X':\nindex = handleX(value, result, index);\nbreak;\ncase 'Z':\nindex = handleZ(value, result, index, slavoGermanic);\nbreak;\ndefault:\nindex++;\nbreak;\n}\n}\n\nreturn alternate ? result.getAlternate() : result.getPrimary();\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:contains(Ljava/lang/String;II[Ljava/lang/String;)Z",
+            "method_body": "protected static boolean contains(String value, int start, int length,\nString[] criteria) {\nboolean result = false;\nif (start >= 0 && start + length <= value.length()) {\nString target = value.substring(start, start + length);\n\nfor (int i = 0; i < criteria.length; i++) {\nif (target.equals(criteria[i])) {\nresult = true;\nbreak;\n}\n}\n}\nreturn result;\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:handleR(Ljava/lang/String;Lorg/apache/commons/codec/language/DoubleMetaphone$DoubleMetaphoneResult;IZ)I",
+            "method_body": "private int handleR(String value,\nDoubleMetaphoneResult result,\nint index,\nboolean slavoGermanic) {\nif (index == value.length() - 1 && !slavoGermanic &&\ncontains(value, index - 2, 2, \"IE\") &&\n!contains(value, index - 4, 2, \"ME\", \"MA\")) {\nresult.appendAlternate('R');\n} else {\nresult.append('R');\n}\nreturn charAt(value, index + 1) == 'R' ? index + 2 : index + 1;\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:handleL(Ljava/lang/String;Lorg/apache/commons/codec/language/DoubleMetaphone$DoubleMetaphoneResult;I)I",
+            "method_body": "private int handleL(String value,\nDoubleMetaphoneResult result,\nint index) {\nif (charAt(value, index + 1) == 'L') {\nif (conditionL0(value, index)) {\nresult.appendPrimary('L');\n} else {\nresult.append('L');\n}\nindex += 2;\n} else {\nindex++;\nresult.append('L');\n}\nreturn index;\n}",
+            "method_id": 14
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:contains(Ljava/lang/String;IILjava/lang/String;)Z",
+            "method_body": "private static boolean contains(String value, int start, int length,\nString criteria) {\nreturn contains(value, start, length,\nnew String[] { criteria });\n}",
+            "method_id": 15
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:contains(Ljava/lang/String;IILjava/lang/String;Ljava/lang/String;)Z",
+            "method_body": "private static boolean contains(String value, int start, int length,\nString criteria1, String criteria2) {\nreturn contains(value, start, length,\nnew String[] { criteria1, criteria2 });\n}",
+            "method_id": 16
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:isSlavoGermanic(Ljava/lang/String;)Z",
+            "method_body": "private boolean isSlavoGermanic(String value) {\nreturn value.indexOf('W') > -1 || value.indexOf('K') > -1 ||\nvalue.indexOf(\"CZ\") > -1 || value.indexOf(\"WITZ\") > -1;\n}",
+            "method_id": 17
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:conditionL0(Ljava/lang/String;I)Z",
+            "method_body": "private boolean conditionL0(String value, int index) {\nif (index == value.length() - 3 &&\ncontains(value, index - 1, 4, \"ILLO\", \"ILLA\", \"ALLE\")) {\nreturn true;\n} else if ((contains(value, value.length() - 2, 2, \"AS\", \"OS\") ||\ncontains(value, value.length() - 1, 1, \"A\", \"O\")) &&\ncontains(value, index - 1, 4, \"ALLE\")) {\nreturn true;\n} else {\nreturn false;\n}\n}",
+            "method_id": 18
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:charAt(Ljava/lang/String;I)C",
+            "method_body": "protected char charAt(String value, int index) {\nif (index < 0 || index >= value.length()) {\nreturn Character.MIN_VALUE;\n}\nreturn value.charAt(index);\n}",
+            "method_id": 19
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:contains(Ljava/lang/String;IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z",
+            "method_body": "private static boolean contains(String value, int start, int length,\nString criteria1, String criteria2,\nString criteria3, String criteria4) {\nreturn contains(value, start, length,\nnew String[] { criteria1, criteria2, criteria3,\ncriteria4 });\n}",
+            "method_id": 20
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone$DoubleMetaphoneResult:appendPrimary(C)V",
+            "method_body": "public void appendPrimary(char value) {\nif (this.primary.length() < this.maxLength) {\nthis.primary.append(value);\n}\n}",
+            "method_id": 21
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:conditionM0(Ljava/lang/String;I)Z",
+            "method_body": "private boolean conditionM0(String value, int index) {\nif (charAt(value, index + 1) == 'M') {\nreturn true;\n}\nreturn contains(value, index - 1, 3, \"UMB\") &&\n((index + 1) == value.length() - 1 || contains(value,\nindex + 2, 2, \"ER\"));\n}",
+            "method_id": 22
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:cleanInput(Ljava/lang/String;)Ljava/lang/String;",
+            "method_body": "private String cleanInput(String input) {\nif (input == null) {\nreturn null;\n}\ninput = input.trim();\nif (input.length() == 0) {\nreturn null;\n}\nreturn input.toUpperCase(java.util.Locale.ENGLISH);\n}",
+            "method_id": 23
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone$DoubleMetaphoneResult:isComplete()Z",
+            "method_body": "public boolean isComplete() {\nreturn this.primary.length() >= this.maxLength &&\nthis.alternate.length() >= this.maxLength;\n}",
+            "method_id": 24
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone$DoubleMetaphoneResult:append(C)V",
+            "method_body": "public void append(char value) {\nappendPrimary(value);\nappendAlternate(value);\n}",
+            "method_id": 25
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:getMaxCodeLen()I",
+            "method_body": "public int getMaxCodeLen() {\nreturn this.maxCodeLen;\n}",
+            "method_id": 26
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:conditionC0(Ljava/lang/String;I)Z",
+            "method_body": "private boolean conditionC0(String value, int index) {\nif (contains(value, index, 4, \"CHIA\")) {\nreturn true;\n} else if (index <= 1) {\nreturn false;\n} else if (isVowel(charAt(value, index - 2))) {\nreturn false;\n} else if (!contains(value, index - 1, 3, \"ACH\")) {\nreturn false;\n} else {\nchar c = charAt(value, index + 2);\nreturn (c != 'I' && c != 'E') ||\ncontains(value, index - 2, 6, \"BACHER\", \"MACHER\");\n}\n}",
+            "method_id": 27
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:isVowel(C)Z",
+            "method_body": "private boolean isVowel(char ch) {\nreturn VOWELS.indexOf(ch) != -1;\n}",
+            "method_id": 28
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:handleP(Ljava/lang/String;Lorg/apache/commons/codec/language/DoubleMetaphone$DoubleMetaphoneResult;I)I",
+            "method_body": "private int handleP(String value,\nDoubleMetaphoneResult result,\nint index) {\nif (charAt(value, index + 1) == 'H') {\nresult.append('F');\nindex += 2;\n} else {\nresult.append('P');\nindex = contains(value, index + 1, 1, \"P\", \"B\") ? index + 2 : index + 1;\n}\nreturn index;\n}",
+            "method_id": 29
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:contains(Ljava/lang/String;IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z",
+            "method_body": "private static boolean contains(String value, int start, int length,\nString criteria1, String criteria2,\nString criteria3) {\nreturn contains(value, start, length,\nnew String[] { criteria1, criteria2, criteria3 });\n}",
+            "method_id": 30
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:<clinit>()V",
+            "method_body": "private static final String VOWELS = \"AEIOUY\";\n\n/**\n* Prefixes when present which are not pronounced\n*/\nprivate static final String[] SILENT_START =\n{ \"GN\", \"KN\", \"PN\", \"WR\", \"PS\" };",
+            "method_id": 31
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:handleH(Ljava/lang/String;Lorg/apache/commons/codec/language/DoubleMetaphone$DoubleMetaphoneResult;I)I",
+            "method_body": "private int handleH(String value,\nDoubleMetaphoneResult result,\nint index) {\n//-- only keep if first & before vowel or between 2 vowels --//\nif ((index == 0 || isVowel(charAt(value, index - 1))) &&\nisVowel(charAt(value, index + 1))) {\nresult.append('H');\nindex += 2;\n//-- also takes car of \"HH\" --//\n} else {\nindex++;\n}\nreturn index;\n}",
+            "method_id": 32
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone$DoubleMetaphoneResult:appendAlternate(C)V",
+            "method_body": "public void appendAlternate(char value) {\nif (this.alternate.length() < this.maxLength) {\nthis.alternate.append(value);\n}\n}",
+            "method_id": 33
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.DoubleMetaphone:handleS(Ljava/lang/String;Lorg/apache/commons/codec/language/DoubleMetaphone$DoubleMetaphoneResult;IZ)I",
+            "method_body": "private int handleS(String value,\nDoubleMetaphoneResult result,\nint index,\nboolean slavoGermanic) {\nif (contains(value, index - 1, 3, \"ISL\", \"YSL\")) {\n//-- special cases \"island\", \"isle\", \"carlisle\", \"carlysle\" --//\nindex++;\n} else if (index == 0 && contains(value, index, 5, \"SUGAR\")) {\n//-- special case \"sugar-\" --//\nresult.append('X', 'S');\nindex++;\n} else if (contains(value, index, 2, \"SH\")) {\nif (contains(value, index + 1, 4,\n\"HEIM\", \"HOEK\", \"HOLM\", \"HOLZ\")) {\n//-- germanic --//\nresult.append('S');\n} else {\nresult.append('X');\n}\nindex += 2;\n} else if (contains(value, index, 3, \"SIO\", \"SIA\") || contains(value, index, 4, \"SIAN\")) {\n//-- Italian and Armenian --//\nif (slavoGermanic) {\nresult.append('S');\n} else {\nresult.append('S', 'X');\n}\nindex += 3;\n} else if ((index == 0 && contains(value, index + 1, 1, \"M\", \"N\", \"L\", \"W\")) || contains(value, index + 1, 1, \"Z\")) {\n//-- german & anglicisations, e.g. \"smith\" match \"schmidt\" //\n// \"snider\" match \"schneider\" --//\n//-- also, -sz- in slavic language altho in hungarian it //\n//   is pronounced \"s\" --//\nresult.append('S', 'X');\nindex = contains(value, index + 1, 1, \"Z\") ? index + 2 : index + 1;\n} else if (contains(value, index, 2, \"SC\")) {\nindex = handleSC(value, result, index);\n} else {\nif (index == value.length() - 1 && contains(value, index - 2,\n2, \"AI\", \"OI\")){\n//-- french e.g. \"resnais\", \"artois\" --//\nresult.appendAlternate('S');\n} else {\nresult.append('S');\n}\nindex = contains(value, index + 1, 1, \"S\", \"Z\") ? index + 2 : index + 1;\n}\nreturn index;\n}",
+            "method_id": 34
+        }
+    ]
+}

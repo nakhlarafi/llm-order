@@ -1,0 +1,44 @@
+{
+    "bug_id": 4,
+    "test_id": 2,
+    "test_name": "com.google.gson.stream.JsonWriterTest.testTopLevelValueTypes",
+    "test_body": "public void testTopLevelValueTypes() throws IOException {\nStringWriter string1 = new StringWriter();\nJsonWriter writer1 = new JsonWriter(string1);\nwriter1.value(true);\nwriter1.close();\nassertEquals(\"true\", string1.toString());\nStringWriter string2 = new StringWriter();\nJsonWriter writer2 = new JsonWriter(string2);\nwriter2.nullValue();\nwriter2.close();\nassertEquals(\"null\", string2.toString());\nStringWriter string3 = new StringWriter();\nJsonWriter writer3 = new JsonWriter(string3);\nwriter3.value(123);\nwriter3.close();\nassertEquals(\"123\", string3.toString());\nStringWriter string4 = new StringWriter();\nJsonWriter writer4 = new JsonWriter(string4);\nwriter4.value(123.4);\nwriter4.close();\nassertEquals(\"123.4\", string4.toString());\nStringWriter string5 = new StringWriter();\nJsonWriter writert = new JsonWriter(string5);\nwritert.value(\"a\");\nwritert.close();\nassertEquals(\"\\\"a\\\"\", string5.toString());\n}\n",
+    "stack_trace": "java.lang.IllegalStateException: JSON must start with an array or an object.\nat com.google.gson.stream.JsonWriter.beforeValue(JsonWriter.java:623)\nat com.google.gson.stream.JsonWriter.value(JsonWriter.java:466)\nat com.google.gson.stream.JsonWriterTest.testTopLevelValueTypes(JsonWriterTest.java:31)",
+    "covered_methods": [
+        {
+            "method_signature": "com.google.gson.stream.JsonWriter:<clinit>()V",
+            "method_body": "private static final String[] REPLACEMENT_CHARS;\nprivate static final String[] HTML_SAFE_REPLACEMENT_CHARS;\nstatic {\nREPLACEMENT_CHARS = new String[128];\nfor (int i = 0; i <= 0x1f; i++) {\nREPLACEMENT_CHARS[i] = String.format(\"\\\\u%04x\", (int) i);\n}\nREPLACEMENT_CHARS['\"'] = \"\\\\\\\"\";\nREPLACEMENT_CHARS['\\\\'] = \"\\\\\\\\\";\nREPLACEMENT_CHARS['\\t'] = \"\\\\t\";\nREPLACEMENT_CHARS['\\b'] = \"\\\\b\";\nREPLACEMENT_CHARS['\\n'] = \"\\\\n\";\nREPLACEMENT_CHARS['\\r'] = \"\\\\r\";\nREPLACEMENT_CHARS['\\f'] = \"\\\\f\";\nHTML_SAFE_REPLACEMENT_CHARS = REPLACEMENT_CHARS.clone();\nHTML_SAFE_REPLACEMENT_CHARS['<'] = \"\\\\u003c\";\nHTML_SAFE_REPLACEMENT_CHARS['>'] = \"\\\\u003e\";\nHTML_SAFE_REPLACEMENT_CHARS['&'] = \"\\\\u0026\";\nHTML_SAFE_REPLACEMENT_CHARS['='] = \"\\\\u003d\";\nHTML_SAFE_REPLACEMENT_CHARS['\\''] = \"\\\\u0027\";\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "com.google.gson.stream.JsonWriter:<init>(Ljava/io/Writer;)V",
+            "method_body": "public JsonWriter(Writer out) {\nif (out == null) {\nthrow new NullPointerException(\"out == null\");\n}\nthis.out = out;\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "com.google.gson.stream.JsonWriter:peek()I",
+            "method_body": "private int peek() {\nif (stackSize == 0) {\nthrow new IllegalStateException(\"JsonWriter is closed.\");\n}\nreturn stack[stackSize - 1];\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "com.google.gson.stream.JsonWriter:writeDeferredName()V",
+            "method_body": "private void writeDeferredName() throws IOException {\nif (deferredName != null) {\nbeforeName();\nstring(deferredName);\ndeferredName = null;\n}\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "com.google.gson.stream.JsonWriter:push(I)V",
+            "method_body": "private void push(int newTop) {\nif (stackSize == stack.length) {\nint[] newStack = new int[stackSize * 2];\nSystem.arraycopy(stack, 0, newStack, 0, stackSize);\nstack = newStack;\n}\nstack[stackSize++] = newTop;\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "com.google.gson.stream.JsonWriter:beforeValue(Z)V",
+            "method_body": "private void beforeValue(boolean root) throws IOException {\nswitch (peek()) {\ncase NONEMPTY_DOCUMENT:\nif (!lenient) {\nthrow new IllegalStateException(\n\"JSON must have only one top-level value.\");\n}\n// fall-through\ncase EMPTY_DOCUMENT: // first in document\nif (!lenient && !root) {\nthrow new IllegalStateException(\n\"JSON must start with an array or an object.\");\n}\nreplaceTop(NONEMPTY_DOCUMENT);\nbreak;\n\ncase EMPTY_ARRAY: // first in array\nreplaceTop(NONEMPTY_ARRAY);\nnewline();\nbreak;\n\ncase NONEMPTY_ARRAY: // another in array\nout.append(',');\nnewline();\nbreak;\n\ncase DANGLING_NAME: // value for name\nout.append(separator);\nreplaceTop(NONEMPTY_OBJECT);\nbreak;\n\ndefault:\nthrow new IllegalStateException(\"Nesting problem.\");\n}\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "com.google.gson.stream.JsonWriter:value(Z)Lcom/google/gson/stream/JsonWriter;",
+            "method_body": "public JsonWriter value(boolean value) throws IOException {\nwriteDeferredName();\nbeforeValue(false);\nout.write(value ? \"true\" : \"false\");\nreturn this;\n}",
+            "method_id": 6
+        }
+    ]
+}

@@ -1,0 +1,74 @@
+{
+    "bug_id": 9,
+    "test_id": 1,
+    "test_name": "org.apache.commons.lang3.time.FastDateParserTest.testLANG_832",
+    "test_body": "public void testLANG_832() throws Exception {\ntestSdfAndFdp(\"'d'd\" ,\"d3\", false); // OK\ntestSdfAndFdp(\"'d'd'\",\"d3\", true); // should fail (unterminated quote)\n}\n",
+    "stack_trace": "junit.framework.AssertionFailedError: Expected FDF failure, but got Fri Jan 02 21:00:00 PST 1970 for ['d'd',d3] using d(\\p{IsNd}++)\nat junit.framework.Assert.fail(Assert.java:57)\nat org.apache.commons.lang3.time.FastDateParserTest.testSdfAndFdp(FastDateParserTest.java:382)\nat org.apache.commons.lang3.time.FastDateParserTest.testLANG_832(FastDateParserTest.java:348)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.lang3.time.FastDateParser$CopyQuotedStrategy:<init>(Ljava/lang/String;)V",
+            "method_body": "CopyQuotedStrategy(String formatField) {\nthis.formatField= formatField;\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.time.FastDateParser$NumberStrategy:setCalendar(Lorg/apache/commons/lang3/time/FastDateParser;Ljava/util/Calendar;Ljava/lang/String;)V",
+            "method_body": "public void setCalendar(FastDateParser parser, Calendar cal, String value) {\ncal.set(field, modify(Integer.parseInt(value)));\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.time.FastDateParser$NumberStrategy:addRegex(Lorg/apache/commons/lang3/time/FastDateParser;Ljava/lang/StringBuilder;)Z",
+            "method_body": "public boolean addRegex(FastDateParser parser, StringBuilder regex) {\nif(parser.isNextNumber()) {\nregex.append(\"(\\\\p{IsNd}{\").append(parser.getFieldWidth()).append(\"}+)\");\n}\nelse {\nregex.append(\"(\\\\p{IsNd}++)\");\n}\nreturn true;\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.time.FastDateParser:getParsePattern()Ljava/util/regex/Pattern;",
+            "method_body": "Pattern getParsePattern() {\nreturn parsePattern;\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.time.FastDateParser:parse(Ljava/lang/String;)Ljava/util/Date;",
+            "method_body": "public Date parse(String source) throws ParseException {\nDate date= parse(source, new ParsePosition(0));\nif(date==null) {\n// Add a note re supported date range\nif (locale.equals(JAPANESE_IMPERIAL)) {\nthrow new ParseException(\n\"(The \" +locale + \" locale does not support dates before 1868 AD)\\n\" +\n\"Unparseable date: \\\"\"+source+\"\\\" does not match \"+parsePattern.pattern(), 0);\n}\nthrow new ParseException(\"Unparseable date: \\\"\"+source+\"\\\" does not match \"+parsePattern.pattern(), 0);\n}\nreturn date;\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.time.FastDateParser:isNextNumber()Z",
+            "method_body": "boolean isNextNumber() {\nreturn nextStrategy!=null && nextStrategy.isNumber();\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.time.FastDateParser$CopyQuotedStrategy:addRegex(Lorg/apache/commons/lang3/time/FastDateParser;Ljava/lang/StringBuilder;)Z",
+            "method_body": "public boolean addRegex(FastDateParser parser, StringBuilder regex) {\nescapeRegex(regex, formatField, true);\nreturn false;\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.time.FastDateParser:parse(Ljava/lang/String;Ljava/text/ParsePosition;)Ljava/util/Date;",
+            "method_body": "public Date parse(String source, ParsePosition pos) {\nint offset= pos.getIndex();\nMatcher matcher= parsePattern.matcher(source.substring(offset));\nif(!matcher.lookingAt()) {\nreturn null;\n}\n// timing tests indicate getting new instance is 19% faster than cloning\nCalendar cal= Calendar.getInstance(timeZone, locale);\ncal.clear();\n\nfor(int i=0; i<strategies.length;) {\nStrategy strategy= strategies[i++];\nstrategy.setCalendar(this, cal, matcher.group(i));\n}\npos.setIndex(offset+matcher.end());\nreturn cal.getTime();\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.time.FastDateParser:escapeRegex(Ljava/lang/StringBuilder;Ljava/lang/String;Z)Ljava/lang/StringBuilder;",
+            "method_body": "private static StringBuilder escapeRegex(StringBuilder regex, String value, boolean unquote) {\nfor(int i= 0; i<value.length(); ++i) {\nchar c= value.charAt(i);\nswitch(c) {\ncase '\\'':\nif(unquote) {\nif(++i==value.length()) {\nreturn regex;\n}\nc= value.charAt(i);\n}\nbreak;\ncase '?':\ncase '[':\ncase ']':\ncase '(':\ncase ')':\ncase '{':\ncase '}':\ncase '\\\\':\ncase '|':\ncase '*':\ncase '+':\ncase '^':\ncase '$':\ncase '.':\nregex.append('\\\\');\n}\nregex.append(c);\n}\nreturn regex;\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.time.FastDateParser:<init>(Ljava/lang/String;Ljava/util/TimeZone;Ljava/util/Locale;)V",
+            "method_body": "protected FastDateParser(String pattern, TimeZone timeZone, Locale locale) {\nthis.pattern = pattern;\nthis.timeZone = timeZone;\nthis.locale = locale;\ninit();\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.time.FastDateParser$NumberStrategy:modify(I)I",
+            "method_body": "public int modify(int iValue) {\nreturn iValue;\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.time.FastDateParser:getStrategy(Ljava/lang/String;)Lorg/apache/commons/lang3/time/FastDateParser$Strategy;",
+            "method_body": "boolean isNumber();\n/**\n* Set the Calendar with the parsed field\n* @param parser The parser calling this strategy\n* @param cal The <code>Calendar</code> to set\n* @param value The parsed field to translate and set in cal\n*/\nvoid setCalendar(FastDateParser parser, Calendar cal, String value);\n/**\n* Generate a <code>Pattern</code> regular expression to the <code>StringBuilder</code>\n* which will accept this field\n* @param parser The parser calling this strategy\n* @param regex The <code>StringBuilder</code> to append to\n* @return true, if this field will set the calendar;\n* false, if this field is a constant value\n*/\nboolean addRegex(FastDateParser parser, StringBuilder regex);\n}\n\n/**\n* A <code>Pattern</code> to parse the user supplied SimpleDateFormat pattern\n*/\nprivate static final Pattern formatPattern= Pattern.compile(\n\"D+|E+|F+|G+|H+|K+|M+|S+|W+|Z+|a+|d+|h+|k+|m+|s+|w+|y+|z+|''|'[^']++(''[^']*+)*+'|[^'A-Za-z]++\");\n\n/**\n* Obtain a Strategy given a field from a SimpleDateFormat pattern\n* @param formatField A sub-sequence of the SimpleDateFormat pattern\n* @return The Strategy that will handle parsing for the field\n*/\nprivate Strategy getStrategy(String formatField) {\nswitch(formatField.charAt(0)) {\ncase '\\'':\nif(formatField.length()>2) {\nformatField= formatField.substring(1, formatField.length()-1);\n}\n//$FALL-THROUGH$\ndefault:\nreturn new CopyQuotedStrategy(formatField);\ncase 'D':\nreturn DAY_OF_YEAR_STRATEGY;\ncase 'E':\nreturn DAY_OF_WEEK_STRATEGY;\ncase 'F':\nreturn DAY_OF_WEEK_IN_MONTH_STRATEGY;\ncase 'G':\nreturn ERA_STRATEGY;\ncase 'H':\nreturn MODULO_HOUR_OF_DAY_STRATEGY;\ncase 'K':\nreturn HOUR_STRATEGY;\ncase 'M':\nreturn formatField.length()>=3 ?TEXT_MONTH_STRATEGY :NUMBER_MONTH_STRATEGY;\ncase 'S':\nreturn MILLISECOND_STRATEGY;\ncase 'W':\nreturn WEEK_OF_MONTH_STRATEGY;\ncase 'Z':\nbreak;\ncase 'a':\nreturn AM_PM_STRATEGY;\ncase 'd':\nreturn DAY_OF_MONTH_STRATEGY;\ncase 'h':\nreturn MODULO_HOUR_STRATEGY;\ncase 'k':\nreturn HOUR_OF_DAY_STRATEGY;\ncase 'm':\nreturn MINUTE_STRATEGY;\ncase 's':\nreturn SECOND_STRATEGY;\ncase 'w':\nreturn WEEK_OF_YEAR_STRATEGY;\ncase 'y':\nreturn formatField.length()>2 ?LITERAL_YEAR_STRATEGY :ABBREVIATED_YEAR_STRATEGY;\ncase 'z':\nbreak;\n}\nTimeZoneStrategy tzs= tzsCache.get(locale);\nif(tzs==null) {\ntzs= new TimeZoneStrategy(locale);\nTimeZoneStrategy inCache= tzsCache.putIfAbsent(locale, tzs);\nif(inCache!=null) {\nreturn inCache;\n}\n}\nreturn tzs;\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.time.FastDateParser:init()V",
+            "method_body": "private void init() {\nthisYear= Calendar.getInstance(timeZone, locale).get(Calendar.YEAR);\n\nnameValues= new ConcurrentHashMap<Integer, KeyValue[]>();\n\nStringBuilder regex= new StringBuilder();\nList<Strategy> collector = new ArrayList<Strategy>();\n\nMatcher patternMatcher= formatPattern.matcher(pattern);\nif(!patternMatcher.lookingAt()) {\nthrow new IllegalArgumentException(\"Invalid pattern\");\n}\n\ncurrentFormatField= patternMatcher.group();\nStrategy currentStrategy= getStrategy(currentFormatField);\nfor(;;) {\npatternMatcher.region(patternMatcher.end(), patternMatcher.regionEnd());\nif(!patternMatcher.lookingAt()) {\nnextStrategy = null;\nbreak;\n}\nString nextFormatField= patternMatcher.group();\nnextStrategy = getStrategy(nextFormatField);\nif(currentStrategy.addRegex(this, regex)) {\ncollector.add(currentStrategy);\n}\ncurrentFormatField= nextFormatField;\ncurrentStrategy= nextStrategy;\n}\nif(currentStrategy.addRegex(this, regex)) {\ncollector.add(currentStrategy);\n}\ncurrentFormatField= null;\nstrategies= collector.toArray(new Strategy[collector.size()]);\nparsePattern= Pattern.compile(regex.toString());\n}",
+            "method_id": 12
+        }
+    ]
+}

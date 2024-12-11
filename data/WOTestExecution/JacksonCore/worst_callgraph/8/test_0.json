@@ -1,0 +1,44 @@
+{
+    "bug_id": 8,
+    "test_id": 0,
+    "test_name": "com.fasterxml.jackson.core.util.TestTextBuffer.testEmpty",
+    "test_body": "public void testEmpty() {\nTextBuffer tb = new TextBuffer(new BufferRecycler());\ntb.resetWithEmpty();\nassertTrue(tb.getTextBuffer().length == 0);\ntb.contentsAsString();\nassertTrue(tb.getTextBuffer().length == 0);\n}\n",
+    "stack_trace": "java.lang.NullPointerException\nat com.fasterxml.jackson.core.util.TestTextBuffer.testEmpty(TestTextBuffer.java:83)",
+    "covered_methods": [
+        {
+            "method_signature": "com.fasterxml.jackson.core.util.TextBuffer:<clinit>()V",
+            "method_body": "final static char[] NO_CHARS = new char[0];\n\n/**\n* Let's start with sizable but not huge buffer, will grow as necessary\n*/\nfinal static int MIN_SEGMENT_LEN = 1000;\n\n/**\n* Let's limit maximum segment length to something sensible\n* like 256k\n*/\nfinal static int MAX_SEGMENT_LEN = 0x40000;\n\n/*\n/**********************************************************\n/* Configuration:\n/**********************************************************\n*/\n\nprivate final BufferRecycler _allocator;\n\n/*\n/**********************************************************\n/* Shared input buffers\n/**********************************************************\n*/\n\n/**\n* Shared input buffer; stored here in case some input can be returned\n* as is, without being copied to collector's own buffers. Note that\n* this is read-only for this Object.\n*/\nprivate char[] _inputBuffer;\n\n/**\n* Character offset of first char in input buffer; -1 to indicate\n* that input buffer currently does not contain any useful char data\n*/\nprivate int _inputStart;\n\nprivate int _inputLen;\n\n/*\n/**********************************************************\n/* Aggregation segments (when not using input buf)\n/**********************************************************\n*/\n\n/**\n* List of segments prior to currently active segment.\n*/\nprivate ArrayList<char[]> _segments;\n\n/**\n* Flag that indicates whether _seqments is non-empty\n*/\nprivate boolean _hasSegments = false;\n\n// // // Currently used segment; not (yet) contained in _seqments\n\n/**\n* Amount of characters in segments in {@link _segments}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.util.TextBuffer:<init>(Lcom/fasterxml/jackson/core/util/BufferRecycler;)V",
+            "method_body": "public TextBuffer(BufferRecycler allocator) {\n_allocator = allocator;\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.util.BufferRecycler:<clinit>()V",
+            "method_body": "public final static int BYTE_READ_IO_BUFFER = 0;\n\n/**\n* Buffer used for temporarily storing encoded content; used\n* for example by UTF-8 encoding writer\n*/\npublic final static int BYTE_WRITE_ENCODING_BUFFER = 1;\n\n/**\n* Buffer used for temporarily concatenating output; used for\n* example when requesting output as byte array.\n*/\npublic final static int BYTE_WRITE_CONCAT_BUFFER = 2;\n\n/**\n* Buffer used for concatenating binary data that is either being\n* encoded as base64 output, or decoded from base64 input.\n*\n* @since 2.1\n*/\npublic final static int BYTE_BASE64_CODEC_BUFFER = 3;\n\npublic final static int CHAR_TOKEN_BUFFER = 0;  // Tokenizable input\npublic final static int CHAR_CONCAT_BUFFER = 1; // concatenated output\npublic final static int CHAR_TEXT_BUFFER = 2; // Text content from input\npublic final static int CHAR_NAME_COPY_BUFFER = 3; // Temporary buffer for getting name characters\n\n// Buffer lengths, defined in 2.4 (smaller before that)\n\nprivate final static int[] BYTE_BUFFER_LENGTHS = new int[] { 8000, 8000, 2000, 2000 };",
+            "method_id": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.util.TextBuffer:resetWithEmpty()V",
+            "method_body": "public void resetWithEmpty()\n{\n_inputStart = -1; // indicates shared buffer not used\n_currentSize = 0;\n_inputLen = 0;\n\n_inputBuffer = null;\n_resultString = null;\n_resultArray = null;\n\n// And then reset internal input buffers, if necessary:\nif (_hasSegments) {\nclearSegments();\n}\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.util.BufferRecycler:<init>(II)V",
+            "method_body": "protected BufferRecycler(int bbCount, int cbCount) {\n_byteBuffers = new byte[bbCount][];\n_charBuffers = new char[cbCount][];\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.util.BufferRecycler:<init>()V",
+            "method_body": "public BufferRecycler() {\nthis(4, 4);\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.core.util.TextBuffer:getTextBuffer()[C",
+            "method_body": "public char[] getTextBuffer()\n{\n// Are we just using shared input buffer?\nif (_inputStart >= 0) return _inputBuffer;\nif (_resultArray != null)  return _resultArray;\nif (_resultString != null) {\nreturn (_resultArray = _resultString.toCharArray());\n}\n// Nope; but does it fit in just one segment?\nif (!_hasSegments)  return _currentSegment;\n// Nope, need to have/create a non-segmented array and return it\nreturn contentsAsArray();\n}",
+            "method_id": 6
+        }
+    ]
+}

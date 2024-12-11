@@ -1,0 +1,24 @@
+{
+    "bug_id": 28,
+    "test_id": 0,
+    "test_name": "org.apache.commons.lang3.text.translate.NumericEntityUnescaperTest.testSupplementaryUnescaping",
+    "test_body": "public void testSupplementaryUnescaping() {\nNumericEntityUnescaper neu = new NumericEntityUnescaper();\nString input = \"&#68642;\";\nString expected = \"\\uD803\\uDC22\";\nString result = neu.translate(input);\nassertEquals(\"Failed to unescape numeric entities supplementary characters\", expected, result);\n}\n",
+    "stack_trace": "junit.framework.ComparisonFailure: Failed to unescape numeric entities supplementary characters expected:<[\ud803\udc22]> but was:<[\u0c22]>\nat junit.framework.Assert.assertEquals(Assert.java:100)\nat junit.framework.TestCase.assertEquals(TestCase.java:261)\nat org.apache.commons.lang3.text.translate.NumericEntityUnescaperTest.testSupplementaryUnescaping(NumericEntityUnescaperTest.java:33)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.lang3.text.translate.CharSequenceTranslator:translate(Ljava/lang/CharSequence;Ljava/io/Writer;)V",
+            "method_body": "public final void translate(CharSequence input, Writer out) throws IOException {\nif (out == null) {\nthrow new IllegalArgumentException(\"The Writer must not be null\");\n}\nif (input == null) {\nreturn;\n}\nint sz = Character.codePointCount(input, 0, input.length());\nfor (int i = 0; i < sz; i++) {\n\n// consumed is the number of codepoints consumed\nint consumed = translate(input, i, out);\n\nif(consumed == 0) {\nout.write( Character.toChars( Character.codePointAt(input, i) ) );\n} else {\n// contract with translators is that they have to understand codepoints and they just took care of a surrogate pair\nfor(int j=0; j<consumed; j++) {\nif(i < sz - 2) {\ni += Character.charCount( Character.codePointAt(input, i) );\n} else {\n// If the String ends with a high surrogate, just add the 1 and don't worry about such things\ni++;\n}\n}\n// for loop will increment 1 anyway, so remove 1 to account for that\ni--;\n}\n}\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.text.translate.CharSequenceTranslator:translate(Ljava/lang/CharSequence;)Ljava/lang/String;",
+            "method_body": "public abstract int translate(CharSequence input, int index, Writer out) throws IOException;\n\n/**\n* Helper for non-Writer usage.\n* @param input CharSequence to be translated\n* @return String output of translation\n*/\npublic final String translate(CharSequence input) {\nif (input == null) {\nreturn null;\n}\ntry {\nStringWriter writer = new StringWriter(input.length() * 2);  // TODO: Make the 2 part of the API???\ntranslate(input, writer);\nreturn writer.toString();\n} catch (IOException ioe) {\n// this should never ever happen while writing to a StringWriter\nthrow new RuntimeException(ioe);\n}\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.text.translate.NumericEntityUnescaper:translate(Ljava/lang/CharSequence;ILjava/io/Writer;)I",
+            "method_body": "public int translate(CharSequence input, int index, Writer out) throws IOException {\n// TODO: Protect from ArrayIndexOutOfBounds\nif(input.charAt(index) == '&' && input.charAt(index + 1) == '#') {\nint start = index + 2;\nboolean isHex = false;\n\nchar firstChar = input.charAt(start);\nif(firstChar == 'x' || firstChar == 'X') {\nstart++;\nisHex = true;\n}\n\nint end = start;\nwhile(input.charAt(end) != ';') {\nend++;\n}\n\nint entityValue;\ntry {\nif(isHex) {\nentityValue = Integer.parseInt(input.subSequence(start, end).toString(), 16);\n} else {\nentityValue = Integer.parseInt(input.subSequence(start, end).toString(), 10);\n}\n} catch(NumberFormatException nfe) {\nreturn 0;\n}\n\nout.write(entityValue);\nreturn 2 + (end - start) + (isHex ? 1 : 0) + 1;\n}\nreturn 0;\n}",
+            "method_id": 2
+        }
+    ]
+}

@@ -1,0 +1,34 @@
+{
+    "bug_id": 16,
+    "test_id": 0,
+    "test_name": "org.apache.commons.codec.binary.Base32Test.testCodec200",
+    "test_body": "public void testCodec200() {\nfinal Base32 codec = new Base32(true, (byte)'W'); // should be allowed\nassertNotNull(codec);\n}\n",
+    "stack_trace": "java.lang.IllegalArgumentException: pad must not be in alphabet or whitespace\nat org.apache.commons.codec.binary.Base32.<init>(Base32.java:309)\nat org.apache.commons.codec.binary.Base32.<init>(Base32.java:193)\nat org.apache.commons.codec.binary.Base32Test.testCodec200(Base32Test.java:158)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.codec.binary.Base32:<init>(ZB)V",
+            "method_body": "public Base32(final boolean useHex, final byte pad) {\nthis(0, null, useHex, pad);\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.codec.binary.Base32:<init>(I[BZB)V",
+            "method_body": "public Base32(final int lineLength, final byte[] lineSeparator, final boolean useHex, final byte pad) {\nsuper(BYTES_PER_UNENCODED_BLOCK, BYTES_PER_ENCODED_BLOCK, lineLength,\nlineSeparator == null ? 0 : lineSeparator.length, pad);\nif (useHex) {\nthis.encodeTable = HEX_ENCODE_TABLE;\nthis.decodeTable = HEX_DECODE_TABLE;\n} else {\nthis.encodeTable = ENCODE_TABLE;\nthis.decodeTable = DECODE_TABLE;\n}\nif (lineLength > 0) {\nif (lineSeparator == null) {\nthrow new IllegalArgumentException(\"lineLength \" + lineLength + \" > 0, but lineSeparator is null\");\n}\n// Must be done after initializing the tables\nif (containsAlphabetOrPad(lineSeparator)) {\nfinal String sep = StringUtils.newStringUtf8(lineSeparator);\nthrow new IllegalArgumentException(\"lineSeparator must not contain Base32 characters: [\" + sep + \"]\");\n}\nthis.encodeSize = BYTES_PER_ENCODED_BLOCK + lineSeparator.length;\nthis.lineSeparator = new byte[lineSeparator.length];\nSystem.arraycopy(lineSeparator, 0, this.lineSeparator, 0, lineSeparator.length);\n} else {\nthis.encodeSize = BYTES_PER_ENCODED_BLOCK;\nthis.lineSeparator = null;\n}\nthis.decodeSize = this.encodeSize - 1;\n\nif (isInAlphabet(pad) || isWhiteSpace(pad)) {\nthrow new IllegalArgumentException(\"pad must not be in alphabet or whitespace\");\n}\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.codec.binary.Base32:<clinit>()V",
+            "method_body": "private static final int BITS_PER_ENCODED_BYTE = 5;\nprivate static final int BYTES_PER_ENCODED_BLOCK = 8;\nprivate static final int BYTES_PER_UNENCODED_BLOCK = 5;\n\n/**\n* Chunk separator per RFC 2045 section 2.1.\n*\n* @see <a href=\"http://www.ietf.org/rfc/rfc2045.txt\">RFC 2045 section 2.1</a>\n*/\nprivate static final byte[] CHUNK_SEPARATOR = {'\\r', '\\n'};",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.codec.binary.Base32:isInAlphabet(B)Z",
+            "method_body": "public boolean isInAlphabet(final byte octet) {\nreturn octet >= 0 && octet < decodeTable.length && decodeTable[octet] != -1;\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.codec.binary.BaseNCodec:<init>(IIIIB)V",
+            "method_body": "protected BaseNCodec(final int unencodedBlockSize, final int encodedBlockSize,\nfinal int lineLength, final int chunkSeparatorLength, final byte pad) {\nthis.unencodedBlockSize = unencodedBlockSize;\nthis.encodedBlockSize = encodedBlockSize;\nfinal boolean useChunking = lineLength > 0 && chunkSeparatorLength > 0;\nthis.lineLength = useChunking ? (lineLength / encodedBlockSize) * encodedBlockSize : 0;\nthis.chunkSeparatorLength = chunkSeparatorLength;\n\nthis.pad = pad;\n}",
+            "method_id": 4
+        }
+    ]
+}

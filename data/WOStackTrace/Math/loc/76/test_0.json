@@ -1,0 +1,411 @@
+{
+    "bug_id": 76,
+    "test_id": 0,
+    "test_name": "org.apache.commons.math.linear.SingularValueSolverTest.testMath320B",
+    "test_body": "public void testMath320B() {\nRealMatrix rm = new Array2DRowRealMatrix(new double[][] {\n{ 1.0, 2.0 }, { 1.0, 2.0 }\n});\nSingularValueDecomposition svd =\nnew SingularValueDecompositionImpl(rm);\nRealMatrix recomposed = svd.getU().multiply(svd.getS()).multiply(svd.getVT());\nAssert.assertEquals(0.0, recomposed.subtract(rm).getNorm(), 2.0e-15);\n}\n",
+    "stack_trace": "junit.framework.AssertionFailedError: expected:<0.0> but was:<3.2>\nat org.junit.Assert.fail(Assert.java:88)\nat org.junit.Assert.failNotEquals(Assert.java:743)\nat org.junit.Assert.assertEquals(Assert.java:494)\nat org.junit.Assert.assertEquals(Assert.java:592)\nat org.apache.commons.math.linear.SingularValueSolverTest.testMath320B(SingularValueSolverTest.java:219)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.math.linear.EigenDecompositionImpl:findEigenvalues()V",
+            "method_body": "private void findEigenvalues()\nthrows InvalidMatrixException {\n\n// compute splitting points\nList<Integer> splitIndices = computeSplits();\n\n// find realEigenvalues in each block\nrealEigenvalues = new double[main.length];\nimagEigenvalues = new double[main.length];\nint begin = 0;\nfor (final int end : splitIndices) {\nfinal int n = end - begin;\nswitch (n) {\n\ncase 1:\n// apply dedicated method for dimension 1\nprocess1RowBlock(begin);\nbreak;\n\ncase 2:\n// apply dedicated method for dimension 2\nprocess2RowsBlock(begin);\nbreak;\n\ncase 3:\n// apply dedicated method for dimension 3\nprocess3RowsBlock(begin);\nbreak;\n\ndefault:\n\n// choose an initial shift for LDL<sup>T</sup> decomposition\nfinal double[] range       = eigenvaluesRange(begin, n);\nfinal double oneFourth     = 0.25 * (3 * range[0] + range[1]);\nfinal int oneFourthCount   = countEigenValues(oneFourth, begin, n);\nfinal double threeFourth   = 0.25 * (range[0] + 3 * range[1]);\nfinal int threeFourthCount = countEigenValues(threeFourth, begin, n);\nfinal boolean chooseLeft   = (oneFourthCount - 1) >= (n - threeFourthCount);\nfinal double lambda        = chooseLeft ? range[0] : range[1];\n\ntau = (range[1] - range[0]) * MathUtils.EPSILON * n + 2 * minPivot;\n\n// decompose T-&lambda;I as LDL<sup>T</sup>\nldlTDecomposition(lambda, begin, n);\n\n// apply general dqd/dqds method\nprocessGeneralBlock(n);\n\n// extract realEigenvalues\nif (chooseLeft) {\nfor (int i = 0; i < n; ++i) {\nrealEigenvalues[begin + i] = lambda + work[4 * i];\n}\n} else {\nfor (int i = 0; i < n; ++i) {\nrealEigenvalues[begin + i] = lambda - work[4 * i];\n}\n}\n\n}\nbegin = end;\n}\n\n// sort the realEigenvalues in decreasing order\nArrays.sort(realEigenvalues);\nint j = realEigenvalues.length - 1;\nfor (int i = 0; i < j; ++i) {\nfinal double tmp = realEigenvalues[i];\nrealEigenvalues[i] = realEigenvalues[j];\nrealEigenvalues[j] = tmp;\n--j;\n}\n\n}",
+            "method_id": 0,
+            "loc": 74
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.BiDiagonalTransformer:transformToUpperBiDiagonal()V",
+            "method_body": "private void transformToUpperBiDiagonal() {\n\nfinal int m = householderVectors.length;\nfinal int n = householderVectors[0].length;\nfor (int k = 0; k < n; k++) {\n\n//zero-out a column\ndouble xNormSqr = 0;\nfor (int i = k; i < m; ++i) {\nfinal double c = householderVectors[i][k];\nxNormSqr += c * c;\n}\nfinal double[] hK = householderVectors[k];\nfinal double a = (hK[k] > 0) ? -Math.sqrt(xNormSqr) : Math.sqrt(xNormSqr);\nmain[k] = a;\nif (a != 0.0) {\nhK[k] -= a;\nfor (int j = k + 1; j < n; ++j) {\ndouble alpha = 0;\nfor (int i = k; i < m; ++i) {\nfinal double[] hI = householderVectors[i];\nalpha -= hI[j] * hI[k];\n}\nalpha /= a * householderVectors[k][k];\nfor (int i = k; i < m; ++i) {\nfinal double[] hI = householderVectors[i];\nhI[j] -= alpha * hI[k];\n}\n}\n}\n\nif (k < n - 1) {\n//zero-out a row\nxNormSqr = 0;\nfor (int j = k + 1; j < n; ++j) {\nfinal double c = hK[j];\nxNormSqr += c * c;\n}\nfinal double b = (hK[k + 1] > 0) ? -Math.sqrt(xNormSqr) : Math.sqrt(xNormSqr);\nsecondary[k] = b;\nif (b != 0.0) {\nhK[k + 1] -= b;\nfor (int i = k + 1; i < m; ++i) {\nfinal double[] hI = householderVectors[i];\ndouble beta = 0;\nfor (int j = k + 1; j < n; ++j) {\nbeta -= hI[j] * hK[j];\n}\nbeta /= b * hK[k + 1];\nfor (int j = k + 1; j < n; ++j) {\nhI[j] -= beta * hK[j];\n}\n}\n}\n}\n\n}\n}",
+            "method_id": 1,
+            "loc": 58
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.EigenDecompositionImpl:findEigenvector(D[D[D)Lorg/apache/commons/math/linear/ArrayRealVector;",
+            "method_body": "private ArrayRealVector findEigenvector(final double eigenvalue,\nfinal double[] d, final double[] l) {\n\n// compute the LDLt and UDUt decompositions of the\n// perfectly shifted tridiagonal matrix\nfinal int m = main.length;\nstationaryQuotientDifferenceWithShift(d, l, eigenvalue);\nprogressiveQuotientDifferenceWithShift(d, l, eigenvalue);\n\n// select the twist index leading to\n// the least diagonal element in the twisted factorization\nint r = m - 1;\ndouble minG = Math.abs(work[6 * r] + work[6 * r + 3] + eigenvalue);\nint sixI = 0;\nfor (int i = 0; i < m - 1; ++i) {\nfinal double absG = Math.abs(work[sixI] + d[i] * work[sixI + 9] / work[sixI + 10]);\nif (absG < minG) {\nr = i;\nminG = absG;\n}\nsixI += 6;\n}\n\n// solve the singular system by ignoring the equation\n// at twist index and propagating upwards and downwards\ndouble[] eigenvector = new double[m];\ndouble n2 = 1;\neigenvector[r] = 1;\ndouble z = 1;\nfor (int i = r - 1; i >= 0; --i) {\nz *= -work[6 * i + 2];\neigenvector[i] = z;\nn2 += z * z;\n}\nz = 1;\nfor (int i = r + 1; i < m; ++i) {\nz *= -work[6 * i - 1];\neigenvector[i] = z;\nn2 += z * z;\n}\n\n// normalize vector\nfinal double inv = 1.0 / Math.sqrt(n2);\nfor (int i = 0; i < m; ++i) {\neigenvector[i] *= inv;\n}\n\nreturn (transformer == null) ?\nnew ArrayRealVector(eigenvector, false) :\nnew ArrayRealVector(transformer.getQ().operate(eigenvector), false);\n\n}",
+            "method_id": 2,
+            "loc": 52
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.SingularValueDecompositionImpl:getV()Lorg/apache/commons/math/linear/RealMatrix;",
+            "method_body": "public RealMatrix getV()\nthrows InvalidMatrixException {\n\nif (cachedV == null) {\n\nfinal int p = singularValues.length;\nif (m >= n) {\n// the tridiagonal matrix is Bt.B, where B is upper bidiagonal\nfinal RealMatrix e =\neigenDecomposition.getV().getSubMatrix(0, n - 1, 0, p - 1);\ncachedV = transformer.getV().multiply(e);\n} else {\n// the tridiagonal matrix is B.Bt, where B is lower bidiagonal\n// compute W = Bt.E.S^(-1) where E is the eigenvectors matrix\nfinal RealMatrix e =\neigenDecomposition.getV().getSubMatrix(0, p - 1, 0, p - 1);\nfinal double[][] eData = e.getData();\nfinal double[][] wData = new double[n][p];\ndouble[] ei1 = eData[0];\nfor (int i = 0; i < p - 1; ++i) {\nfinal double mi = mainBidiagonal[i];\nfinal double[] ei0 = ei1;\nfinal double[] wi  = wData[i];\nei1 = eData[i + 1];\nfinal double si = secondaryBidiagonal[i];\nfor (int j = 0; j < p; ++j) {\nwi[j] = (mi * ei0[j] + si * ei1[j]) / singularValues[j];\n}\n}\nfor (int j = 0; j < p; ++j) {\nwData[p - 1][j] = ei1[j] * mainBidiagonal[p - 1] / singularValues[j];\n}\nfor (int i = p; i < n; ++i) {\nwData[i] = new double[p];\n}\ncachedV =\ntransformer.getV().multiply(MatrixUtils.createRealMatrix(wData));\n}\n\n}\n\n// return the cached matrix\nreturn cachedV;\n\n}",
+            "method_id": 3,
+            "loc": 45
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.BiDiagonalTransformer:getU()Lorg/apache/commons/math/linear/RealMatrix;",
+            "method_body": "public RealMatrix getU() {\n\nif (cachedU == null) {\n\nfinal int m = householderVectors.length;\nfinal int n = householderVectors[0].length;\nfinal int p = main.length;\nfinal int diagOffset    = (m >= n) ? 0 : 1;\nfinal double[] diagonal = (m >= n) ? main : secondary;\ncachedU = MatrixUtils.createRealMatrix(m, m);\n\n// fill up the part of the matrix not affected by Householder transforms\nfor (int k = m - 1; k >= p; --k) {\ncachedU.setEntry(k, k, 1);\n}\n\n// build up first part of the matrix by applying Householder transforms\nfor (int k = p - 1; k >= diagOffset; --k) {\nfinal double[] hK = householderVectors[k];\ncachedU.setEntry(k, k, 1);\nif (hK[k - diagOffset] != 0.0) {\nfor (int j = k; j < m; ++j) {\ndouble alpha = 0;\nfor (int i = k; i < m; ++i) {\nalpha -= cachedU.getEntry(i, j) * householderVectors[i][k - diagOffset];\n}\nalpha /= diagonal[k - diagOffset] * hK[k - diagOffset];\n\nfor (int i = k; i < m; ++i) {\ncachedU.addToEntry(i, j, -alpha * householderVectors[i][k - diagOffset]);\n}\n}\n}\n}\nif (diagOffset > 0) {\ncachedU.setEntry(0, 0, 1);\n}\n\n}\n\n// return the cached matrix\nreturn cachedU;\n\n}",
+            "method_id": 4,
+            "loc": 44
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.BiDiagonalTransformer:getV()Lorg/apache/commons/math/linear/RealMatrix;",
+            "method_body": "public RealMatrix getV() {\n\nif (cachedV == null) {\n\nfinal int m = householderVectors.length;\nfinal int n = householderVectors[0].length;\nfinal int p = main.length;\nfinal int diagOffset    = (m >= n) ? 1 : 0;\nfinal double[] diagonal = (m >= n) ? secondary : main;\ncachedV = MatrixUtils.createRealMatrix(n, n);\n\n// fill up the part of the matrix not affected by Householder transforms\nfor (int k = n - 1; k >= p; --k) {\ncachedV.setEntry(k, k, 1);\n}\n\n// build up first part of the matrix by applying Householder transforms\nfor (int k = p - 1; k >= diagOffset; --k) {\nfinal double[] hK = householderVectors[k - diagOffset];\ncachedV.setEntry(k, k, 1);\nif (hK[k] != 0.0) {\nfor (int j = k; j < n; ++j) {\ndouble beta = 0;\nfor (int i = k; i < n; ++i) {\nbeta -= cachedV.getEntry(i, j) * hK[i];\n}\nbeta /= diagonal[k - diagOffset] * hK[k];\n\nfor (int i = k; i < n; ++i) {\ncachedV.addToEntry(i, j, -beta * hK[i]);\n}\n}\n}\n}\nif (diagOffset > 0) {\ncachedV.setEntry(0, 0, 1);\n}\n\n}\n\n// return the cached matrix\nreturn cachedV;\n\n}",
+            "method_id": 5,
+            "loc": 44
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.SingularValueDecompositionImpl:<init>(Lorg/apache/commons/math/linear/RealMatrix;I)V",
+            "method_body": "public SingularValueDecompositionImpl(final RealMatrix matrix, final int max)\nthrows InvalidMatrixException {\n\nm = matrix.getRowDimension();\nn = matrix.getColumnDimension();\n\ncachedU  = null;\ncachedS  = null;\ncachedV  = null;\ncachedVt = null;\n\n// transform the matrix to bidiagonal\ntransformer         = new BiDiagonalTransformer(matrix);\nmainBidiagonal      = transformer.getMainDiagonalRef();\nsecondaryBidiagonal = transformer.getSecondaryDiagonalRef();\n\n// compute Bt.B (if upper diagonal) or B.Bt (if lower diagonal)\nmainTridiagonal      = new double[mainBidiagonal.length];\nsecondaryTridiagonal = new double[mainBidiagonal.length - 1];\ndouble a = mainBidiagonal[0];\nmainTridiagonal[0] = a * a;\nfor (int i = 1; i < mainBidiagonal.length; ++i) {\nfinal double b  = secondaryBidiagonal[i - 1];\nsecondaryTridiagonal[i - 1] = a * b;\na = mainBidiagonal[i];\nmainTridiagonal[i] = a * a + b * b;\n}\n\n// compute singular values\neigenDecomposition =\nnew EigenDecompositionImpl(mainTridiagonal, secondaryTridiagonal,\nMathUtils.SAFE_MIN);\nfinal double[] eigenValues = eigenDecomposition.getRealEigenvalues();\nint p = Math.min(max, eigenValues.length);\nwhile ((p > 0) && (eigenValues[p - 1] <= 0)) {\n--p;\n}\nsingularValues = new double[p];\nfor (int i = 0; i < p; ++i) {\nsingularValues[i] = Math.sqrt(eigenValues[i]);\n}\n\n}",
+            "method_id": 6,
+            "loc": 43
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.EigenDecompositionImpl:stationaryQuotientDifferenceWithShift([D[DD)V",
+            "method_body": "private void stationaryQuotientDifferenceWithShift(final double[] d, final double[] l,\nfinal double lambda) {\nfinal int nM1 = d.length - 1;\ndouble si = -lambda;\nint sixI = 0;\nfor (int i = 0; i < nM1; ++i) {\nfinal double di   = d[i];\nfinal double li   = l[i];\nfinal double ldi  = li * di;\nfinal double diP1 = di + si;\nfinal double liP1 = ldi / diP1;\nwork[sixI]        = si;\nwork[sixI + 1]    = diP1;\nwork[sixI + 2]    = liP1;\nsi = li * liP1 * si - lambda;\nsixI += 6;\n}\nif (Double.isNaN(si)) {\n// one of the pivot was null, use a slower but safer version of dstqds\nsi = -lambda;\nsixI = 0;\nfor (int i = 0; i < nM1; ++i) {\nfinal double di   = d[i];\nfinal double li   = l[i];\nfinal double ldi  = li * di;\ndouble diP1 = di + si;\nif (Math.abs(diP1) < minPivot) {\ndiP1 = -minPivot;\n}\nfinal double liP1 = ldi / diP1;\nwork[sixI]        = si;\nwork[sixI + 1]    = diP1;\nwork[sixI + 2]    = liP1;\nsi = li * ((liP1 == 0) ? li * di : liP1 * si) - lambda;\nsixI += 6;\n}\n}\nwork[6 * nM1 + 1] = d[nM1] + si;\nwork[6 * nM1]     = si;\n}",
+            "method_id": 7,
+            "loc": 40
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.EigenDecompositionImpl:computeGershgorinCircles()V",
+            "method_body": "private void computeGershgorinCircles() {\n\nfinal int m     = main.length;\nfinal int lowerStart = 4 * m;\nfinal int upperStart = 5 * m;\nlowerSpectra = Double.POSITIVE_INFINITY;\nupperSpectra = Double.NEGATIVE_INFINITY;\ndouble eMax = 0;\n\ndouble eCurrent = 0;\nfor (int i = 0; i < m - 1; ++i) {\n\nfinal double dCurrent = main[i];\nfinal double ePrevious = eCurrent;\neCurrent = Math.abs(secondary[i]);\neMax = Math.max(eMax, eCurrent);\nfinal double radius = ePrevious + eCurrent;\n\nfinal double lower = dCurrent - radius;\nwork[lowerStart + i] = lower;\nlowerSpectra = Math.min(lowerSpectra, lower);\n\nfinal double upper = dCurrent + radius;\nwork[upperStart + i] = upper;\nupperSpectra = Math.max(upperSpectra, upper);\n\n}\n\nfinal double dCurrent = main[m - 1];\nfinal double lower = dCurrent - eCurrent;\nwork[lowerStart + m - 1] = lower;\nlowerSpectra = Math.min(lowerSpectra, lower);\nfinal double upper = dCurrent + eCurrent;\nwork[upperStart + m - 1] = upper;\nupperSpectra = Math.max(upperSpectra, upper);\nminPivot = MathUtils.SAFE_MIN * Math.max(1.0, eMax * eMax);\n\n}",
+            "method_id": 8,
+            "loc": 38
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.EigenDecompositionImpl:progressiveQuotientDifferenceWithShift([D[DD)V",
+            "method_body": "private void progressiveQuotientDifferenceWithShift(final double[] d, final double[] l,\nfinal double lambda) {\nfinal int nM1 = d.length - 1;\ndouble pi = d[nM1] - lambda;\nint sixI = 6 * (nM1 - 1);\nfor (int i = nM1 - 1; i >= 0; --i) {\nfinal double di   = d[i];\nfinal double li   = l[i];\nfinal double diP1 = di * li * li + pi;\nfinal double t    = di / diP1;\nwork[sixI +  9]   = pi;\nwork[sixI + 10]   = diP1;\nwork[sixI +  5]   = li * t;\npi = pi * t - lambda;\nsixI -= 6;\n}\nif (Double.isNaN(pi)) {\n// one of the pivot was null, use a slower but safer version of dqds\npi = d[nM1] - lambda;\nsixI = 6 * (nM1 - 1);\nfor (int i = nM1 - 1; i >= 0; --i) {\nfinal double di   = d[i];\nfinal double li   = l[i];\ndouble diP1 = di * li * li + pi;\nif (Math.abs(diP1) < minPivot) {\ndiP1 = -minPivot;\n}\nfinal double t    = di / diP1;\nwork[sixI +  9]   = pi;\nwork[sixI + 10]   = diP1;\nwork[sixI +  5]   = li * t;\npi = ((t == 0) ? di : pi * t) - lambda;\nsixI -= 6;\n}\n}\nwork[3] = pi;\nwork[4] = pi;\n}",
+            "method_id": 9,
+            "loc": 38
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.AbstractRealMatrix:getNorm()D",
+            "method_body": "public double getNorm() {\nreturn walkInColumnOrder(new RealMatrixPreservingVisitor() {\n\n/** Last row index. */\nprivate double endRow;\n\n/** Sum of absolute values on one column. */\nprivate double columnSum;\n\n/** Maximal sum across all columns. */\nprivate double maxColSum;\n\n/** {@inheritDoc} */\npublic void start(final int rows, final int columns,\nfinal int startRow, final int endRow,\nfinal int startColumn, final int endColumn) {\nthis.endRow = endRow;\ncolumnSum   = 0;\nmaxColSum   = 0;\n}\n\n/** {@inheritDoc} */\npublic void visit(final int row, final int column, final double value) {\ncolumnSum += Math.abs(value);\nif (row == endRow) {\nmaxColSum = Math.max(maxColSum, columnSum);\ncolumnSum = 0;\n}\n}\n\n/** {@inheritDoc} */\npublic double end() {\nreturn maxColSum;\n}\n\n});\n}",
+            "method_id": 10,
+            "loc": 37
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.AbstractRealMatrix$1:end()D",
+            "method_body": "public double getNorm() {\nreturn walkInColumnOrder(new RealMatrixPreservingVisitor() {\n\n/** Last row index. */\nprivate double endRow;\n\n/** Sum of absolute values on one column. */\nprivate double columnSum;\n\n/** Maximal sum across all columns. */\nprivate double maxColSum;\n\n/** {@inheritDoc} */\npublic void start(final int rows, final int columns,\nfinal int startRow, final int endRow,\nfinal int startColumn, final int endColumn) {\nthis.endRow = endRow;\ncolumnSum   = 0;\nmaxColSum   = 0;\n}\n\n/** {@inheritDoc} */\npublic void visit(final int row, final int column, final double value) {\ncolumnSum += Math.abs(value);\nif (row == endRow) {\nmaxColSum = Math.max(maxColSum, columnSum);\ncolumnSum = 0;\n}\n}\n\n/** {@inheritDoc} */\npublic double end() {\nreturn maxColSum;\n}\n\n});\n}",
+            "method_id": 11,
+            "loc": 37
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.AbstractRealMatrix$1:visit(IID)V",
+            "method_body": "public double getNorm() {\nreturn walkInColumnOrder(new RealMatrixPreservingVisitor() {\n\n/** Last row index. */\nprivate double endRow;\n\n/** Sum of absolute values on one column. */\nprivate double columnSum;\n\n/** Maximal sum across all columns. */\nprivate double maxColSum;\n\n/** {@inheritDoc} */\npublic void start(final int rows, final int columns,\nfinal int startRow, final int endRow,\nfinal int startColumn, final int endColumn) {\nthis.endRow = endRow;\ncolumnSum   = 0;\nmaxColSum   = 0;\n}\n\n/** {@inheritDoc} */\npublic void visit(final int row, final int column, final double value) {\ncolumnSum += Math.abs(value);\nif (row == endRow) {\nmaxColSum = Math.max(maxColSum, columnSum);\ncolumnSum = 0;\n}\n}\n\n/** {@inheritDoc} */\npublic double end() {\nreturn maxColSum;\n}\n\n});\n}",
+            "method_id": 12,
+            "loc": 37
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.AbstractRealMatrix$1:start(IIIIII)V",
+            "method_body": "public double getNorm() {\nreturn walkInColumnOrder(new RealMatrixPreservingVisitor() {\n\n/** Last row index. */\nprivate double endRow;\n\n/** Sum of absolute values on one column. */\nprivate double columnSum;\n\n/** Maximal sum across all columns. */\nprivate double maxColSum;\n\n/** {@inheritDoc} */\npublic void start(final int rows, final int columns,\nfinal int startRow, final int endRow,\nfinal int startColumn, final int endColumn) {\nthis.endRow = endRow;\ncolumnSum   = 0;\nmaxColSum   = 0;\n}\n\n/** {@inheritDoc} */\npublic void visit(final int row, final int column, final double value) {\ncolumnSum += Math.abs(value);\nif (row == endRow) {\nmaxColSum = Math.max(maxColSum, columnSum);\ncolumnSum = 0;\n}\n}\n\n/** {@inheritDoc} */\npublic double end() {\nreturn maxColSum;\n}\n\n});\n}",
+            "method_id": 13,
+            "loc": 37
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:setSubMatrix([[DII)V",
+            "method_body": "public void setSubMatrix(final double[][] subMatrix, final int row, final int column)\nthrows MatrixIndexException {\nif (data == null) {\nif (row > 0) {\nthrow MathRuntimeException.createIllegalStateException(\n\"first {0} rows are not initialized yet\", row);\n}\nif (column > 0) {\nthrow MathRuntimeException.createIllegalStateException(\n\"first {0} columns are not initialized yet\", column);\n}\nfinal int nRows = subMatrix.length;\nif (nRows == 0) {\nthrow MathRuntimeException.createIllegalArgumentException(\nAT_LEAST_ONE_ROW_MESSAGE);\n}\n\nfinal int nCols = subMatrix[0].length;\nif (nCols == 0) {\nthrow MathRuntimeException.createIllegalArgumentException(\nAT_LEAST_ONE_COLUMN_MESSAGE);\n}\ndata = new double[subMatrix.length][nCols];\nfor (int i = 0; i < data.length; ++i) {\nif (subMatrix[i].length != nCols) {\nthrow MathRuntimeException.createIllegalArgumentException(\nDIFFERENT_ROWS_LENGTHS_MESSAGE, nCols, subMatrix[i].length);\n}\nSystem.arraycopy(subMatrix[i], 0, data[i + row], column, nCols);\n}\n} else {\nsuper.setSubMatrix(subMatrix, row, column);\n}\n\n}",
+            "method_id": 14,
+            "loc": 35
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:<init>([[DZ)V",
+            "method_body": "public Array2DRowRealMatrix(final double[][] d, final boolean copyArray)\nthrows IllegalArgumentException, NullPointerException {\nif (copyArray) {\ncopyIn(d);\n} else {\nif (d == null) {\nthrow new NullPointerException();\n}\nfinal int nRows = d.length;\nif (nRows == 0) {\nthrow MathRuntimeException.createIllegalArgumentException(\nAT_LEAST_ONE_ROW_MESSAGE);\n}\nfinal int nCols = d[0].length;\nif (nCols == 0) {\nthrow MathRuntimeException.createIllegalArgumentException(\nAT_LEAST_ONE_COLUMN_MESSAGE);\n}\nfor (int r = 1; r < nRows; r++) {\nif (d[r].length != nCols) {\nthrow MathRuntimeException.createIllegalArgumentException(\nDIFFERENT_ROWS_LENGTHS_MESSAGE, nCols, d[r].length);\n}\n}\ndata = d;\n}\n}",
+            "method_id": 15,
+            "loc": 27
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.EigenDecompositionImpl:findEigenVectors()V",
+            "method_body": "private void findEigenVectors() {\n\nfinal int m = main.length;\neigenvectors = new ArrayRealVector[m];\n\n// perform an initial non-shifted LDLt decomposition\nfinal double[] d = new double[m];\nfinal double[] l = new double[m - 1];\n// avoid zero divide on indefinite matrix\nfinal double mu = realEigenvalues[m-1] <= 0 && realEigenvalues[0] > 0 ? 0.5-realEigenvalues[m-1] : 0;\ndouble di = main[0]+mu;\nd[0] = di;\nfor (int i = 1; i < m; ++i) {\nfinal double eiM1  = secondary[i - 1];\nfinal double ratio = eiM1 / di;\ndi       = main[i] - eiM1 * ratio + mu;\nl[i - 1] = ratio;\nd[i]     = di;\n}\n\n// compute eigenvectors\nfor (int i = 0; i < m; ++i) {\neigenvectors[i] = findEigenvector(realEigenvalues[i]+mu, d, l);\n}\n\n}",
+            "method_id": 16,
+            "loc": 26
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:multiply(Lorg/apache/commons/math/linear/Array2DRowRealMatrix;)Lorg/apache/commons/math/linear/Array2DRowRealMatrix;",
+            "method_body": "public Array2DRowRealMatrix multiply(final Array2DRowRealMatrix m)\nthrows IllegalArgumentException {\n\n// safety check\nMatrixUtils.checkMultiplicationCompatible(this, m);\n\nfinal int nRows = this.getRowDimension();\nfinal int nCols = m.getColumnDimension();\nfinal int nSum = this.getColumnDimension();\nfinal double[][] outData = new double[nRows][nCols];\nfor (int row = 0; row < nRows; row++) {\nfinal double[] dataRow    = data[row];\nfinal double[] outDataRow = outData[row];\nfor (int col = 0; col < nCols; col++) {\ndouble sum = 0;\nfor (int i = 0; i < nSum; i++) {\nsum += dataRow[i] * m.data[i][col];\n}\noutDataRow[col] = sum;\n}\n}\n\nreturn new Array2DRowRealMatrix(outData, false);\n\n}",
+            "method_id": 17,
+            "loc": 25
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.EigenDecompositionImpl:process2RowsBlock(I)V",
+            "method_body": "private void process2RowsBlock(final int index)\nthrows InvalidMatrixException {\n\n// the characteristic polynomial is\n// X^2 - (q0 + q1) X + q0 q1 - e1^2\nfinal double q0   = main[index];\nfinal double q1   = main[index + 1];\nfinal double e12  = squaredSecondary[index];\n\nfinal double s     = q0 + q1;\nfinal double p     = q0 * q1 - e12;\nfinal double delta = s * s - 4 * p;\nif (delta < 0) {\nthrow new InvalidMatrixException(\"cannot solve degree {0} equation\", 2);\n}\n\nfinal double largestRoot = 0.5 * (s + Math.sqrt(delta));\nrealEigenvalues[index]     = largestRoot;\nrealEigenvalues[index + 1] = p / largestRoot;\n\n}",
+            "method_id": 18,
+            "loc": 21
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.EigenDecompositionImpl:getV()Lorg/apache/commons/math/linear/RealMatrix;",
+            "method_body": "public RealMatrix getV()\nthrows InvalidMatrixException {\n\nif (cachedV == null) {\n\nif (eigenvectors == null) {\nfindEigenVectors();\n}\n\nfinal int m = eigenvectors.length;\ncachedV = MatrixUtils.createRealMatrix(m, m);\nfor (int k = 0; k < m; ++k) {\ncachedV.setColumnVector(k, eigenvectors[k]);\n}\n\n}\n\n// return the cached matrix\nreturn cachedV;\n\n}",
+            "method_id": 19,
+            "loc": 21
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.EigenDecompositionImpl:computeSplits()Ljava/util/List;",
+            "method_body": "private List<Integer> computeSplits() {\n\nfinal List<Integer> list = new ArrayList<Integer>();\n\n// splitting preserving relative accuracy\ndouble absDCurrent = Math.abs(main[0]);\nfor (int i = 0; i < secondary.length; ++i) {\nfinal double absDPrevious = absDCurrent;\nabsDCurrent = Math.abs(main[i + 1]);\nfinal double max = splitTolerance * Math.sqrt(absDPrevious * absDCurrent);\nif (Math.abs(secondary[i]) <= max) {\nlist.add(i + 1);\nsecondary[i] = 0;\nsquaredSecondary[i] = 0;\n}\n}\n\nlist.add(secondary.length + 1);\nreturn list;\n\n}",
+            "method_id": 20,
+            "loc": 21
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:subtract(Lorg/apache/commons/math/linear/Array2DRowRealMatrix;)Lorg/apache/commons/math/linear/Array2DRowRealMatrix;",
+            "method_body": "public Array2DRowRealMatrix subtract(final Array2DRowRealMatrix m)\nthrows IllegalArgumentException {\n\n// safety check\nMatrixUtils.checkSubtractionCompatible(this, m);\n\nfinal int rowCount    = getRowDimension();\nfinal int columnCount = getColumnDimension();\nfinal double[][] outData = new double[rowCount][columnCount];\nfor (int row = 0; row < rowCount; row++) {\nfinal double[] dataRow    = data[row];\nfinal double[] mRow       = m.data[row];\nfinal double[] outDataRow = outData[row];\nfor (int col = 0; col < columnCount; col++) {\noutDataRow[col] = dataRow[col] - mRow[col];\n}\n}\n\nreturn new Array2DRowRealMatrix(outData, false);\n\n}",
+            "method_id": 21,
+            "loc": 21
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.BiDiagonalTransformer:<init>(Lorg/apache/commons/math/linear/RealMatrix;)V",
+            "method_body": "public BiDiagonalTransformer(RealMatrix matrix) {\n\nfinal int m = matrix.getRowDimension();\nfinal int n = matrix.getColumnDimension();\nfinal int p = Math.min(m, n);\nhouseholderVectors = matrix.getData();\nmain      = new double[p];\nsecondary = new double[p - 1];\ncachedU   = null;\ncachedB   = null;\ncachedV   = null;\n\n// transform matrix\nif (m >= n) {\ntransformToUpperBiDiagonal();\n} else {\ntransformToLowerBiDiagonal();\n}\n\n}",
+            "method_id": 22,
+            "loc": 20
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.EigenDecompositionImpl:<init>([D[DD)V",
+            "method_body": "public EigenDecompositionImpl(final double[] main, double[] secondary,\nfinal double splitTolerance)\nthrows InvalidMatrixException {\n\nthis.main      = main.clone();\nthis.secondary = secondary.clone();\ntransformer    = null;\n\n// pre-compute some elements\nsquaredSecondary = new double[secondary.length];\nfor (int i = 0; i < squaredSecondary.length; ++i) {\nfinal double s = secondary[i];\nsquaredSecondary[i] = s * s;\n}\n\nthis.splitTolerance = splitTolerance;\ndecompose();\n\n}",
+            "method_id": 23,
+            "loc": 19
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.MatrixUtils:checkSubMatrixIndex(Lorg/apache/commons/math/linear/AnyMatrix;IIII)V",
+            "method_body": "public static void checkSubMatrixIndex(final AnyMatrix m,\nfinal int startRow, final int endRow,\nfinal int startColumn, final int endColumn) {\ncheckRowIndex(m, startRow);\ncheckRowIndex(m, endRow);\nif (startRow > endRow) {\nthrow new MatrixIndexException(\"initial row {0} after final row {1}\",\nstartRow, endRow);\n}\n\ncheckColumnIndex(m, startColumn);\ncheckColumnIndex(m, endColumn);\nif (startColumn > endColumn) {\nthrow new MatrixIndexException(\"initial column {0} after final column {1}\",\nstartColumn, endColumn);\n}\n\n\n}",
+            "method_id": 24,
+            "loc": 19
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.AbstractRealMatrix:transpose()Lorg/apache/commons/math/linear/RealMatrix;",
+            "method_body": "public RealMatrix transpose() {\n\nfinal int nRows = getRowDimension();\nfinal int nCols = getColumnDimension();\nfinal RealMatrix out = createMatrix(nCols, nRows);\nwalkInOptimizedOrder(new DefaultRealMatrixPreservingVisitor() {\n\n/** {@inheritDoc} */\n@Override\npublic void visit(final int row, final int column, final double value) {\nout.setEntry(column, row, value);\n}\n\n});\n\nreturn out;\n\n}",
+            "method_id": 25,
+            "loc": 18
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.AbstractRealMatrix$5:visit(IID)V",
+            "method_body": "public RealMatrix transpose() {\n\nfinal int nRows = getRowDimension();\nfinal int nCols = getColumnDimension();\nfinal RealMatrix out = createMatrix(nCols, nRows);\nwalkInOptimizedOrder(new DefaultRealMatrixPreservingVisitor() {\n\n/** {@inheritDoc} */\n@Override\npublic void visit(final int row, final int column, final double value) {\nout.setEntry(column, row, value);\n}\n\n});\n\nreturn out;\n\n}",
+            "method_id": 26,
+            "loc": 18
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.EigenDecompositionImpl:decompose()V",
+            "method_body": "private void decompose() {\n\ncachedV  = null;\ncachedD  = null;\ncachedVt = null;\nwork     = new double[6 * main.length];\n\n// compute the Gershgorin circles\ncomputeGershgorinCircles();\n\n// find all the realEigenvalues\nfindEigenvalues();\n\n// we will search for eigenvectors only if required\neigenvectors = null;\n\n}",
+            "method_id": 27,
+            "loc": 17
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.AbstractRealMatrix:getSubMatrix(IIII)Lorg/apache/commons/math/linear/RealMatrix;",
+            "method_body": "public RealMatrix getSubMatrix(final int startRow, final int endRow,\nfinal int startColumn, final int endColumn)\nthrows MatrixIndexException {\n\nMatrixUtils.checkSubMatrixIndex(this, startRow, endRow, startColumn, endColumn);\n\nfinal RealMatrix subMatrix =\ncreateMatrix(endRow - startRow + 1, endColumn - startColumn + 1);\nfor (int i = startRow; i <= endRow; ++i) {\nfor (int j = startColumn; j <= endColumn; ++j) {\nsubMatrix.setEntry(i - startRow, j - startColumn, getEntry(i, j));\n}\n}\n\nreturn subMatrix;\n\n}",
+            "method_id": 28,
+            "loc": 17
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.AbstractRealMatrix:setColumnVector(ILorg/apache/commons/math/linear/RealVector;)V",
+            "method_body": "public void setColumnVector(final int column, final RealVector vector)\nthrows MatrixIndexException, InvalidMatrixException {\n\nMatrixUtils.checkColumnIndex(this, column);\nfinal int nRows = getRowDimension();\nif (vector.getDimension() != nRows) {\nthrow new InvalidMatrixException(\n\"dimensions mismatch: got {0}x{1} but expected {2}x{3}\",\nvector.getDimension(), 1, nRows, 1);\n}\nfor (int i = 0; i < nRows; ++i) {\nsetEntry(i, column, vector.getEntry(i));\n}\n\n}",
+            "method_id": 29,
+            "loc": 15
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.AbstractRealMatrix:<init>(II)V",
+            "method_body": "protected AbstractRealMatrix(final int rowDimension, final int columnDimension)\nthrows IllegalArgumentException {\nif (rowDimension <= 0 ) {\nthrow MathRuntimeException.createIllegalArgumentException(\n\"invalid row dimension {0} (must be positive)\",\nrowDimension);\n}\nif (columnDimension <= 0) {\nthrow MathRuntimeException.createIllegalArgumentException(\n\"invalid column dimension {0} (must be positive)\",\ncolumnDimension);\n}\nlu = null;\n}",
+            "method_id": 30,
+            "loc": 14
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:walkInRowOrder(Lorg/apache/commons/math/linear/RealMatrixPreservingVisitor;)D",
+            "method_body": "public double walkInRowOrder(final RealMatrixPreservingVisitor visitor)\nthrows MatrixVisitorException {\nfinal int rows    = getRowDimension();\nfinal int columns = getColumnDimension();\nvisitor.start(rows, columns, 0, rows - 1, 0, columns - 1);\nfor (int i = 0; i < rows; ++i) {\nfinal double[] rowI = data[i];\nfor (int j = 0; j < columns; ++j) {\nvisitor.visit(i, j, rowI[j]);\n}\n}\nreturn visitor.end();\n}",
+            "method_id": 31,
+            "loc": 13
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.AbstractRealMatrix$1:<init>(Lorg/apache/commons/math/linear/AbstractRealMatrix;)V",
+            "method_body": "public double getNorm() {\nreturn walkInColumnOrder(new RealMatrixPreservingVisitor() {\nthis.endRow = endRow;\ncolumnSum   = 0;\nmaxColSum   = 0;\n}\ncolumnSum += Math.abs(value);\nif (row == endRow) {\nmaxColSum = Math.max(maxColSum, columnSum);\ncolumnSum = 0;\n}\nreturn maxColSum;\n}",
+            "method_id": 32,
+            "loc": 13
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:walkInColumnOrder(Lorg/apache/commons/math/linear/RealMatrixPreservingVisitor;)D",
+            "method_body": "public double walkInColumnOrder(final RealMatrixPreservingVisitor visitor)\nthrows MatrixVisitorException {\nfinal int rows    = getRowDimension();\nfinal int columns = getColumnDimension();\nvisitor.start(rows, columns, 0, rows - 1, 0, columns - 1);\nfor (int j = 0; j < columns; ++j) {\nfor (int i = 0; i < rows; ++i) {\nvisitor.visit(i, j, data[i][j]);\n}\n}\nreturn visitor.end();\n}",
+            "method_id": 33,
+            "loc": 12
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.SingularValueDecompositionImpl:getS()Lorg/apache/commons/math/linear/RealMatrix;",
+            "method_body": "public RealMatrix getS()\nthrows InvalidMatrixException {\n\nif (cachedS == null) {\n\n// cache the matrix for subsequent calls\ncachedS = MatrixUtils.createRealDiagonalMatrix(singularValues);\n\n}\nreturn cachedS;\n}",
+            "method_id": 34,
+            "loc": 11
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.SingularValueDecompositionImpl:getVT()Lorg/apache/commons/math/linear/RealMatrix;",
+            "method_body": "public RealMatrix getVT()\nthrows InvalidMatrixException {\n\nif (cachedVt == null) {\ncachedVt = getV().transpose();\n}\n\n// return the cached matrix\nreturn cachedVt;\n\n}",
+            "method_id": 35,
+            "loc": 11
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.ArrayRealVector:<init>([DZ)V",
+            "method_body": "public ArrayRealVector(double[] d, boolean copyArray)\nthrows NullPointerException, IllegalArgumentException {\nif (d == null) {\nthrow new NullPointerException();\n}\nif (d.length == 0) {\nthrow MathRuntimeException.createIllegalArgumentException(\"vector must have at least one element\");\n}\ndata = copyArray ? d.clone() :  d;\n}",
+            "method_id": 36,
+            "loc": 10
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.MatrixUtils:checkSubtractionCompatible(Lorg/apache/commons/math/linear/AnyMatrix;Lorg/apache/commons/math/linear/AnyMatrix;)V",
+            "method_body": "public static void checkSubtractionCompatible(final AnyMatrix left, final AnyMatrix right)\nthrows IllegalArgumentException {\nif ((left.getRowDimension()    != right.getRowDimension()) ||\n(left.getColumnDimension() != right.getColumnDimension())) {\nthrow MathRuntimeException.createIllegalArgumentException(\n\"{0}x{1} and {2}x{3} matrices are not subtraction compatible\",\nleft.getRowDimension(), left.getColumnDimension(),\nright.getRowDimension(), right.getColumnDimension());\n}\n}",
+            "method_id": 37,
+            "loc": 10
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:addToEntry(IID)V",
+            "method_body": "public void addToEntry(final int row, final int column, final double increment)\nthrows MatrixIndexException {\ntry {\ndata[row][column] += increment;\n} catch (ArrayIndexOutOfBoundsException e) {\nthrow new MatrixIndexException(\nNO_ENTRY_MESSAGE, row, column, getRowDimension(), getColumnDimension());\n}\n}",
+            "method_id": 38,
+            "loc": 9
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:copyOut()[[D",
+            "method_body": "private double[][] copyOut() {\nfinal int nRows = this.getRowDimension();\nfinal double[][] out = new double[nRows][this.getColumnDimension()];\n// can't copy 2-d array in one shot, otherwise get row references\nfor (int i = 0; i < nRows; i++) {\nSystem.arraycopy(data[i], 0, out[i], 0, data[i].length);\n}\nreturn out;\n}",
+            "method_id": 39,
+            "loc": 9
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:getEntry(II)D",
+            "method_body": "public double getEntry(final int row, final int column)\nthrows MatrixIndexException {\ntry {\nreturn data[row][column];\n} catch (ArrayIndexOutOfBoundsException e) {\nthrow new MatrixIndexException(\nNO_ENTRY_MESSAGE, row, column, getRowDimension(), getColumnDimension());\n}\n}",
+            "method_id": 40,
+            "loc": 9
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.AbstractRealMatrix$5:<init>(Lorg/apache/commons/math/linear/AbstractRealMatrix;Lorg/apache/commons/math/linear/RealMatrix;)V",
+            "method_body": "public RealMatrix transpose() {\nfinal int nRows = getRowDimension();\nfinal int nCols = getColumnDimension();\nfinal RealMatrix out = createMatrix(nCols, nRows);\nwalkInOptimizedOrder(new DefaultRealMatrixPreservingVisitor() {\nout.setEntry(column, row, value);\n}\nreturn out;\n}",
+            "method_id": 41,
+            "loc": 9
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:setEntry(IID)V",
+            "method_body": "public void setEntry(final int row, final int column, final double value)\nthrows MatrixIndexException {\ntry {\ndata[row][column] = value;\n} catch (ArrayIndexOutOfBoundsException e) {\nthrow new MatrixIndexException(\nNO_ENTRY_MESSAGE, row, column, getRowDimension(), getColumnDimension());\n}\n}",
+            "method_id": 42,
+            "loc": 9
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.MatrixUtils:checkMultiplicationCompatible(Lorg/apache/commons/math/linear/AnyMatrix;Lorg/apache/commons/math/linear/AnyMatrix;)V",
+            "method_body": "public static void checkMultiplicationCompatible(final AnyMatrix left, final AnyMatrix right)\nthrows IllegalArgumentException {\nif (left.getColumnDimension() != right.getRowDimension()) {\nthrow MathRuntimeException.createIllegalArgumentException(\n\"{0}x{1} and {2}x{3} matrices are not multiplication compatible\",\nleft.getRowDimension(), left.getColumnDimension(),\nright.getRowDimension(), right.getColumnDimension());\n}\n}",
+            "method_id": 43,
+            "loc": 9
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:multiply(Lorg/apache/commons/math/linear/RealMatrix;)Lorg/apache/commons/math/linear/RealMatrix;",
+            "method_body": "public RealMatrix multiply(final RealMatrix m)\nthrows IllegalArgumentException {\ntry {\nreturn multiply((Array2DRowRealMatrix) m);\n} catch (ClassCastException cce) {\nreturn super.multiply(m);\n}\n}",
+            "method_id": 44,
+            "loc": 8
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:subtract(Lorg/apache/commons/math/linear/RealMatrix;)Lorg/apache/commons/math/linear/RealMatrix;",
+            "method_body": "public RealMatrix subtract(final RealMatrix m)\nthrows IllegalArgumentException {\ntry {\nreturn subtract((Array2DRowRealMatrix) m);\n} catch (ClassCastException cce) {\nreturn super.subtract(m);\n}\n}",
+            "method_id": 45,
+            "loc": 8
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.MatrixUtils:checkColumnIndex(Lorg/apache/commons/math/linear/AnyMatrix;I)V",
+            "method_body": "public static void checkColumnIndex(final AnyMatrix m, final int column)\nthrows MatrixIndexException {\nif (column < 0 || column >= m.getColumnDimension()) {\nthrow new MatrixIndexException(\"column index {0} out of allowed range [{1}, {2}]\",\ncolumn, 0, m.getColumnDimension() - 1);\n}\n}",
+            "method_id": 46,
+            "loc": 7
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.MatrixUtils:createRealDiagonalMatrix([D)Lorg/apache/commons/math/linear/RealMatrix;",
+            "method_body": "public static RealMatrix createRealDiagonalMatrix(final double[] diagonal) {\nfinal RealMatrix m = createRealMatrix(diagonal.length, diagonal.length);\nfor (int i = 0; i < diagonal.length; ++i) {\nm.setEntry(i, i, diagonal[i]);\n}\nreturn m;\n}",
+            "method_id": 47,
+            "loc": 7
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.MatrixUtils:checkRowIndex(Lorg/apache/commons/math/linear/AnyMatrix;I)V",
+            "method_body": "public static void checkRowIndex(final AnyMatrix m, final int row) {\nif (row < 0 || row >= m.getRowDimension()) {\nthrow new MatrixIndexException(\"row index {0} out of allowed range [{1}, {2}]\",\nrow, 0, m.getRowDimension() - 1);\n}\n}",
+            "method_id": 48,
+            "loc": 6
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:<init>(II)V",
+            "method_body": "public Array2DRowRealMatrix(final int rowDimension, final int columnDimension)\nthrows IllegalArgumentException {\nsuper(rowDimension, columnDimension);\ndata = new double[rowDimension][columnDimension];\n}",
+            "method_id": 49,
+            "loc": 5
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:createMatrix(II)Lorg/apache/commons/math/linear/RealMatrix;",
+            "method_body": "public RealMatrix createMatrix(final int rowDimension, final int columnDimension)\nthrows IllegalArgumentException {\nreturn new Array2DRowRealMatrix(rowDimension, columnDimension);\n}",
+            "method_id": 50,
+            "loc": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.SingularValueDecompositionImpl:<init>(Lorg/apache/commons/math/linear/RealMatrix;)V",
+            "method_body": "public SingularValueDecompositionImpl(final RealMatrix matrix)\nthrows InvalidMatrixException {\nthis(matrix, Math.min(matrix.getRowDimension(), matrix.getColumnDimension()));\n}",
+            "method_id": 51,
+            "loc": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.MatrixUtils:createRealMatrix(II)Lorg/apache/commons/math/linear/RealMatrix;",
+            "method_body": "public static RealMatrix createRealMatrix(final int rows, final int columns) {\nreturn (rows * columns <= 4096) ?\nnew Array2DRowRealMatrix(rows, columns) : new BlockRealMatrix(rows, columns);\n}",
+            "method_id": 52,
+            "loc": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.EigenDecompositionImpl:getRealEigenvalues()[D",
+            "method_body": "public double[] getRealEigenvalues()\nthrows InvalidMatrixException {\nreturn realEigenvalues.clone();\n}",
+            "method_id": 53,
+            "loc": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:<init>([[D)V",
+            "method_body": "public Array2DRowRealMatrix(final double[][] d)\nthrows IllegalArgumentException, NullPointerException {\ncopyIn(d);\n}",
+            "method_id": 54,
+            "loc": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.AbstractRealMatrix:walkInOptimizedOrder(Lorg/apache/commons/math/linear/RealMatrixPreservingVisitor;)D",
+            "method_body": "public double walkInOptimizedOrder(final RealMatrixPreservingVisitor visitor)\nthrows MatrixVisitorException {\nreturn walkInRowOrder(visitor);\n}",
+            "method_id": 55,
+            "loc": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.MatrixUtils:createRealMatrix([[D)Lorg/apache/commons/math/linear/RealMatrix;",
+            "method_body": "public static RealMatrix createRealMatrix(double[][] data) {\nreturn (data.length * data[0].length <= 4096) ?\nnew Array2DRowRealMatrix(data) : new BlockRealMatrix(data);\n}",
+            "method_id": 56,
+            "loc": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.AbstractRealMatrix:<init>()V",
+            "method_body": "protected AbstractRealMatrix() {\nlu = null;\n}",
+            "method_id": 57,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:copyIn([[D)V",
+            "method_body": "private void copyIn(final double[][] in) {\nsetSubMatrix(in, 0, 0);\n}",
+            "method_id": 58,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.DefaultRealMatrixPreservingVisitor:end()D",
+            "method_body": "public double end() {\nreturn 0;\n}",
+            "method_id": 59,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.ArrayRealVector:getEntry(I)D",
+            "method_body": "public double getEntry(int index) throws MatrixIndexException {\nreturn data[index];\n}",
+            "method_id": 60,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.ArrayRealVector:getDimension()I",
+            "method_body": "public int getDimension() {\nreturn data.length;\n}",
+            "method_id": 61,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:getData()[[D",
+            "method_body": "public double[][] getData() {\nreturn copyOut();\n}",
+            "method_id": 62,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.BiDiagonalTransformer:getMainDiagonalRef()[D",
+            "method_body": "double[] getMainDiagonalRef() {\nreturn main;\n}",
+            "method_id": 63,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:getColumnDimension()I",
+            "method_body": "public int getColumnDimension() {\nreturn ((data == null) || (data[0] == null)) ? 0 : data[0].length;\n}",
+            "method_id": 64,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.Array2DRowRealMatrix:getRowDimension()I",
+            "method_body": "public int getRowDimension() {\nreturn (data == null) ? 0 : data.length;\n}",
+            "method_id": 65,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.linear.BiDiagonalTransformer:getSecondaryDiagonalRef()[D",
+            "method_body": "double[] getSecondaryDiagonalRef() {\nreturn secondary;\n}",
+            "method_id": 66,
+            "loc": 3
+        }
+    ]
+}

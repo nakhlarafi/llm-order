@@ -1,0 +1,34 @@
+{
+    "bug_id": 55,
+    "test_id": 0,
+    "test_name": "org.apache.commons.lang.time.StopWatchTest.testLang315",
+    "test_body": "public void testLang315() {\nStopWatch watch = new StopWatch();\nwatch.start();\ntry {Thread.sleep(200);} catch (InterruptedException ex) {}\nwatch.suspend();\nlong suspendTime = watch.getTime();\ntry {Thread.sleep(200);} catch (InterruptedException ex) {}\nwatch.stop();\nlong totalTime = watch.getTime();\nassertTrue( suspendTime == totalTime );\n}\n",
+    "stack_trace": "junit.framework.AssertionFailedError\nat junit.framework.Assert.fail(Assert.java:55)\nat junit.framework.Assert.assertTrue(Assert.java:22)\nat junit.framework.Assert.assertTrue(Assert.java:31)\nat junit.framework.TestCase.assertTrue(TestCase.java:201)\nat org.apache.commons.lang.time.StopWatchTest.testLang315(StopWatchTest.java:120)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.lang.time.StopWatch:getTime()J",
+            "method_body": "public long getTime() {\nif(this.runningState == STATE_STOPPED || this.runningState == STATE_SUSPENDED) {\nreturn this.stopTime - this.startTime;\n} else\nif(this.runningState == STATE_UNSTARTED) {\nreturn 0;\n} else\nif(this.runningState == STATE_RUNNING) {\nreturn System.currentTimeMillis() - this.startTime;\n}\nthrow new RuntimeException(\"Illegal running state has occured. \");\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.StopWatch:start()V",
+            "method_body": "public void start() {\nif(this.runningState == STATE_STOPPED) {\nthrow new IllegalStateException(\"Stopwatch must be reset before being restarted. \");\n}\nif(this.runningState != STATE_UNSTARTED) {\nthrow new IllegalStateException(\"Stopwatch already started. \");\n}\nstopTime = -1;\nstartTime = System.currentTimeMillis();\nthis.runningState = STATE_RUNNING;\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.StopWatch:suspend()V",
+            "method_body": "public void suspend() {\nif(this.runningState != STATE_RUNNING) {\nthrow new IllegalStateException(\"Stopwatch must be running to suspend. \");\n}\nstopTime = System.currentTimeMillis();\nthis.runningState = STATE_SUSPENDED;\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.StopWatch:<init>()V",
+            "method_body": "public StopWatch() {\nsuper();\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.lang.time.StopWatch:stop()V",
+            "method_body": "public void stop() {\nif(this.runningState != STATE_RUNNING && this.runningState != STATE_SUSPENDED) {\nthrow new IllegalStateException(\"Stopwatch is not running. \");\n}\nstopTime = System.currentTimeMillis();\nthis.runningState = STATE_STOPPED;\n}",
+            "method_id": 4
+        }
+    ]
+}

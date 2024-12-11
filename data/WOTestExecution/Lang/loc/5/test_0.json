@@ -1,0 +1,21 @@
+{
+    "bug_id": 5,
+    "test_id": 0,
+    "test_name": "org.apache.commons.lang3.LocaleUtilsTest.testLang865",
+    "test_body": "public void testLang865() {\nassertValidToLocale(\"_GB\", \"\", \"GB\", \"\");\nassertValidToLocale(\"_GB_P\", \"\", \"GB\", \"P\");\nassertValidToLocale(\"_GB_POSIX\", \"\", \"GB\", \"POSIX\");\ntry {\nLocaleUtils.toLocale(\"_G\");\nfail(\"Must be at least 3 chars if starts with underscore\");\n} catch (final IllegalArgumentException iae) {\n}\ntry {\nLocaleUtils.toLocale(\"_Gb\");\nfail(\"Must be uppercase if starts with underscore\");\n} catch (final IllegalArgumentException iae) {\n}\ntry {\nLocaleUtils.toLocale(\"_gB\");\nfail(\"Must be uppercase if starts with underscore\");\n} catch (final IllegalArgumentException iae) {\n}\ntry {\nLocaleUtils.toLocale(\"_1B\");\nfail(\"Must be letter if starts with underscore\");\n} catch (final IllegalArgumentException iae) {\n}\ntry {\nLocaleUtils.toLocale(\"_G1\");\nfail(\"Must be letter if starts with underscore\");\n} catch (final IllegalArgumentException iae) {\n}\ntry {\nLocaleUtils.toLocale(\"_GB_\");\nfail(\"Must be at least 5 chars if starts with underscore\");\n} catch (final IllegalArgumentException iae) {\n}\ntry {\nLocaleUtils.toLocale(\"_GBAP\");\nfail(\"Must have underscore after the country if starts with underscore and is at least 5 chars\");\n} catch (final IllegalArgumentException iae) {\n}\n}\n",
+    "stack_trace": "java.lang.IllegalArgumentException: Invalid locale format: _GB\nat org.apache.commons.lang3.LocaleUtils.toLocale(LocaleUtils.java:99)\nat org.apache.commons.lang3.LocaleUtilsTest.assertValidToLocale(LocaleUtilsTest.java:119)\nat org.apache.commons.lang3.LocaleUtilsTest.testLang865(LocaleUtilsTest.java:505)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.lang3.LocaleUtils:toLocale(Ljava/lang/String;)Ljava/util/Locale;",
+            "method_body": "public static Locale toLocale(final String str) {\nif (str == null) {\nreturn null;\n}\nfinal int len = str.length();\nif (len < 2) {\nthrow new IllegalArgumentException(\"Invalid locale format: \" + str);\n}\nfinal char ch0 = str.charAt(0);\nfinal char ch1 = str.charAt(1);\nif (!Character.isLowerCase(ch0) || !Character.isLowerCase(ch1)) {\nthrow new IllegalArgumentException(\"Invalid locale format: \" + str);\n}\nif (len == 2) {\nreturn new Locale(str);\n}\nif (len < 5) {\nthrow new IllegalArgumentException(\"Invalid locale format: \" + str);\n}\nif (str.charAt(2) != '_') {\nthrow new IllegalArgumentException(\"Invalid locale format: \" + str);\n}\nfinal char ch3 = str.charAt(3);\nif (ch3 == '_') {\nreturn new Locale(str.substring(0, 2), \"\", str.substring(4));\n}\nfinal char ch4 = str.charAt(4);\nif (!Character.isUpperCase(ch3) || !Character.isUpperCase(ch4)) {\nthrow new IllegalArgumentException(\"Invalid locale format: \" + str);\n}\nif (len == 5) {\nreturn new Locale(str.substring(0, 2), str.substring(3, 5));\n}\nif (len < 7) {\nthrow new IllegalArgumentException(\"Invalid locale format: \" + str);\n}\nif (str.charAt(5) != '_') {\nthrow new IllegalArgumentException(\"Invalid locale format: \" + str);\n}\nreturn new Locale(str.substring(0, 2), str.substring(3, 5), str.substring(6));\n}",
+            "method_id": 0,
+            "loc": 41
+        },
+        {
+            "method_signature": "org.apache.commons.lang3.LocaleUtils$SyncAvoid:access$100()Ljava/util/Set;",
+            "method_body": "public static List<Locale> countriesByLanguage(String languageCode) {\n}",
+            "method_id": 1,
+            "loc": 2
+        }
+    ]
+}

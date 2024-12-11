@@ -1,0 +1,59 @@
+{
+    "bug_id": 17,
+    "test_id": 1,
+    "test_name": "com.google.gson.DefaultDateTypeAdapterTest.testUnexpectedToken",
+    "test_body": "public void testUnexpectedToken() throws Exception {\ntry {\nDefaultDateTypeAdapter adapter = new DefaultDateTypeAdapter(Date.class);\nadapter.fromJson(\"{}\");\nfail(\"Unexpected token should fail.\");\n} catch (IllegalStateException expected) { }\n}\n",
+    "stack_trace": "com.google.gson.JsonParseException: The date should be a string value\nat com.google.gson.DefaultDateTypeAdapter.read(DefaultDateTypeAdapter.java:100)\nat com.google.gson.DefaultDateTypeAdapter.read(DefaultDateTypeAdapter.java:40)\nat com.google.gson.TypeAdapter.fromJson(TypeAdapter.java:260)\nat com.google.gson.TypeAdapter.fromJson(TypeAdapter.java:273)\nat com.google.gson.DefaultDateTypeAdapterTest.testUnexpectedToken(DefaultDateTypeAdapterTest.java:173)",
+    "covered_methods": [
+        {
+            "method_signature": "com.google.gson.DefaultDateTypeAdapter:read(Lcom/google/gson/stream/JsonReader;)Ljava/util/Date;",
+            "method_body": "public Date read(JsonReader in) throws IOException {\nif (in.peek() != JsonToken.STRING) {\nthrow new JsonParseException(\"The date should be a string value\");\n}\nDate date = deserializeToDate(in.nextString());\nif (dateType == Date.class) {\nreturn date;\n} else if (dateType == Timestamp.class) {\nreturn new Timestamp(date.getTime());\n} else if (dateType == java.sql.Date.class) {\nreturn new java.sql.Date(date.getTime());\n} else {\n// This must never happen: dateType is guarded in the primary constructor\nthrow new AssertionError();\n}\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "com.google.gson.DefaultDateTypeAdapter:<init>(Ljava/lang/Class;Ljava/text/DateFormat;Ljava/text/DateFormat;)V",
+            "method_body": "DefaultDateTypeAdapter(final Class<? extends Date> dateType, DateFormat enUsFormat, DateFormat localFormat) {\nif ( dateType != Date.class && dateType != java.sql.Date.class && dateType != Timestamp.class ) {\nthrow new IllegalArgumentException(\"Date type must be one of \" + Date.class + \", \" + Timestamp.class + \", or \" + java.sql.Date.class + \" but was \" + dateType);\n}\nthis.dateType = dateType;\nthis.enUsFormat = enUsFormat;\nthis.localFormat = localFormat;\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "com.google.gson.DefaultDateTypeAdapter:<init>(Ljava/lang/Class;)V",
+            "method_body": "DefaultDateTypeAdapter(Class<? extends Date> dateType) {\nthis(dateType,\nDateFormat.getDateTimeInstance(DateFormat.DEFAULT, DateFormat.DEFAULT, Locale.US),\nDateFormat.getDateTimeInstance(DateFormat.DEFAULT, DateFormat.DEFAULT));\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "com.google.gson.JsonParseException:<init>(Ljava/lang/String;)V",
+            "method_body": "public JsonParseException(String msg) {\nsuper(msg);\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "com.google.gson.TypeAdapter:fromJson(Ljava/io/Reader;)Ljava/lang/Object;",
+            "method_body": "public final T fromJson(Reader in) throws IOException {\nJsonReader reader = new JsonReader(in);\nreturn read(reader);\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "com.google.gson.TypeAdapter:fromJson(Ljava/lang/String;)Ljava/lang/Object;",
+            "method_body": "public final T fromJson(String json) throws IOException {\nreturn fromJson(new StringReader(json));\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "com.google.gson.stream.JsonReader:peek()Lcom/google/gson/stream/JsonToken;",
+            "method_body": "public JsonToken peek() throws IOException {\nint p = peeked;\nif (p == PEEKED_NONE) {\np = doPeek();\n}\n\nswitch (p) {\ncase PEEKED_BEGIN_OBJECT:\nreturn JsonToken.BEGIN_OBJECT;\ncase PEEKED_END_OBJECT:\nreturn JsonToken.END_OBJECT;\ncase PEEKED_BEGIN_ARRAY:\nreturn JsonToken.BEGIN_ARRAY;\ncase PEEKED_END_ARRAY:\nreturn JsonToken.END_ARRAY;\ncase PEEKED_SINGLE_QUOTED_NAME:\ncase PEEKED_DOUBLE_QUOTED_NAME:\ncase PEEKED_UNQUOTED_NAME:\nreturn JsonToken.NAME;\ncase PEEKED_TRUE:\ncase PEEKED_FALSE:\nreturn JsonToken.BOOLEAN;\ncase PEEKED_NULL:\nreturn JsonToken.NULL;\ncase PEEKED_SINGLE_QUOTED:\ncase PEEKED_DOUBLE_QUOTED:\ncase PEEKED_UNQUOTED:\ncase PEEKED_BUFFERED:\nreturn JsonToken.STRING;\ncase PEEKED_LONG:\ncase PEEKED_NUMBER:\nreturn JsonToken.NUMBER;\ncase PEEKED_EOF:\nreturn JsonToken.END_DOCUMENT;\ndefault:\nthrow new AssertionError();\n}\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "com.google.gson.stream.JsonReader:fillBuffer(I)Z",
+            "method_body": "private boolean fillBuffer(int minimum) throws IOException {\nchar[] buffer = this.buffer;\nlineStart -= pos;\nif (limit != pos) {\nlimit -= pos;\nSystem.arraycopy(buffer, pos, buffer, 0, limit);\n} else {\nlimit = 0;\n}\n\npos = 0;\nint total;\nwhile ((total = in.read(buffer, limit, buffer.length - limit)) != -1) {\nlimit += total;\n\n// if this is the first read, consume an optional byte order mark (BOM) if it exists\nif (lineNumber == 0 && lineStart == 0 && limit > 0 && buffer[0] == '\\ufeff') {\npos++;\nlineStart++;\nminimum++;\n}\n\nif (limit >= minimum) {\nreturn true;\n}\n}\nreturn false;\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "com.google.gson.stream.JsonReader:nextNonWhitespace(Z)I",
+            "method_body": "private int nextNonWhitespace(boolean throwOnEof) throws IOException {\n/*\n* This code uses ugly local variables 'p' and 'l' representing the 'pos'\n* and 'limit' fields respectively. Using locals rather than fields saves\n* a few field reads for each whitespace character in a pretty-printed\n* document, resulting in a 5% speedup. We need to flush 'p' to its field\n* before any (potentially indirect) call to fillBuffer() and reread both\n* 'p' and 'l' after any (potentially indirect) call to the same method.\n*/\nchar[] buffer = this.buffer;\nint p = pos;\nint l = limit;\nwhile (true) {\nif (p == l) {\npos = p;\nif (!fillBuffer(1)) {\nbreak;\n}\np = pos;\nl = limit;\n}\n\nint c = buffer[p++];\nif (c == '\\n') {\nlineNumber++;\nlineStart = p;\ncontinue;\n} else if (c == ' ' || c == '\\r' || c == '\\t') {\ncontinue;\n}\n\nif (c == '/') {\npos = p;\nif (p == l) {\npos--; // push back '/' so it's still in the buffer when this method returns\nboolean charsLoaded = fillBuffer(2);\npos++; // consume the '/' again\nif (!charsLoaded) {\nreturn c;\n}\n}\n\ncheckLenient();\nchar peek = buffer[pos];\nswitch (peek) {\ncase '*':\n// skip a /* c-style comment */\npos++;\nif (!skipTo(\"*/\")) {\nthrow syntaxError(\"Unterminated comment\");\n}\np = pos + 2;\nl = limit;\ncontinue;\n\ncase '/':\n// skip a // end-of-line comment\npos++;\nskipToEndOfLine();\np = pos;\nl = limit;\ncontinue;\n\ndefault:\nreturn c;\n}\n} else if (c == '#') {\npos = p;\n/*\n* Skip a # hash end-of-line comment. The JSON RFC doesn't\n* specify this behaviour, but it's required to parse\n* existing documents. See http://b/2571423.\n*/\ncheckLenient();\nskipToEndOfLine();\np = pos;\nl = limit;\n} else {\npos = p;\nreturn c;\n}\n}\nif (throwOnEof) {\nthrow new EOFException(\"End of input\" + locationString());\n} else {\nreturn -1;\n}\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "com.google.gson.stream.JsonReader:<init>(Ljava/io/Reader;)V",
+            "method_body": "public JsonReader(Reader in) {\nif (in == null) {\nthrow new NullPointerException(\"in == null\");\n}\nthis.in = in;\n}",
+            "method_id": 9
+        }
+    ]
+}

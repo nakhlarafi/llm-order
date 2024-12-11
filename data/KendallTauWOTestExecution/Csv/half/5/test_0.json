@@ -1,0 +1,149 @@
+{
+    "bug_id": 5,
+    "test_id": 0,
+    "test_name": "org.apache.commons.csv.CSVFormatTest.testNullRecordSeparatorCsv106",
+    "test_body": "public void testNullRecordSeparatorCsv106() {\nfinal CSVFormat format = CSVFormat.newFormat(';').withSkipHeaderRecord(true).withHeader(\"H1\", \"H2\");\nfinal String formatStr = format.format(\"A\", \"B\");\nassertNotNull(formatStr);\nassertFalse(formatStr.endsWith(\"null\"));\n}\n",
+    "stack_trace": "junit.framework.AssertionFailedError\nat org.junit.Assert.fail(Assert.java:86)\nat org.junit.Assert.assertTrue(Assert.java:41)\nat org.junit.Assert.assertFalse(Assert.java:64)\nat org.junit.Assert.assertFalse(Assert.java:74)\nat org.apache.commons.csv.CSVFormatTest.testNullRecordSeparatorCsv106(CSVFormatTest.java:237)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:isLineBreak(C)Z",
+            "method_body": "private static boolean isLineBreak(final char c) {\nreturn c == LF || c == CR;\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.csv.Constants:<clinit>()V",
+            "method_body": "static final char BACKSPACE = '\\b';\nstatic final char COMMA = ',';\n\n/**\n* Starts a comment, the remainder of the line is the comment.\n*/\nstatic final char COMMENT = '#';\n\nstatic final char CR = '\\r';\nstatic final Character DOUBLE_QUOTE_CHAR = Character.valueOf('\"');\nstatic final char BACKSLASH = '\\\\';\nstatic final char FF = '\\f';\nstatic final char LF = '\\n';\nstatic final char SP = ' ';\nstatic final char TAB = '\\t';\nstatic final String EMPTY = \"\";\n\n/** The end of stream symbol */\nstatic final int END_OF_STREAM = -1;\n\n/** Undefined state for the lookahead char */\nstatic final int UNDEFINED = -2;\n\n/** According to RFC 4180, line breaks are delimited by CRLF */\nstatic final String CRLF = \"\\r\\n\";\n\n/**\n* Unicode line separator.\n*/\nstatic final String LINE_SEPARATOR = \"\\u2028\";\n\n/**\n* Unicode paragraph separator.\n*/\nstatic final String PARAGRAPH_SEPARATOR = \"\\u2029\";\n\n/**\n* Unicode next line.\n*/\nstatic final String NEXT_LINE = \"\\u0085\";\n\n}\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:format([Ljava/lang/Object;)Ljava/lang/String;",
+            "method_body": "public String format(final Object... values) {\nfinal StringWriter out = new StringWriter();\ntry {\nnew CSVPrinter(out, this).printRecord(values);\nreturn out.toString().trim();\n} catch (final IOException e) {\n// should not happen because a StringWriter does not do IO.\nthrow new IllegalStateException(e);\n}\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:isEscaping()Z",
+            "method_body": "public boolean isEscaping() {\nreturn escape != null;\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:<init>(CLjava/lang/Character;Lorg/apache/commons/csv/Quote;Ljava/lang/Character;Ljava/lang/Character;ZZLjava/lang/String;Ljava/lang/String;[Ljava/lang/String;Z)V",
+            "method_body": "CSVFormat(final char delimiter, final Character quoteChar,\nfinal Quote quotePolicy, final Character commentStart,\nfinal Character escape, final boolean ignoreSurroundingSpaces,\nfinal boolean ignoreEmptyLines, final String recordSeparator,\nfinal String nullString, final String[] header, final boolean skipHeaderRecord) {\nif (isLineBreak(delimiter)) {\nthrow new IllegalArgumentException(\"The delimiter cannot be a line break\");\n}\nthis.delimiter = delimiter;\nthis.quoteChar = quoteChar;\nthis.quotePolicy = quotePolicy;\nthis.commentStart = commentStart;\nthis.escape = escape;\nthis.ignoreSurroundingSpaces = ignoreSurroundingSpaces;\nthis.ignoreEmptyLines = ignoreEmptyLines;\nthis.recordSeparator = recordSeparator;\nthis.nullString = nullString;\nthis.header = header == null ? null : header.clone();\nthis.skipHeaderRecord = skipHeaderRecord;\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withIgnoreSurroundingSpaces(Z)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withIgnoreSurroundingSpaces(final boolean ignoreSurroundingSpaces) {\nreturn new CSVFormat(delimiter, quoteChar, quotePolicy, commentStart, escape,\nignoreSurroundingSpaces, ignoreEmptyLines, recordSeparator, nullString, header, skipHeaderRecord);\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVPrinter:print(Ljava/lang/Object;)V",
+            "method_body": "public void print(final Object value) throws IOException {\n// null values are considered empty\nString strValue;\nif (value == null) {\nfinal String nullString = format.getNullString();\nstrValue = nullString == null ? Constants.EMPTY : nullString;\n} else {\nstrValue = value.toString();\n}\nthis.print(value, strValue, 0, strValue.length());\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withSkipHeaderRecord(Z)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withSkipHeaderRecord(final boolean skipHeaderRecord) {\nreturn new CSVFormat(delimiter, quoteChar, quotePolicy, commentStart, escape,\nignoreSurroundingSpaces, ignoreEmptyLines, recordSeparator, nullString, header, skipHeaderRecord);\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withDelimiter(C)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withDelimiter(final char delimiter) {\nif (isLineBreak(delimiter)) {\nthrow new IllegalArgumentException(\"The delimiter cannot be a line break\");\n}\nreturn new CSVFormat(delimiter, quoteChar, quotePolicy, commentStart, escape,\nignoreSurroundingSpaces, ignoreEmptyLines, recordSeparator, nullString, header, skipHeaderRecord);\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:getRecordSeparator()Ljava/lang/String;",
+            "method_body": "public String getRecordSeparator() {\nreturn recordSeparator;\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:isLineBreak(Ljava/lang/Character;)Z",
+            "method_body": "private static boolean isLineBreak(final Character c) {\nreturn c != null && isLineBreak(c.charValue());\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:isQuoting()Z",
+            "method_body": "public boolean isQuoting() {\nreturn quoteChar != null;\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withEscape(C)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withEscape(final char escape) {\nreturn withEscape(Character.valueOf(escape));\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withQuoteChar(Ljava/lang/Character;)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withQuoteChar(final Character quoteChar) {\nif (isLineBreak(quoteChar)) {\nthrow new IllegalArgumentException(\"The quoteChar cannot be a line break\");\n}\nreturn new CSVFormat(delimiter, quoteChar, quotePolicy, commentStart, escape,\nignoreSurroundingSpaces, ignoreEmptyLines, recordSeparator, nullString, header, skipHeaderRecord);\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:validate()V",
+            "method_body": "void validate() throws IllegalStateException {\nif (quoteChar != null && delimiter == quoteChar.charValue()) {\nthrow new IllegalStateException(\n\"The quoteChar character and the delimiter cannot be the same ('\" + quoteChar + \"')\");\n}\n\nif (escape != null && delimiter == escape.charValue()) {\nthrow new IllegalStateException(\n\"The escape character and the delimiter cannot be the same ('\" + escape + \"')\");\n}\n\nif (commentStart != null && delimiter == commentStart.charValue()) {\nthrow new IllegalStateException(\n\"The comment start character and the delimiter cannot be the same ('\" + commentStart + \"')\");\n}\n\nif (quoteChar != null && quoteChar.equals(commentStart)) {\nthrow new IllegalStateException(\n\"The comment start character and the quoteChar cannot be the same ('\" + commentStart + \"')\");\n}\n\nif (escape != null && escape.equals(commentStart)) {\nthrow new IllegalStateException(\n\"The comment start and the escape character cannot be the same ('\" + commentStart + \"')\");\n}\n\nif (escape == null && quotePolicy == Quote.NONE) {\nthrow new IllegalStateException(\"No quotes mode set but no escape character is set\");\n}\n\nif (header != null) {\nfinal Set<String> set = new HashSet<String>(header.length);\nset.addAll(Arrays.asList(header));\nif (set.size() != header.length) {\nthrow new IllegalStateException(\"The header contains duplicate names: \" + Arrays.toString(header));\n}\n}\n}",
+            "method_id": 14
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withIgnoreEmptyLines(Z)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withIgnoreEmptyLines(final boolean ignoreEmptyLines) {\nreturn new CSVFormat(delimiter, quoteChar, quotePolicy, commentStart, escape,\nignoreSurroundingSpaces, ignoreEmptyLines, recordSeparator, nullString, header, skipHeaderRecord);\n}",
+            "method_id": 15
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVPrinter:println()V",
+            "method_body": "private void printAndQuote(final Object object, final CharSequence value,\nfinal int offset, final int len) throws IOException {\nboolean quote = false;\nint start = offset;\nint pos = offset;\nfinal int end = offset + len;\n\nfinal char delimChar = format.getDelimiter();\nfinal char quoteChar = format.getQuoteChar().charValue();\n\nQuote quotePolicy = format.getQuotePolicy();\nif (quotePolicy == null) {\nquotePolicy = Quote.MINIMAL;\n}\nswitch (quotePolicy) {\ncase ALL:\nquote = true;\nbreak;\ncase NON_NUMERIC:\nquote = !(object instanceof Number);\nbreak;\ncase NONE:\n// Use the existing escaping code\nprintAndEscape(value, offset, len);\nreturn;\ncase MINIMAL:\nif (len <= 0) {\n// always quote an empty token that is the first\n// on the line, as it may be the only thing on the\n// line. If it were not quoted in that case,\n// an empty line has no tokens.\nif (newRecord) {\nquote = true;\n}\n} else {\nchar c = value.charAt(pos);\n\n// Hmmm, where did this rule come from?\nif (newRecord && (c < '0' || (c > '9' && c < 'A') || (c > 'Z' && c < 'a') || (c > 'z'))) {\nquote = true;\n// } else if (c == ' ' || c == '\\f' || c == '\\t') {\n} else if (c <= COMMENT) {\n// Some other chars at the start of a value caused the parser to fail, so for now\n// encapsulate if we start in anything less than '#'. We are being conservative\n// by including the default comment char too.\nquote = true;\n} else {\nwhile (pos < end) {\nc = value.charAt(pos);\nif (c == LF || c == CR || c == quoteChar || c == delimChar) {\nquote = true;\nbreak;\n}\npos++;\n}\n\nif (!quote) {\npos = end - 1;\nc = value.charAt(pos);\n// if (c == ' ' || c == '\\f' || c == '\\t') {\n// Some other chars at the end caused the parser to fail, so for now\n// encapsulate if we end in anything less than ' '\nif (c <= SP) {\nquote = true;\n}\n}\n}\n}\n\nif (!quote) {\n// no encapsulation needed - write out the original value\nout.append(value, start, end);\nreturn;\n}\nbreak;\n}\n\nif (!quote) {\n// no encapsulation needed - write out the original value\nout.append(value, start, end);\nreturn;\n}\n\n// we hit something that needed encapsulation\nout.append(quoteChar);\n\n// Pick up where we left off: pos should be positioned on the first character that caused\n// the need for encapsulation.\nwhile (pos < end) {\nfinal char c = value.charAt(pos);\nif (c == quoteChar) {\n// write out the chunk up until this point\n\n// add 1 to the length to write out the encapsulator also\nout.append(value, start, pos + 1);\n// put the next starting position on the encapsulator so we will\n// write it out again with the next string (effectively doubling it)\nstart = pos;\n}\npos++;\n}\n\n// write the last segment\nout.append(value, start, pos);\nout.append(quoteChar);\n}\n\n/**\n* Prints a comment on a new line among the delimiter separated values. Comments will always begin on a new line\n* and occupy a least one full line. The character specified to start comments and a space will be inserted at the\n* beginning of each new line in the comment.\n* <p/>\n* If comments are disabled in the current CSV format this method does nothing.\n*\n* @param comment\n*            the comment to output\n* @throws IOException\n*             If an I/O error occurs\n*/\npublic void printComment(final String comment) throws IOException {\nif (!format.isCommentingEnabled()) {\nreturn;\n}\nif (!newRecord) {\nprintln();\n}\nout.append(format.getCommentStart().charValue());\nout.append(SP);\nfor (int i = 0; i < comment.length(); i++) {\nfinal char c = comment.charAt(i);\nswitch (c) {\ncase CR:\nif (i + 1 < comment.length() && comment.charAt(i + 1) == LF) {\ni++;\n}\n//$FALL-THROUGH$ break intentionally excluded.\ncase LF:\nprintln();\nout.append(format.getCommentStart().charValue());\nout.append(SP);\nbreak;\ndefault:\nout.append(c);\nbreak;\n}\n}\nprintln();\n}\n\n/**\n* Outputs the record separator.\n*\n* @throws IOException\n*             If an I/O error occurs\n*/\npublic void println() throws IOException {\nfinal String recordSeparator = format.getRecordSeparator();\nout.append(recordSeparator);\nnewRecord = true;\n}\n\n/**\n* Prints a single line of delimiter separated values. The values will be quoted if needed. Quotes and newLine\n* characters will be escaped.\n*\n* @param values\n*            values to output.\n* @throws IOException\n*             If an I/O error occurs\n*/\npublic void printRecord(final Iterable<?> values) throws IOException {\nfor (final Object value : values) {\nprint(value);\n}\nprintln();\n}\n\n/**\n* Prints a single line of delimiter separated values. The values will be quoted if needed. Quotes and newLine\n* characters will be escaped.\n*\n* @param values\n*            values to output.\n* @throws IOException\n*             If an I/O error occurs\n*/\npublic void printRecord(final Object... values) throws IOException {\nfor (final Object value : values) {\nprint(value);\n}\nprintln();\n}\n\n/**\n* Prints all the objects in the given collection.\n*\n* @param values\n*            the values to print.\n* @throws IOException\n*             If an I/O error occurs\n*/\npublic void printRecords(final Iterable<?> values) throws IOException {\nfor (final Object value : values) {\nif (value instanceof Object[]) {\nthis.printRecord((Object[]) value);\n} else if (value instanceof Iterable) {\nthis.printRecord((Iterable<?>) value);\n} else {\nthis.printRecord(value);\n}\n}\n}\n\n/**\n* Prints all the objects in the given array.\n*\n* @param values\n*            the values to print.\n* @throws IOException\n*             If an I/O error occurs\n*/\npublic void printRecords(final Object[] values) throws IOException {\nfor (final Object value : values) {\nif (value instanceof Object[]) {\nthis.printRecord((Object[]) value);\n} else if (value instanceof Iterable) {\nthis.printRecord((Iterable<?>) value);\n} else {\nthis.printRecord(value);\n}\n}\n}\n\n/**\n* Prints all the objects in the given JDBC result set.\n*\n* @param resultSet result set\n*            the values to print.\n* @throws IOException\n*             If an I/O error occurs\n* @throws SQLException if a database access error occurs\n*/\npublic void printRecords(final ResultSet resultSet) throws SQLException, IOException {\nfinal int columnCount = resultSet.getMetaData().getColumnCount();\nwhile (resultSet.next()) {\nfor (int i = 1; i <= columnCount; i++) {\nprint(resultSet.getString(i));\n}\nprintln();\n}\n}\n\n/**\n* Gets the target Appendable.\n*\n* @return the target Appendable.\n*/\npublic Appendable getOut() {\nreturn this.out;\n}\n}",
+            "method_id": 16
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVPrinter:<init>(Ljava/lang/Appendable;Lorg/apache/commons/csv/CSVFormat;)V",
+            "method_body": "public CSVPrinter(final Appendable out, final CSVFormat format) {\nAssertions.notNull(out, \"out\");\nAssertions.notNull(format, \"format\");\n\nthis.out = out;\nthis.format = format;\nthis.format.validate();\n}",
+            "method_id": 17
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withEscape(Ljava/lang/Character;)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withEscape(final Character escape) {\nif (isLineBreak(escape)) {\nthrow new IllegalArgumentException(\"The escape character cannot be a line break\");\n}\nreturn new CSVFormat(delimiter, quoteChar, quotePolicy, commentStart, escape,\nignoreSurroundingSpaces, ignoreEmptyLines, recordSeparator, nullString, header, skipHeaderRecord);\n}",
+            "method_id": 18
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:getDelimiter()C",
+            "method_body": "public char getDelimiter() {\nreturn delimiter;\n}",
+            "method_id": 19
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVPrinter:print(Ljava/lang/Object;Ljava/lang/CharSequence;II)V",
+            "method_body": "private void print(final Object object, final CharSequence value,\nfinal int offset, final int len) throws IOException {\nif (!newRecord) {\nout.append(format.getDelimiter());\n}\nif (format.isQuoting()) {\n// the original object is needed so can check for Number\nprintAndQuote(object, value, offset, len);\n} else if (format.isEscaping()) {\nprintAndEscape(value, offset, len);\n} else {\nout.append(value, offset, offset + len);\n}\nnewRecord = false;\n}",
+            "method_id": 20
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:newFormat(C)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public static CSVFormat newFormat(final char delimiter) {\nreturn new CSVFormat(delimiter, null, null, null, null, false, false, null, null, null, false);\n}",
+            "method_id": 21
+        },
+        {
+            "method_signature": "org.apache.commons.csv.Assertions:notNull(Ljava/lang/Object;Ljava/lang/String;)V",
+            "method_body": "public static void notNull(final Object parameter, final String parameterName) {\nif (parameter == null) {\nthrow new IllegalArgumentException(\"Parameter '\" + parameterName + \"' must not be null!\");\n}\n}",
+            "method_id": 22
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVPrinter:printRecord([Ljava/lang/Object;)V",
+            "method_body": "private void printAndQuote(final Object object, final CharSequence value,\nfinal int offset, final int len) throws IOException {\nboolean quote = false;\nint start = offset;\nint pos = offset;\nfinal int end = offset + len;\n\nfinal char delimChar = format.getDelimiter();\nfinal char quoteChar = format.getQuoteChar().charValue();\n\nQuote quotePolicy = format.getQuotePolicy();\nif (quotePolicy == null) {\nquotePolicy = Quote.MINIMAL;\n}\nswitch (quotePolicy) {\ncase ALL:\nquote = true;\nbreak;\ncase NON_NUMERIC:\nquote = !(object instanceof Number);\nbreak;\ncase NONE:\n// Use the existing escaping code\nprintAndEscape(value, offset, len);\nreturn;\ncase MINIMAL:\nif (len <= 0) {\n// always quote an empty token that is the first\n// on the line, as it may be the only thing on the\n// line. If it were not quoted in that case,\n// an empty line has no tokens.\nif (newRecord) {\nquote = true;\n}\n} else {\nchar c = value.charAt(pos);\n\n// Hmmm, where did this rule come from?\nif (newRecord && (c < '0' || (c > '9' && c < 'A') || (c > 'Z' && c < 'a') || (c > 'z'))) {\nquote = true;\n// } else if (c == ' ' || c == '\\f' || c == '\\t') {\n} else if (c <= COMMENT) {\n// Some other chars at the start of a value caused the parser to fail, so for now\n// encapsulate if we start in anything less than '#'. We are being conservative\n// by including the default comment char too.\nquote = true;\n} else {\nwhile (pos < end) {\nc = value.charAt(pos);\nif (c == LF || c == CR || c == quoteChar || c == delimChar) {\nquote = true;\nbreak;\n}\npos++;\n}\n\nif (!quote) {\npos = end - 1;\nc = value.charAt(pos);\n// if (c == ' ' || c == '\\f' || c == '\\t') {\n// Some other chars at the end caused the parser to fail, so for now\n// encapsulate if we end in anything less than ' '\nif (c <= SP) {\nquote = true;\n}\n}\n}\n}\n\nif (!quote) {\n// no encapsulation needed - write out the original value\nout.append(value, start, end);\nreturn;\n}\nbreak;\n}\n\nif (!quote) {\n// no encapsulation needed - write out the original value\nout.append(value, start, end);\nreturn;\n}\n\n// we hit something that needed encapsulation\nout.append(quoteChar);\n\n// Pick up where we left off: pos should be positioned on the first character that caused\n// the need for encapsulation.\nwhile (pos < end) {\nfinal char c = value.charAt(pos);\nif (c == quoteChar) {\n// write out the chunk up until this point\n\n// add 1 to the length to write out the encapsulator also\nout.append(value, start, pos + 1);\n// put the next starting position on the encapsulator so we will\n// write it out again with the next string (effectively doubling it)\nstart = pos;\n}\npos++;\n}\n\n// write the last segment\nout.append(value, start, pos);\nout.append(quoteChar);\n}\n\n/**\n* Prints a comment on a new line among the delimiter separated values. Comments will always begin on a new line\n* and occupy a least one full line. The character specified to start comments and a space will be inserted at the\n* beginning of each new line in the comment.\n* <p/>\n* If comments are disabled in the current CSV format this method does nothing.\n*\n* @param comment\n*            the comment to output\n* @throws IOException\n*             If an I/O error occurs\n*/\npublic void printComment(final String comment) throws IOException {\nif (!format.isCommentingEnabled()) {\nreturn;\n}\nif (!newRecord) {\nprintln();\n}\nout.append(format.getCommentStart().charValue());\nout.append(SP);\nfor (int i = 0; i < comment.length(); i++) {\nfinal char c = comment.charAt(i);\nswitch (c) {\ncase CR:\nif (i + 1 < comment.length() && comment.charAt(i + 1) == LF) {\ni++;\n}\n//$FALL-THROUGH$ break intentionally excluded.\ncase LF:\nprintln();\nout.append(format.getCommentStart().charValue());\nout.append(SP);\nbreak;\ndefault:\nout.append(c);\nbreak;\n}\n}\nprintln();\n}\n\n/**\n* Outputs the record separator.\n*\n* @throws IOException\n*             If an I/O error occurs\n*/\npublic void println() throws IOException {\nfinal String recordSeparator = format.getRecordSeparator();\nout.append(recordSeparator);\nnewRecord = true;\n}\n\n/**\n* Prints a single line of delimiter separated values. The values will be quoted if needed. Quotes and newLine\n* characters will be escaped.\n*\n* @param values\n*            values to output.\n* @throws IOException\n*             If an I/O error occurs\n*/\npublic void printRecord(final Iterable<?> values) throws IOException {\nfor (final Object value : values) {\nprint(value);\n}\nprintln();\n}\n\n/**\n* Prints a single line of delimiter separated values. The values will be quoted if needed. Quotes and newLine\n* characters will be escaped.\n*\n* @param values\n*            values to output.\n* @throws IOException\n*             If an I/O error occurs\n*/\npublic void printRecord(final Object... values) throws IOException {\nfor (final Object value : values) {\nprint(value);\n}\nprintln();\n}\n\n/**\n* Prints all the objects in the given collection.\n*\n* @param values\n*            the values to print.\n* @throws IOException\n*             If an I/O error occurs\n*/\npublic void printRecords(final Iterable<?> values) throws IOException {\nfor (final Object value : values) {\nif (value instanceof Object[]) {\nthis.printRecord((Object[]) value);\n} else if (value instanceof Iterable) {\nthis.printRecord((Iterable<?>) value);\n} else {\nthis.printRecord(value);\n}\n}\n}\n\n/**\n* Prints all the objects in the given array.\n*\n* @param values\n*            the values to print.\n* @throws IOException\n*             If an I/O error occurs\n*/\npublic void printRecords(final Object[] values) throws IOException {\nfor (final Object value : values) {\nif (value instanceof Object[]) {\nthis.printRecord((Object[]) value);\n} else if (value instanceof Iterable) {\nthis.printRecord((Iterable<?>) value);\n} else {\nthis.printRecord(value);\n}\n}\n}\n\n/**\n* Prints all the objects in the given JDBC result set.\n*\n* @param resultSet result set\n*            the values to print.\n* @throws IOException\n*             If an I/O error occurs\n* @throws SQLException if a database access error occurs\n*/\npublic void printRecords(final ResultSet resultSet) throws SQLException, IOException {\nfinal int columnCount = resultSet.getMetaData().getColumnCount();\nwhile (resultSet.next()) {\nfor (int i = 1; i <= columnCount; i++) {\nprint(resultSet.getString(i));\n}\nprintln();\n}\n}\n\n/**\n* Gets the target Appendable.\n*\n* @return the target Appendable.\n*/\npublic Appendable getOut() {\nreturn this.out;\n}\n}",
+            "method_id": 23
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withRecordSeparator(Ljava/lang/String;)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withRecordSeparator(final String recordSeparator) {\nreturn new CSVFormat(delimiter, quoteChar, quotePolicy, commentStart, escape,\nignoreSurroundingSpaces, ignoreEmptyLines, recordSeparator, nullString, header, skipHeaderRecord);\n}",
+            "method_id": 24
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withRecordSeparator(C)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withRecordSeparator(final char recordSeparator) {\nreturn withRecordSeparator(String.valueOf(recordSeparator));\n}",
+            "method_id": 25
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:withHeader([Ljava/lang/String;)Lorg/apache/commons/csv/CSVFormat;",
+            "method_body": "public CSVFormat withHeader(final String... header) {\nreturn new CSVFormat(delimiter, quoteChar, quotePolicy, commentStart, escape,\nignoreSurroundingSpaces, ignoreEmptyLines, recordSeparator, nullString, header, skipHeaderRecord);\n}",
+            "method_id": 26
+        },
+        {
+            "method_signature": "org.apache.commons.csv.CSVFormat:<clinit>()V",
+            "method_body": "public static final CSVFormat DEFAULT = new CSVFormat(COMMA, DOUBLE_QUOTE_CHAR, null, null, null,\nfalse, true, CRLF, null, null, false);\n\n/**\n* Comma separated format as defined by <a href=\"http://tools.ietf.org/html/rfc4180\">RFC 4180</a>.\n* <h3>RFC 4180:</h3>\n* <ul>\n* <li>withDelimiter(',')</li>\n* <li>withQuoteChar('\"')</li>\n* <li>withRecordSeparator(CRLF)</li>\n* </ul>\n*/\npublic static final CSVFormat RFC4180 = DEFAULT.withIgnoreEmptyLines(false);\n\n/**\n* Excel file format (using a comma as the value delimiter). Note that the actual value delimiter used by Excel is\n* locale dependent, it might be necessary to customize this format to accommodate to your regional settings.\n* <p/>\n* For example for parsing or generating a CSV file on a French system the following format will be used:\n*\n* <pre>\n* CSVFormat fmt = CSVFormat.newBuilder(EXCEL).withDelimiter(';');\n* </pre>\n* Settings are:\n* <ul>\n* <li>withDelimiter(',')</li>\n* <li>withQuoteChar('\"')</li>\n* <li>withRecordSeparator(CRLF)</li>\n* </ul>\n* Note: this is currently the same as RFC4180\n*/\npublic static final CSVFormat EXCEL = DEFAULT.withIgnoreEmptyLines(false);\n\n/** Tab-delimited format, with quote; leading and trailing spaces ignored. */\npublic static final CSVFormat TDF =\nDEFAULT\n.withDelimiter(TAB)\n.withIgnoreSurroundingSpaces(true);\n\n/**\n* Default MySQL format used by the <tt>SELECT INTO OUTFILE</tt> and <tt>LOAD DATA INFILE</tt> operations. This is\n* a tab-delimited format with a LF character as the line separator. Values are not quoted and special characters\n* are escaped with '\\'.\n*\n* @see <a href=\"http://dev.mysql.com/doc/refman/5.1/en/load-data.html\">\n*      http://dev.mysql.com/doc/refman/5.1/en/load-data.html</a>\n*/\npublic static final CSVFormat MYSQL =\nDEFAULT\n.withDelimiter(TAB)\n.withEscape(BACKSLASH)\n.withIgnoreEmptyLines(false)\n.withQuoteChar(null)\n.withRecordSeparator(LF);\n\n/**\n* Returns true if the given character is a line break character.\n*\n* @param c\n*            the character to check\n*\n* @return true if <code>c</code> is a line break character\n*/\nprivate static boolean isLineBreak(final char c) {\nreturn c == LF || c == CR;\n}",
+            "method_id": 27
+        }
+    ]
+}

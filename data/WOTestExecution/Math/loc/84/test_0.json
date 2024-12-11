@@ -1,0 +1,177 @@
+{
+    "bug_id": 84,
+    "test_id": 0,
+    "test_name": "org.apache.commons.math.optimization.direct.MultiDirectionalTest.testMath283",
+    "test_body": "public void testMath283()\nthrows FunctionEvaluationException, OptimizationException {\n// fails because MultiDirectional.iterateSimplex is looping forever\n// the while(true) should be replaced with a convergence check\nMultiDirectional multiDirectional = new MultiDirectional();\nmultiDirectional.setMaxIterations(100);\nmultiDirectional.setMaxEvaluations(1000);\nfinal Gaussian2D function = new Gaussian2D(0.0, 0.0, 1.0);\nRealPointValuePair estimate = multiDirectional.optimize(function,\nGoalType.MAXIMIZE, function.getMaximumPosition());\nfinal double EPSILON = 1e-5;\nfinal double expectedMaximum = function.getMaximum();\nfinal double actualMaximum = estimate.getValue();\nAssert.assertEquals(expectedMaximum, actualMaximum, EPSILON);\nfinal double[] expectedPosition = function.getMaximumPosition();\nfinal double[] actualPosition = estimate.getPoint();\nAssert.assertEquals(expectedPosition[0], actualPosition[0], EPSILON );\nAssert.assertEquals(expectedPosition[1], actualPosition[1], EPSILON );\n}\n",
+    "stack_trace": "org.apache.commons.math.optimization.OptimizationException: org.apache.commons.math.MaxIterationsExceededException: Maximal number of iterations (100) exceeded\nat org.apache.commons.math.optimization.direct.DirectSearchOptimizer.incrementIterationsCounter(DirectSearchOptimizer.java:320)\nat org.apache.commons.math.optimization.direct.MultiDirectional.iterateSimplex(MultiDirectional.java:66)\nat org.apache.commons.math.optimization.direct.DirectSearchOptimizer.optimize(DirectSearchOptimizer.java:307)\nat org.apache.commons.math.optimization.direct.MultiDirectionalTest.testMath283(MultiDirectionalTest.java:203)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.math.optimization.direct.DirectSearchOptimizer$1:compare(Lorg/apache/commons/math/optimization/RealPointValuePair;Lorg/apache/commons/math/optimization/RealPointValuePair;)I",
+            "method_body": "public RealPointValuePair optimize(final MultivariateRealFunction f,\nfinal GoalType goalType,\nfinal double[] startPoint)\nthrows FunctionEvaluationException, OptimizationException,\nIllegalArgumentException {\n\nif (startConfiguration == null) {\n// no initial configuration has been set up for simplex\n// build a default one from a unit hypercube\nfinal double[] unit = new double[startPoint.length];\nArrays.fill(unit, 1.0);\nsetStartConfiguration(unit);\n}\n\nthis.f = f;\nfinal Comparator<RealPointValuePair> comparator =\nnew Comparator<RealPointValuePair>() {\npublic int compare(final RealPointValuePair o1,\nfinal RealPointValuePair o2) {\nfinal double v1 = o1.getValue();\nfinal double v2 = o2.getValue();\nreturn (goalType == GoalType.MINIMIZE) ?\nDouble.compare(v1, v2) : Double.compare(v2, v1);\n}\n};\n\n// initialize search\niterations  = 0;\nevaluations = 0;\nbuildSimplex(startPoint);\nevaluateSimplex(comparator);\n\nRealPointValuePair[] previous = new RealPointValuePair[simplex.length];\nwhile (true) {\n\nif (iterations > 0) {\nboolean converged = true;\nfor (int i = 0; i < simplex.length; ++i) {\nconverged &= checker.converged(iterations, previous[i], simplex[i]);\n}\nif (converged) {\n// we have found an optimum\nreturn simplex[0];\n}\n}\n\n// we still need to search\nSystem.arraycopy(simplex, 0, previous, 0, simplex.length);\niterateSimplex(comparator);\n\n}\n\n}",
+            "method_id": 0,
+            "loc": 53
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.direct.DirectSearchOptimizer:optimize(Lorg/apache/commons/math/analysis/MultivariateRealFunction;Lorg/apache/commons/math/optimization/GoalType;[D)Lorg/apache/commons/math/optimization/RealPointValuePair;",
+            "method_body": "public RealPointValuePair optimize(final MultivariateRealFunction f,\nfinal GoalType goalType,\nfinal double[] startPoint)\nthrows FunctionEvaluationException, OptimizationException,\nIllegalArgumentException {\n\nif (startConfiguration == null) {\n// no initial configuration has been set up for simplex\n// build a default one from a unit hypercube\nfinal double[] unit = new double[startPoint.length];\nArrays.fill(unit, 1.0);\nsetStartConfiguration(unit);\n}\n\nthis.f = f;\nfinal Comparator<RealPointValuePair> comparator =\nnew Comparator<RealPointValuePair>() {\npublic int compare(final RealPointValuePair o1,\nfinal RealPointValuePair o2) {\nfinal double v1 = o1.getValue();\nfinal double v2 = o2.getValue();\nreturn (goalType == GoalType.MINIMIZE) ?\nDouble.compare(v1, v2) : Double.compare(v2, v1);\n}\n};\n\n// initialize search\niterations  = 0;\nevaluations = 0;\nbuildSimplex(startPoint);\nevaluateSimplex(comparator);\n\nRealPointValuePair[] previous = new RealPointValuePair[simplex.length];\nwhile (true) {\n\nif (iterations > 0) {\nboolean converged = true;\nfor (int i = 0; i < simplex.length; ++i) {\nconverged &= checker.converged(iterations, previous[i], simplex[i]);\n}\nif (converged) {\n// we have found an optimum\nreturn simplex[0];\n}\n}\n\n// we still need to search\nSystem.arraycopy(simplex, 0, previous, 0, simplex.length);\niterateSimplex(comparator);\n\n}\n\n}",
+            "method_id": 1,
+            "loc": 53
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.direct.MultiDirectional:evaluateNewSimplex([Lorg/apache/commons/math/optimization/RealPointValuePair;DLjava/util/Comparator;)Lorg/apache/commons/math/optimization/RealPointValuePair;",
+            "method_body": "private RealPointValuePair evaluateNewSimplex(final RealPointValuePair[] original,\nfinal double coeff,\nfinal Comparator<RealPointValuePair> comparator)\nthrows FunctionEvaluationException, OptimizationException {\n\nfinal double[] xSmallest = original[0].getPointRef();\nfinal int n = xSmallest.length;\n\n// create the linearly transformed simplex\nsimplex = new RealPointValuePair[n + 1];\nsimplex[0] = original[0];\nfor (int i = 1; i <= n; ++i) {\nfinal double[] xOriginal    = original[i].getPointRef();\nfinal double[] xTransformed = new double[n];\nfor (int j = 0; j < n; ++j) {\nxTransformed[j] = xSmallest[j] + coeff * (xSmallest[j] - xOriginal[j]);\n}\nsimplex[i] = new RealPointValuePair(xTransformed, Double.NaN, false);\n}\n\n// evaluate it\nevaluateSimplex(comparator);\nreturn simplex[0];\n\n}",
+            "method_id": 2,
+            "loc": 25
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.direct.DirectSearchOptimizer:buildSimplex([D)V",
+            "method_body": "private void buildSimplex(final double[] startPoint)\nthrows IllegalArgumentException {\n\nfinal int n = startPoint.length;\nif (n != startConfiguration.length) {\nthrow MathRuntimeException.createIllegalArgumentException(\n\"dimension mismatch {0} != {1}\",\nn, startConfiguration.length);\n}\n\n// set first vertex\nsimplex = new RealPointValuePair[n + 1];\nsimplex[0] = new RealPointValuePair(startPoint, Double.NaN);\n\n// set remaining vertices\nfor (int i = 0; i < n; ++i) {\nfinal double[] confI   = startConfiguration[i];\nfinal double[] vertexI = new double[n];\nfor (int k = 0; k < n; ++k) {\nvertexI[k] = startPoint[k] + confI[k];\n}\nsimplex[i + 1] = new RealPointValuePair(vertexI, Double.NaN);\n}\n\n}",
+            "method_id": 3,
+            "loc": 25
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.direct.DirectSearchOptimizer:evaluate([D)D",
+            "method_body": "protected abstract void iterateSimplex(final Comparator<RealPointValuePair> comparator)\nthrows FunctionEvaluationException, OptimizationException, IllegalArgumentException;\n\n/** Evaluate the objective function on one point.\n* <p>A side effect of this method is to count the number of\n* function evaluations</p>\n* @param x point on which the objective function should be evaluated\n* @return objective function value at the given point\n* @exception FunctionEvaluationException if no value can be computed for the\n* parameters or if the maximal number of evaluations is exceeded\n* @exception IllegalArgumentException if the start point dimension is wrong\n*/\nprotected double evaluate(final double[] x)\nthrows FunctionEvaluationException, IllegalArgumentException {\nif (++evaluations > maxEvaluations) {\nthrow new FunctionEvaluationException(new MaxEvaluationsExceededException(maxEvaluations),\nx);\n}\nreturn f.value(x);\n}",
+            "method_id": 4,
+            "loc": 20
+        },
+        {
+            "method_signature": "org.apache.commons.math.MathException:translate(Ljava/lang/String;Ljava/util/Locale;)Ljava/lang/String;",
+            "method_body": "private static String translate(String s, Locale locale) {\ntry {\nResourceBundle bundle =\nResourceBundle.getBundle(\"org.apache.commons.math.MessagesResources\", locale);\nif (bundle.getLocale().getLanguage().equals(locale.getLanguage())) {\n// the value of the resource is the translated string\nreturn bundle.getString(s);\n}\n\n} catch (MissingResourceException mre) {\n// do nothing here\n}\n\n// the locale is not supported or the resource is unknown\n// don't translate and fall back to using the string as is\nreturn s;\n\n}",
+            "method_id": 5,
+            "loc": 18
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.direct.DirectSearchOptimizer:setStartConfiguration([D)V",
+            "method_body": "public void setStartConfiguration(final double[] steps)\nthrows IllegalArgumentException {\n// only the relative position of the n final vertices with respect\n// to the first one are stored\nfinal int n = steps.length;\nstartConfiguration = new double[n][n];\nfor (int i = 0; i < n; ++i) {\nfinal double[] vertexI = startConfiguration[i];\nfor (int j = 0; j < i + 1; ++j) {\nif (steps[j] == 0.0) {\nthrow MathRuntimeException.createIllegalArgumentException(\n\"equals vertices {0} and {1} in simplex configuration\",\nj, j + 1);\n}\nSystem.arraycopy(steps, 0, vertexI, 0, j + 1);\n}\n}\n}",
+            "method_id": 6,
+            "loc": 18
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.direct.DirectSearchOptimizer:evaluateSimplex(Ljava/util/Comparator;)V",
+            "method_body": "protected void evaluateSimplex(final Comparator<RealPointValuePair> comparator)\nthrows FunctionEvaluationException, OptimizationException {\n\n// evaluate the objective function at all non-evaluated simplex points\nfor (int i = 0; i < simplex.length; ++i) {\nfinal RealPointValuePair vertex = simplex[i];\nfinal double[] point = vertex.getPointRef();\nif (Double.isNaN(vertex.getValue())) {\nsimplex[i] = new RealPointValuePair(point, evaluate(point), false);\n}\n}\n\n// sort the simplex from best to worst\nArrays.sort(simplex, comparator);\n\n}",
+            "method_id": 7,
+            "loc": 16
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.direct.DirectSearchOptimizer:incrementIterationsCounter()V",
+            "method_body": "protected void incrementIterationsCounter()\nthrows OptimizationException {\nif (++iterations > maxIterations) {\nthrow new OptimizationException(new MaxIterationsExceededException(maxIterations));\n}\n}",
+            "method_id": 8,
+            "loc": 6
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.direct.DirectSearchOptimizer:<init>()V",
+            "method_body": "protected DirectSearchOptimizer() {\nsetConvergenceChecker(new SimpleScalarValueChecker());\nsetMaxIterations(Integer.MAX_VALUE);\nsetMaxEvaluations(Integer.MAX_VALUE);\n}",
+            "method_id": 9,
+            "loc": 5
+        },
+        {
+            "method_signature": "org.apache.commons.math.MathException:<init>(Ljava/lang/Throwable;)V",
+            "method_body": "public MathException(Throwable rootCause) {\nsuper(rootCause);\nthis.pattern   = getMessage();\nthis.arguments = new Object[0];\n}",
+            "method_id": 10,
+            "loc": 5
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.RealPointValuePair:<init>([DDZ)V",
+            "method_body": "public RealPointValuePair(final double[] point, final double value,\nfinal boolean copyArray) {\nthis.point = copyArray ? point.clone() : point;\nthis.value  = value;\n}",
+            "method_id": 11,
+            "loc": 5
+        },
+        {
+            "method_signature": "org.apache.commons.math.MathException:<init>(Ljava/lang/String;[Ljava/lang/Object;)V",
+            "method_body": "public MathException(String pattern, Object ... arguments) {\nsuper(buildMessage(Locale.US, pattern, arguments));\nthis.pattern   = pattern;\nthis.arguments = (arguments == null) ? new Object[0] : arguments.clone();\n}",
+            "method_id": 12,
+            "loc": 5
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.direct.MultiDirectional:<init>()V",
+            "method_body": "public MultiDirectional() {\nthis.khi   = 2.0;\nthis.gamma = 0.5;\n}",
+            "method_id": 13,
+            "loc": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.SimpleScalarValueChecker:<init>()V",
+            "method_body": "public SimpleScalarValueChecker() {\nthis.relativeThreshold = DEFAULT_RELATIVE_THRESHOLD;\nthis.absoluteThreshold = DEFAULT_ABSOLUTE_THRESHOLD;\n}",
+            "method_id": 14,
+            "loc": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.RealPointValuePair:<init>([DD)V",
+            "method_body": "public RealPointValuePair(final double[] point, final double value) {\nthis.point = point.clone();\nthis.value  = value;\n}",
+            "method_id": 15,
+            "loc": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math.MaxIterationsExceededException:<init>(I)V",
+            "method_body": "public MaxIterationsExceededException(final int maxIterations) {\nsuper(\"Maximal number of iterations ({0}) exceeded\", maxIterations);\nthis.maxIterations = maxIterations;\n}",
+            "method_id": 16,
+            "loc": 4
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.RealPointValuePair:getValue()D",
+            "method_body": "public double getValue() {\nreturn value;\n}",
+            "method_id": 17,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.ConvergenceException:<init>(Ljava/lang/Throwable;)V",
+            "method_body": "public ConvergenceException(Throwable cause) {\nsuper(cause);\n}",
+            "method_id": 18,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.direct.DirectSearchOptimizer:setConvergenceChecker(Lorg/apache/commons/math/optimization/RealConvergenceChecker;)V",
+            "method_body": "public void setConvergenceChecker(RealConvergenceChecker checker) {\nthis.checker = checker;\n}",
+            "method_id": 19,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.MathException:buildMessage(Ljava/util/Locale;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;",
+            "method_body": "private static String buildMessage(Locale locale, String pattern, Object ... arguments) {\nreturn (pattern == null) ? \"\" : new MessageFormat(translate(pattern, locale), locale).format(arguments);\n}",
+            "method_id": 20,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.MathException:getLocalizedMessage()Ljava/lang/String;",
+            "method_body": "public String getLocalizedMessage() {\nreturn getMessage(Locale.getDefault());\n}",
+            "method_id": 21,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.MathException:getMessage(Ljava/util/Locale;)Ljava/lang/String;",
+            "method_body": "public String getMessage(Locale locale) {\nreturn buildMessage(locale, pattern, arguments);\n}",
+            "method_id": 22,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.RealPointValuePair:getPointRef()[D",
+            "method_body": "public double[] getPointRef() {\nreturn point;\n}",
+            "method_id": 23,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.ConvergenceException:<init>(Ljava/lang/String;[Ljava/lang/Object;)V",
+            "method_body": "public ConvergenceException(String pattern, Object ... arguments) {\nsuper(pattern, arguments);\n}",
+            "method_id": 24,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.OptimizationException:<init>(Ljava/lang/Throwable;)V",
+            "method_body": "public OptimizationException(Throwable cause) {\nsuper(cause);\n}",
+            "method_id": 25,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.direct.DirectSearchOptimizer:setMaxEvaluations(I)V",
+            "method_body": "public void setMaxEvaluations(int maxEvaluations) {\nthis.maxEvaluations = maxEvaluations;\n}",
+            "method_id": 26,
+            "loc": 3
+        },
+        {
+            "method_signature": "org.apache.commons.math.optimization.direct.DirectSearchOptimizer:setMaxIterations(I)V",
+            "method_body": "public void setMaxIterations(int maxIterations) {\nthis.maxIterations = maxIterations;\n}",
+            "method_id": 27,
+            "loc": 3
+        }
+    ]
+}

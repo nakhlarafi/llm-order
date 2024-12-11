@@ -1,0 +1,299 @@
+{
+    "bug_id": 33,
+    "test_id": 0,
+    "test_name": "org.apache.commons.compress.compressors.DetectCompressorTestCase.testDetection",
+    "test_body": "public void testDetection() throws Exception {\nCompressorInputStream bzip2 = getStreamFor(\"bla.txt.bz2\"); \nassertNotNull(bzip2);\nassertTrue(bzip2 instanceof BZip2CompressorInputStream);\nCompressorInputStream gzip = getStreamFor(\"bla.tgz\");\nassertNotNull(gzip);\nassertTrue(gzip instanceof GzipCompressorInputStream);\nCompressorInputStream pack200 = getStreamFor(\"bla.pack\");\nassertNotNull(pack200);\nassertTrue(pack200 instanceof Pack200CompressorInputStream);\nCompressorInputStream xz = getStreamFor(\"bla.tar.xz\");\nassertNotNull(xz);\nassertTrue(xz instanceof XZCompressorInputStream);\nCompressorInputStream zlib = getStreamFor(\"bla.tar.deflatez\");\nassertNotNull(zlib);\nassertTrue(zlib instanceof DeflateCompressorInputStream);\ntry {\nfactory.createCompressorInputStream(new ByteArrayInputStream(new byte[0]));\nfail(\"No exception thrown for an empty input stream\");\n} catch (CompressorException e) {\n// expected\n}\n}\n",
+    "stack_trace": "",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.compress.compressors.lzma.LZMAUtils:setCacheLZMAAvailablity(Z)V",
+            "method_body": "public static void setCacheLZMAAvailablity(boolean doCache) {\nif (!doCache) {\ncachedLZMAAvailability = CachedAvailability.DONT_CACHE;\n} else if (cachedLZMAAvailability == CachedAvailability.DONT_CACHE) {\nfinal boolean hasLzma = internalIsLZMACompressionAvailable();\ncachedLZMAAvailability = hasLzma ? CachedAvailability.CACHED_AVAILABLE\n: CachedAvailability.CACHED_UNAVAILABLE;\n}\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.FileNameUtil:<init>(Ljava/util/Map;Ljava/lang/String;)V",
+            "method_body": "public FileNameUtil(Map<String, String> uncompressSuffix,\nString defaultExtension) {\nthis.uncompressSuffix = Collections.unmodifiableMap(uncompressSuffix);\nint lc = Integer.MIN_VALUE, sc = Integer.MAX_VALUE;\nint lu = Integer.MIN_VALUE, su = Integer.MAX_VALUE;\nfor (Map.Entry<String, String> ent : uncompressSuffix.entrySet()) {\nint cl = ent.getKey().length();\nif (cl > lc) {\nlc = cl;\n}\nif (cl < sc) {\nsc = cl;\n}\n\nString u = ent.getValue();\nint ul = u.length();\nif (ul > 0) {\nif (!compressSuffix.containsKey(u)) {\ncompressSuffix.put(u, ent.getKey());\n}\nif (ul > lu) {\nlu = ul;\n}\nif (ul < su) {\nsu = ul;\n}\n}\n}\nlongestCompressedSuffix = lc;\nlongestUncompressedSuffix = lu;\nshortestCompressedSuffix = sc;\nshortestUncompressedSuffix = su;\nthis.defaultExtension = defaultExtension;\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream:init(Z)Z",
+            "method_body": "private boolean init(boolean isFirstMember) throws IOException {\nassert isFirstMember || decompressConcatenated;\n\n// Check the magic bytes without a possibility of EOFException.\nint magic0 = in.read();\nint magic1 = in.read();\n\n// If end of input was reached after decompressing at least\n// one .gz member, we have reached the end of the file successfully.\nif (magic0 == -1 && !isFirstMember) {\nreturn false;\n}\n\nif (magic0 != 31 || magic1 != 139) {\nthrow new IOException(isFirstMember\n? \"Input is not in the .gz format\"\n: \"Garbage after a valid .gz stream\");\n}\n\n// Parsing the rest of the header may throw EOFException.\nDataInputStream inData = new DataInputStream(in);\nint method = inData.readUnsignedByte();\nif (method != Deflater.DEFLATED) {\nthrow new IOException(\"Unsupported compression method \"\n+ method + \" in the .gz header\");\n}\n\nint flg = inData.readUnsignedByte();\nif ((flg & FRESERVED) != 0) {\nthrow new IOException(\n\"Reserved flags are set in the .gz header\");\n}\n\nparameters.setModificationTime(readLittleEndianInt(inData) * 1000);\nswitch (inData.readUnsignedByte()) { // extra flags\ncase 2:\nparameters.setCompressionLevel(Deflater.BEST_COMPRESSION);\nbreak;\ncase 4:\nparameters.setCompressionLevel(Deflater.BEST_SPEED);\nbreak;\ndefault:\n// ignored for now\nbreak;\n}\nparameters.setOperatingSystem(inData.readUnsignedByte());\n\n// Extra field, ignored\nif ((flg & FEXTRA) != 0) {\nint xlen = inData.readUnsignedByte();\nxlen |= inData.readUnsignedByte() << 8;\n\n// This isn't as efficient as calling in.skip would be,\n// but it's lazier to handle unexpected end of input this way.\n// Most files don't have an extra field anyway.\nwhile (xlen-- > 0) {\ninData.readUnsignedByte();\n}\n}\n\n// Original file name\nif ((flg & FNAME) != 0) {\nparameters.setFilename(new String(readToNull(inData),\nCharsetNames.ISO_8859_1));\n}\n\n// Comment\nif ((flg & FCOMMENT) != 0) {\nparameters.setComment(new String(readToNull(inData),\nCharsetNames.ISO_8859_1));\n}\n\n// Header \"CRC16\" which is actually a truncated CRC32 (which isn't\n// as good as real CRC16). I don't know if any encoder implementation\n// sets this, so it's not worth trying to verify it. GNU gzip 1.4\n// doesn't support this field, but zlib seems to be able to at least\n// skip over it.\nif ((flg & FHCRC) != 0) {\ninData.readShort();\n}\n\n// Reset\ninf.reset();\ncrc.reset();\n\nreturn true;\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.bzip2.CRC:initialiseCRC()V",
+            "method_body": "void initialiseCRC() {\nglobalCrc = 0xffffffff;\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream:makeMaps()V",
+            "method_body": "private void makeMaps() {\nfinal boolean[] inUse = this.data.inUse;\nfinal byte[] seqToUnseq = this.data.seqToUnseq;\n\nint nInUseShadow = 0;\n\nfor (int i = 0; i < 256; i++) {\nif (inUse[i]) {\nseqToUnseq[nInUseShadow++] = (byte) i;\n}\n}\n\nthis.nInUse = nInUseShadow;\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.gzip.GzipParameters:setOperatingSystem(I)V",
+            "method_body": "public void setOperatingSystem(int operatingSystem) {\nthis.operatingSystem = operatingSystem;\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.pack200.Pack200CompressorInputStream:matches([BI)Z",
+            "method_body": "public static boolean matches(byte[] signature, int length) {\nif (length < SIG_LENGTH) {\nreturn false;\n}\n\nfor (int i = 0; i < SIG_LENGTH; i++) {\nif (signature[i] != CAFE_DOOD[i]) {\nreturn false;\n}\n}\n\nreturn true;\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.xz.XZUtils:isXZCompressionAvailable()Z",
+            "method_body": "public static boolean isXZCompressionAvailable() {\nfinal CachedAvailability cachedResult = cachedXZAvailability;\nif (cachedResult != CachedAvailability.DONT_CACHE) {\nreturn cachedResult == CachedAvailability.CACHED_AVAILABLE;\n}\nreturn internalIsXZCompressionAvailable();\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.pack200.StreamBridge:<init>(Ljava/io/OutputStream;)V",
+            "method_body": "protected StreamBridge(OutputStream out) {\nsuper(out);\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.pack200.InMemoryCachingStreamBridge:<init>()V",
+            "method_body": "InMemoryCachingStreamBridge() {\nsuper(new ByteArrayOutputStream());\n}",
+            "method_id": 9
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.gzip.GzipParameters:setModificationTime(J)V",
+            "method_body": "public void setModificationTime(long modificationTime) {\nthis.modificationTime = modificationTime;\n}",
+            "method_id": 10
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.xz.XZUtils:<clinit>()V",
+            "method_body": "private static final byte[] HEADER_MAGIC = {\n(byte) 0xFD, '7', 'z', 'X', 'Z', '\\0'\n};",
+            "method_id": 11
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.gzip.GzipParameters:<init>()V",
+            "method_body": "private int compressionLevel = Deflater.DEFAULT_COMPRESSION;\nprivate int operatingSystem = 255; // Unknown OS by default\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream:matches([BI)Z",
+            "method_body": "public static boolean matches(byte[] signature, int length) {\n\nif (length < 3) {\nreturn false;\n}\n\nif (signature[0] != 'B') {\nreturn false;\n}\n\nif (signature[1] != 'Z') {\nreturn false;\n}\n\nif (signature[2] != 'h') {\nreturn false;\n}\n\nreturn true;\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.lzma.LZMACompressorInputStream:matches([BI)Z",
+            "method_body": "public static boolean matches(byte[] signature, int length) {\n\nif (signature == null || length < 3) {\nreturn false;\n}\n\nif (signature[0] != 0x5d) {\nreturn false;\n}\n\nif (signature[1] != 0) {\nreturn false;\n}\n\nif (signature[2] != 0) {\nreturn false;\n}\n\nreturn true;\n}",
+            "method_id": 14
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.pack200.Pack200CompressorInputStream:<clinit>()V",
+            "method_body": "private static final byte[] CAFE_DOOD = new byte[] {\n(byte) 0xCA, (byte) 0xFE, (byte) 0xD0, (byte) 0x0D\n};",
+            "method_id": 15
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream:readLittleEndianInt(Ljava/io/DataInputStream;)J",
+            "method_body": "private long readLittleEndianInt(DataInputStream inData) throws IOException {\nreturn inData.readUnsignedByte()\n| (inData.readUnsignedByte() << 8)\n| (inData.readUnsignedByte() << 16)\n| (((long) inData.readUnsignedByte()) << 24);\n}",
+            "method_id": 16
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.xz.XZCompressorInputStream:matches([BI)Z",
+            "method_body": "public static boolean matches(byte[] signature, int length) {\nif (length < XZ.HEADER_MAGIC.length) {\nreturn false;\n}\n\nfor (int i = 0; i < XZ.HEADER_MAGIC.length; ++i) {\nif (signature[i] != XZ.HEADER_MAGIC[i]) {\nreturn false;\n}\n}\n\nreturn true;\n}",
+            "method_id": 17
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.CompressorStreamFactory:createCompressorInputStream(Ljava/io/InputStream;)Lorg/apache/commons/compress/compressors/CompressorInputStream;",
+            "method_body": "public CompressorInputStream createCompressorInputStream(final InputStream in)\nthrows CompressorException {\nif (in == null) {\nthrow new IllegalArgumentException(\"Stream must not be null.\");\n}\n\nif (!in.markSupported()) {\nthrow new IllegalArgumentException(\"Mark is not supported.\");\n}\n\nfinal byte[] signature = new byte[12];\nin.mark(signature.length);\ntry {\nint signatureLength = IOUtils.readFully(in, signature);\nin.reset();\n\nif (BZip2CompressorInputStream.matches(signature, signatureLength)) {\nreturn new BZip2CompressorInputStream(in, decompressConcatenated);\n}\n\nif (GzipCompressorInputStream.matches(signature, signatureLength)) {\nreturn new GzipCompressorInputStream(in, decompressConcatenated);\n}\n\nif (Pack200CompressorInputStream.matches(signature, signatureLength)) {\nreturn new Pack200CompressorInputStream(in);\n}\n\nif (FramedSnappyCompressorInputStream.matches(signature, signatureLength)) {\nreturn new FramedSnappyCompressorInputStream(in);\n}\n\nif (ZCompressorInputStream.matches(signature, signatureLength)) {\nreturn new ZCompressorInputStream(in);\n}\n\n\nif (XZUtils.matches(signature, signatureLength) &&\nXZUtils.isXZCompressionAvailable()) {\nreturn new XZCompressorInputStream(in, decompressConcatenated);\n}\n\nif (LZMAUtils.matches(signature, signatureLength) &&\nLZMAUtils.isLZMACompressionAvailable()) {\nreturn new LZMACompressorInputStream(in);\n}\n\n} catch (IOException e) {\nthrow new CompressorException(\"Failed to detect Compressor from InputStream.\", e);\n}\n\nthrow new CompressorException(\"No Compressor found for the stream signature.\");\n}",
+            "method_id": 18
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.lzma.LZMAUtils:internalIsLZMACompressionAvailable()Z",
+            "method_body": "private static boolean internalIsLZMACompressionAvailable() {\ntry {\nLZMACompressorInputStream.matches(null, 0);\nreturn true;\n} catch (NoClassDefFoundError error) {\nreturn false;\n}\n}",
+            "method_id": 19
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream:initBlock()V",
+            "method_body": "private void initBlock() throws IOException {\nchar magic0;\nchar magic1;\nchar magic2;\nchar magic3;\nchar magic4;\nchar magic5;\n\nwhile (true) {\n// Get the block magic bytes.\nmagic0 = bsGetUByte();\nmagic1 = bsGetUByte();\nmagic2 = bsGetUByte();\nmagic3 = bsGetUByte();\nmagic4 = bsGetUByte();\nmagic5 = bsGetUByte();\n\n// If isn't end of stream magic, break out of the loop.\nif (magic0 != 0x17 || magic1 != 0x72 || magic2 != 0x45\n|| magic3 != 0x38 || magic4 != 0x50 || magic5 != 0x90) {\nbreak;\n}\n\n// End of stream was reached. Check the combined CRC and\n// advance to the next .bz2 stream if decoding concatenated\n// streams.\nif (complete()) {\nreturn;\n}\n}\n\nif (magic0 != 0x31 || // '1'\nmagic1 != 0x41 || // ')'\nmagic2 != 0x59 || // 'Y'\nmagic3 != 0x26 || // '&'\nmagic4 != 0x53 || // 'S'\nmagic5 != 0x59 // 'Y'\n) {\nthis.currentState = EOF;\nthrow new IOException(\"bad block header\");\n} else {\nthis.storedBlockCRC = bsGetInt();\nthis.blockRandomised = bsR(1) == 1;\n\n/**\n* Allocate data here instead in constructor, so we do not allocate\n* it if the input file is empty.\n*/\nif (this.data == null) {\nthis.data = new Data(this.blockSize100k);\n}\n\n// currBlockNo++;\ngetAndMoveToFrontDecode();\n\nthis.crc.initialiseCRC();\nthis.currentState = START_BLOCK_STATE;\n}\n}",
+            "method_id": 20
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream:bsGetUByte()C",
+            "method_body": "private char bsGetUByte() throws IOException {\nreturn (char) bsR(8);\n}",
+            "method_id": 21
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream:matches([BI)Z",
+            "method_body": "public static boolean matches(byte[] signature, int length) {\n\nif (length < 2) {\nreturn false;\n}\n\nif (signature[0] != 31) {\nreturn false;\n}\n\nif (signature[1] != -117) {\nreturn false;\n}\n\nreturn true;\n}",
+            "method_id": 22
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream:recvDecodingTables()V",
+            "method_body": "private void recvDecodingTables() throws IOException {\nfinal Data dataShadow = this.data;\nfinal boolean[] inUse = dataShadow.inUse;\nfinal byte[] pos = dataShadow.recvDecodingTables_pos;\nfinal byte[] selector = dataShadow.selector;\nfinal byte[] selectorMtf = dataShadow.selectorMtf;\n\nint inUse16 = 0;\n\n/* Receive the mapping table */\nfor (int i = 0; i < 16; i++) {\nif (bsGetBit()) {\ninUse16 |= 1 << i;\n}\n}\n\nfor (int i = 256; --i >= 0;) {\ninUse[i] = false;\n}\n\nfor (int i = 0; i < 16; i++) {\nif ((inUse16 & (1 << i)) != 0) {\nfinal int i16 = i << 4;\nfor (int j = 0; j < 16; j++) {\nif (bsGetBit()) {\ninUse[i16 + j] = true;\n}\n}\n}\n}\n\nmakeMaps();\nfinal int alphaSize = this.nInUse + 2;\n\n/* Now the selectors */\nfinal int nGroups = bsR(3);\nfinal int nSelectors = bsR(15);\n\nfor (int i = 0; i < nSelectors; i++) {\nint j = 0;\nwhile (bsGetBit()) {\nj++;\n}\nselectorMtf[i] = (byte) j;\n}\n\n/* Undo the MTF values for the selectors. */\nfor (int v = nGroups; --v >= 0;) {\npos[v] = (byte) v;\n}\n\nfor (int i = 0; i < nSelectors; i++) {\nint v = selectorMtf[i] & 0xff;\nfinal byte tmp = pos[v];\nwhile (v > 0) {\n// nearly all times v is zero, 4 in most other cases\npos[v] = pos[v - 1];\nv--;\n}\npos[0] = tmp;\nselector[i] = tmp;\n}\n\nfinal char[][] len = dataShadow.temp_charArray2d;\n\n/* Now the coding tables */\nfor (int t = 0; t < nGroups; t++) {\nint curr = bsR(5);\nfinal char[] len_t = len[t];\nfor (int i = 0; i < alphaSize; i++) {\nwhile (bsGetBit()) {\ncurr += bsGetBit() ? -1 : 1;\n}\nlen_t[i] = (char) curr;\n}\n}\n\n// finally create the Huffman tables\ncreateHuffmanDecodingTables(alphaSize, nGroups);\n}",
+            "method_id": 23
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.CompressorStreamFactory:setDecompressConcatenated(Z)V",
+            "method_body": "public void setDecompressConcatenated(boolean decompressConcatenated) {\nif (this.decompressUntilEOF != null) {\nthrow new IllegalStateException(\"Cannot override the setting defined by the constructor\");\n}\nthis.decompressConcatenated = decompressConcatenated;\n}",
+            "method_id": 24
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream:bsR(I)I",
+            "method_body": "private int bsR(final int n) throws IOException {\nint bsLiveShadow = this.bsLive;\nint bsBuffShadow = this.bsBuff;\n\nif (bsLiveShadow < n) {\nfinal InputStream inShadow = this.in;\ndo {\nint thech = inShadow.read();\n\nif (thech < 0) {\nthrow new IOException(\"unexpected end of stream\");\n}\n\nbsBuffShadow = (bsBuffShadow << 8) | thech;\nbsLiveShadow += 8;\n} while (bsLiveShadow < n);\n\nthis.bsBuff = bsBuffShadow;\n}\n\nthis.bsLive = bsLiveShadow - n;\nreturn (bsBuffShadow >> (bsLiveShadow - n)) & ((1 << n) - 1);\n}",
+            "method_id": 25
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream:getAndMoveToFrontDecode()V",
+            "method_body": "private void getAndMoveToFrontDecode() throws IOException {\nthis.origPtr = bsR(24);\nrecvDecodingTables();\n\nfinal InputStream inShadow = this.in;\nfinal Data dataShadow = this.data;\nfinal byte[] ll8 = dataShadow.ll8;\nfinal int[] unzftab = dataShadow.unzftab;\nfinal byte[] selector = dataShadow.selector;\nfinal byte[] seqToUnseq = dataShadow.seqToUnseq;\nfinal char[] yy = dataShadow.getAndMoveToFrontDecode_yy;\nfinal int[] minLens = dataShadow.minLens;\nfinal int[][] limit = dataShadow.limit;\nfinal int[][] base = dataShadow.base;\nfinal int[][] perm = dataShadow.perm;\nfinal int limitLast = this.blockSize100k * 100000;\n\n/*\n* Setting up the unzftab entries here is not strictly necessary, but it\n* does save having to do it later in a separate pass, and so saves a\n* block's worth of cache misses.\n*/\nfor (int i = 256; --i >= 0;) {\nyy[i] = (char) i;\nunzftab[i] = 0;\n}\n\nint groupNo = 0;\nint groupPos = G_SIZE - 1;\nfinal int eob = this.nInUse + 1;\nint nextSym = getAndMoveToFrontDecode0(0);\nint bsBuffShadow = this.bsBuff;\nint bsLiveShadow = this.bsLive;\nint lastShadow = -1;\nint zt = selector[groupNo] & 0xff;\nint[] base_zt = base[zt];\nint[] limit_zt = limit[zt];\nint[] perm_zt = perm[zt];\nint minLens_zt = minLens[zt];\n\nwhile (nextSym != eob) {\nif ((nextSym == RUNA) || (nextSym == RUNB)) {\nint s = -1;\n\nfor (int n = 1; true; n <<= 1) {\nif (nextSym == RUNA) {\ns += n;\n} else if (nextSym == RUNB) {\ns += n << 1;\n} else {\nbreak;\n}\n\nif (groupPos == 0) {\ngroupPos = G_SIZE - 1;\nzt = selector[++groupNo] & 0xff;\nbase_zt = base[zt];\nlimit_zt = limit[zt];\nperm_zt = perm[zt];\nminLens_zt = minLens[zt];\n} else {\ngroupPos--;\n}\n\nint zn = minLens_zt;\n\n// Inlined:\n// int zvec = bsR(zn);\nwhile (bsLiveShadow < zn) {\nfinal int thech = inShadow.read();\nif (thech >= 0) {\nbsBuffShadow = (bsBuffShadow << 8) | thech;\nbsLiveShadow += 8;\ncontinue;\n} else {\nthrow new IOException(\"unexpected end of stream\");\n}\n}\nint zvec = (bsBuffShadow >> (bsLiveShadow - zn))\n& ((1 << zn) - 1);\nbsLiveShadow -= zn;\n\nwhile (zvec > limit_zt[zn]) {\nzn++;\nwhile (bsLiveShadow < 1) {\nfinal int thech = inShadow.read();\nif (thech >= 0) {\nbsBuffShadow = (bsBuffShadow << 8) | thech;\nbsLiveShadow += 8;\ncontinue;\n} else {\nthrow new IOException(\n\"unexpected end of stream\");\n}\n}\nbsLiveShadow--;\nzvec = (zvec << 1)\n| ((bsBuffShadow >> bsLiveShadow) & 1);\n}\nnextSym = perm_zt[zvec - base_zt[zn]];\n}\n\nfinal byte ch = seqToUnseq[yy[0]];\nunzftab[ch & 0xff] += s + 1;\n\nwhile (s-- >= 0) {\nll8[++lastShadow] = ch;\n}\n\nif (lastShadow >= limitLast) {\nthrow new IOException(\"block overrun\");\n}\n} else {\nif (++lastShadow >= limitLast) {\nthrow new IOException(\"block overrun\");\n}\n\nfinal char tmp = yy[nextSym - 1];\nunzftab[seqToUnseq[tmp] & 0xff]++;\nll8[lastShadow] = seqToUnseq[tmp];\n\n/*\n* This loop is hammered during decompression, hence avoid\n* native method call overhead of System.arraycopy for very\n* small ranges to copy.\n*/\nif (nextSym <= 16) {\nfor (int j = nextSym - 1; j > 0;) {\nyy[j] = yy[--j];\n}\n} else {\nSystem.arraycopy(yy, 0, yy, 1, nextSym - 1);\n}\n\nyy[0] = tmp;\n\nif (groupPos == 0) {\ngroupPos = G_SIZE - 1;\nzt = selector[++groupNo] & 0xff;\nbase_zt = base[zt];\nlimit_zt = limit[zt];\nperm_zt = perm[zt];\nminLens_zt = minLens[zt];\n} else {\ngroupPos--;\n}\n\nint zn = minLens_zt;\n\n// Inlined:\n// int zvec = bsR(zn);\nwhile (bsLiveShadow < zn) {\nfinal int thech = inShadow.read();\nif (thech >= 0) {\nbsBuffShadow = (bsBuffShadow << 8) | thech;\nbsLiveShadow += 8;\ncontinue;\n} else {\nthrow new IOException(\"unexpected end of stream\");\n}\n}\nint zvec = (bsBuffShadow >> (bsLiveShadow - zn))\n& ((1 << zn) - 1);\nbsLiveShadow -= zn;\n\nwhile (zvec > limit_zt[zn]) {\nzn++;\nwhile (bsLiveShadow < 1) {\nfinal int thech = inShadow.read();\nif (thech >= 0) {\nbsBuffShadow = (bsBuffShadow << 8) | thech;\nbsLiveShadow += 8;\ncontinue;\n} else {\nthrow new IOException(\"unexpected end of stream\");\n}\n}\nbsLiveShadow--;\nzvec = (zvec << 1) | ((bsBuffShadow >> bsLiveShadow) & 1);\n}\nnextSym = perm_zt[zvec - base_zt[zn]];\n}\n}\n\nthis.last = lastShadow;\nthis.bsLive = bsLiveShadow;\nthis.bsBuff = bsBuffShadow;\n}",
+            "method_id": 26
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.pack200.Pack200CompressorInputStream:<init>(Ljava/io/InputStream;Ljava/io/File;Lorg/apache/commons/compress/compressors/pack200/Pack200Strategy;Ljava/util/Map;)V",
+            "method_body": "private Pack200CompressorInputStream(final InputStream in, final File f,\nfinal Pack200Strategy mode,\nfinal Map<String, String> props)\nthrows IOException {\noriginalInput = in;\nstreamBridge = mode.newStreamBridge();\nJarOutputStream jarOut = new JarOutputStream(streamBridge);\nPack200.Unpacker u = Pack200.newUnpacker();\nif (props != null) {\nu.properties().putAll(props);\n}\nif (f == null) {\nu.unpack(new FilterInputStream(in) {\n@Override\npublic void close() {\n// unpack would close this stream but we\n// want to give the user code more control\n}\n},\njarOut);\n} else {\nu.unpack(f, jarOut);\n}\njarOut.close();\n}",
+            "method_id": 27
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.pack200.Pack200Strategy$1:newStreamBridge()Lorg/apache/commons/compress/compressors/pack200/StreamBridge;",
+            "method_body": "StreamBridge newStreamBridge() {\nreturn new InMemoryCachingStreamBridge();\n}",
+            "method_id": 28
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream:init(Z)Z",
+            "method_body": "private boolean init(boolean isFirstStream) throws IOException {\nif (null == in) {\nthrow new IOException(\"No InputStream\");\n}\n\nint magic0 = this.in.read();\nif (magic0 == -1 && !isFirstStream) {\nreturn false;\n}\nint magic1 = this.in.read();\nint magic2 = this.in.read();\n\nif (magic0 != 'B' || magic1 != 'Z' || magic2 != 'h') {\nthrow new IOException(isFirstStream\n? \"Stream is not in the BZip2 format\"\n: \"Garbage after a valid BZip2 stream\");\n}\n\nint blockSize = this.in.read();\nif ((blockSize < '1') || (blockSize > '9')) {\nthrow new IOException(\"BZip2 block size is invalid\");\n}\n\nthis.blockSize100k = blockSize - '0';\n\nthis.bsLive = 0;\nthis.computedCombinedCRC = 0;\n\nreturn true;\n}",
+            "method_id": 29
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorInputStream:matches([BI)Z",
+            "method_body": "public static boolean matches(byte[] signature, int length) {\n\nif (length < SZ_SIGNATURE.length) {\nreturn false;\n}\n\nbyte[] shortenedSig = signature;\nif (signature.length > SZ_SIGNATURE.length) {\nshortenedSig = new byte[SZ_SIGNATURE.length];\nSystem.arraycopy(signature, 0, shortenedSig, 0, SZ_SIGNATURE.length);\n}\n\nreturn Arrays.equals(shortenedSig, SZ_SIGNATURE);\n}",
+            "method_id": 30
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream$Data:<init>(I)V",
+            "method_body": "Data(int blockSize100k) {\nthis.ll8 = new byte[blockSize100k * BZip2Constants.BASEBLOCKSIZE];\n}",
+            "method_id": 31
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream:hbCreateDecodeTables([I[I[I[CIII)V",
+            "method_body": "private static void hbCreateDecodeTables(final int[] limit,\nfinal int[] base, final int[] perm, final char[] length,\nfinal int minLen, final int maxLen, final int alphaSize) {\nfor (int i = minLen, pp = 0; i <= maxLen; i++) {\nfor (int j = 0; j < alphaSize; j++) {\nif (length[j] == i) {\nperm[pp++] = j;\n}\n}\n}\n\nfor (int i = MAX_CODE_LEN; --i > 0;) {\nbase[i] = 0;\nlimit[i] = 0;\n}\n\nfor (int i = 0; i < alphaSize; i++) {\nbase[length[i] + 1]++;\n}\n\nfor (int i = 1, b = base[0]; i < MAX_CODE_LEN; i++) {\nb += base[i];\nbase[i] = b;\n}\n\nfor (int i = minLen, vec = 0, b = base[i]; i <= maxLen; i++) {\nfinal int nb = base[i + 1];\nvec += nb - b;\nb = nb;\nlimit[i] = vec - 1;\nvec <<= 1;\n}\n\nfor (int i = minLen + 1; i <= maxLen; i++) {\nbase[i] = ((limit[i - 1] + 1) << 1) - base[i];\n}\n}",
+            "method_id": 32
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.CompressorStreamFactory:<init>(Z)V",
+            "method_body": "public CompressorStreamFactory(boolean decompressUntilEOF) {\nthis.decompressUntilEOF = Boolean.valueOf(decompressUntilEOF);\n// Also copy to existing variable so can continue to use that as the current value\nthis.decompressConcatenated = decompressUntilEOF;\n}",
+            "method_id": 33
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.xz.XZUtils:matches([BI)Z",
+            "method_body": "public static boolean matches(byte[] signature, int length) {\nif (length < HEADER_MAGIC.length) {\nreturn false;\n}\n\nfor (int i = 0; i < HEADER_MAGIC.length; ++i) {\nif (signature[i] != HEADER_MAGIC[i]) {\nreturn false;\n}\n}\n\nreturn true;\n}",
+            "method_id": 34
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream:bsGetInt()I",
+            "method_body": "private int bsGetInt() throws IOException {\nreturn (((((bsR(8) << 8) | bsR(8)) << 8) | bsR(8)) << 8) | bsR(8);\n}",
+            "method_id": 35
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.bzip2.CRC:<clinit>()V",
+            "method_body": "private static final int crc32Table[] = {\n0x00000000, 0x04c11db7, 0x09823b6e, 0x0d4326d9,\n0x130476dc, 0x17c56b6b, 0x1a864db2, 0x1e475005,\n0x2608edb8, 0x22c9f00f, 0x2f8ad6d6, 0x2b4bcb61,\n0x350c9b64, 0x31cd86d3, 0x3c8ea00a, 0x384fbdbd,\n0x4c11db70, 0x48d0c6c7, 0x4593e01e, 0x4152fda9,\n0x5f15adac, 0x5bd4b01b, 0x569796c2, 0x52568b75,\n0x6a1936c8, 0x6ed82b7f, 0x639b0da6, 0x675a1011,\n0x791d4014, 0x7ddc5da3, 0x709f7b7a, 0x745e66cd,\n0x9823b6e0, 0x9ce2ab57, 0x91a18d8e, 0x95609039,\n0x8b27c03c, 0x8fe6dd8b, 0x82a5fb52, 0x8664e6e5,\n0xbe2b5b58, 0xbaea46ef, 0xb7a96036, 0xb3687d81,\n0xad2f2d84, 0xa9ee3033, 0xa4ad16ea, 0xa06c0b5d,\n0xd4326d90, 0xd0f37027, 0xddb056fe, 0xd9714b49,\n0xc7361b4c, 0xc3f706fb, 0xceb42022, 0xca753d95,\n0xf23a8028, 0xf6fb9d9f, 0xfbb8bb46, 0xff79a6f1,\n0xe13ef6f4, 0xe5ffeb43, 0xe8bccd9a, 0xec7dd02d,\n0x34867077, 0x30476dc0, 0x3d044b19, 0x39c556ae,\n0x278206ab, 0x23431b1c, 0x2e003dc5, 0x2ac12072,\n0x128e9dcf, 0x164f8078, 0x1b0ca6a1, 0x1fcdbb16,\n0x018aeb13, 0x054bf6a4, 0x0808d07d, 0x0cc9cdca,\n0x7897ab07, 0x7c56b6b0, 0x71159069, 0x75d48dde,\n0x6b93dddb, 0x6f52c06c, 0x6211e6b5, 0x66d0fb02,\n0x5e9f46bf, 0x5a5e5b08, 0x571d7dd1, 0x53dc6066,\n0x4d9b3063, 0x495a2dd4, 0x44190b0d, 0x40d816ba,\n0xaca5c697, 0xa864db20, 0xa527fdf9, 0xa1e6e04e,\n0xbfa1b04b, 0xbb60adfc, 0xb6238b25, 0xb2e29692,\n0x8aad2b2f, 0x8e6c3698, 0x832f1041, 0x87ee0df6,\n0x99a95df3, 0x9d684044, 0x902b669d, 0x94ea7b2a,\n0xe0b41de7, 0xe4750050, 0xe9362689, 0xedf73b3e,\n0xf3b06b3b, 0xf771768c, 0xfa325055, 0xfef34de2,\n0xc6bcf05f, 0xc27dede8, 0xcf3ecb31, 0xcbffd686,\n0xd5b88683, 0xd1799b34, 0xdc3abded, 0xd8fba05a,\n0x690ce0ee, 0x6dcdfd59, 0x608edb80, 0x644fc637,\n0x7a089632, 0x7ec98b85, 0x738aad5c, 0x774bb0eb,\n0x4f040d56, 0x4bc510e1, 0x46863638, 0x42472b8f,\n0x5c007b8a, 0x58c1663d, 0x558240e4, 0x51435d53,\n0x251d3b9e, 0x21dc2629, 0x2c9f00f0, 0x285e1d47,\n0x36194d42, 0x32d850f5, 0x3f9b762c, 0x3b5a6b9b,\n0x0315d626, 0x07d4cb91, 0x0a97ed48, 0x0e56f0ff,\n0x1011a0fa, 0x14d0bd4d, 0x19939b94, 0x1d528623,\n0xf12f560e, 0xf5ee4bb9, 0xf8ad6d60, 0xfc6c70d7,\n0xe22b20d2, 0xe6ea3d65, 0xeba91bbc, 0xef68060b,\n0xd727bbb6, 0xd3e6a601, 0xdea580d8, 0xda649d6f,\n0xc423cd6a, 0xc0e2d0dd, 0xcda1f604, 0xc960ebb3,\n0xbd3e8d7e, 0xb9ff90c9, 0xb4bcb610, 0xb07daba7,\n0xae3afba2, 0xaafbe615, 0xa7b8c0cc, 0xa379dd7b,\n0x9b3660c6, 0x9ff77d71, 0x92b45ba8, 0x9675461f,\n0x8832161a, 0x8cf30bad, 0x81b02d74, 0x857130c3,\n0x5d8a9099, 0x594b8d2e, 0x5408abf7, 0x50c9b640,\n0x4e8ee645, 0x4a4ffbf2, 0x470cdd2b, 0x43cdc09c,\n0x7b827d21, 0x7f436096, 0x7200464f, 0x76c15bf8,\n0x68860bfd, 0x6c47164a, 0x61043093, 0x65c52d24,\n0x119b4be9, 0x155a565e, 0x18197087, 0x1cd86d30,\n0x029f3d35, 0x065e2082, 0x0b1d065b, 0x0fdc1bec,\n0x3793a651, 0x3352bbe6, 0x3e119d3f, 0x3ad08088,\n0x2497d08d, 0x2056cd3a, 0x2d15ebe3, 0x29d4f654,\n0xc5a92679, 0xc1683bce, 0xcc2b1d17, 0xc8ea00a0,\n0xd6ad50a5, 0xd26c4d12, 0xdf2f6bcb, 0xdbee767c,\n0xe3a1cbc1, 0xe760d676, 0xea23f0af, 0xeee2ed18,\n0xf0a5bd1d, 0xf464a0aa, 0xf9278673, 0xfde69bc4,\n0x89b8fd09, 0x8d79e0be, 0x803ac667, 0x84fbdbd0,\n0x9abc8bd5, 0x9e7d9662, 0x933eb0bb, 0x97ffad0c,\n0xafb010b1, 0xab710d06, 0xa6322bdf, 0xa2f33668,\n0xbcb4666d, 0xb8757bda, 0xb5365d03, 0xb1f740b4\n};",
+            "method_id": 36
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream:<init>(Ljava/io/InputStream;Z)V",
+            "method_body": "public GzipCompressorInputStream(InputStream inputStream,\nboolean decompressConcatenated)\nthrows IOException {\n// Mark support is strictly needed for concatenated files only,\n// but it's simpler if it is always available.\nif (inputStream.markSupported()) {\nin = inputStream;\n} else {\nin = new BufferedInputStream(inputStream);\n}\n\nthis.decompressConcatenated = decompressConcatenated;\ninit(true);\n}",
+            "method_id": 37
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.xz.XZCompressorInputStream:<init>(Ljava/io/InputStream;Z)V",
+            "method_body": "public XZCompressorInputStream(InputStream inputStream,\nboolean decompressConcatenated)\nthrows IOException {\nif (decompressConcatenated) {\nin = new XZInputStream(inputStream);\n} else {\nin = new SingleXZInputStream(inputStream);\n}\n}",
+            "method_id": 38
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.lzma.LZMAUtils:<clinit>()V",
+            "method_body": "private static final FileNameUtil fileNameUtil;\n\n/**\n* LZMA Header Magic Bytes begin a LZMA file.\n*/\nprivate static final byte[] HEADER_MAGIC = {\n(byte) 0x5D, 0, 0\n};",
+            "method_id": 39
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream:createHuffmanDecodingTables(II)V",
+            "method_body": "private void createHuffmanDecodingTables(final int alphaSize,\nfinal int nGroups) {\nfinal Data dataShadow = this.data;\nfinal char[][] len = dataShadow.temp_charArray2d;\nfinal int[] minLens = dataShadow.minLens;\nfinal int[][] limit = dataShadow.limit;\nfinal int[][] base = dataShadow.base;\nfinal int[][] perm = dataShadow.perm;\n\nfor (int t = 0; t < nGroups; t++) {\nint minLen = 32;\nint maxLen = 0;\nfinal char[] len_t = len[t];\nfor (int i = alphaSize; --i >= 0;) {\nfinal char lent = len_t[i];\nif (lent > maxLen) {\nmaxLen = lent;\n}\nif (lent < minLen) {\nminLen = lent;\n}\n}\nhbCreateDecodeTables(limit[t], base[t], perm[t], len[t], minLen,\nmaxLen, alphaSize);\nminLens[t] = minLen;\n}\n}",
+            "method_id": 40
+        },
+        {
+            "method_signature": "org.apache.commons.compress.utils.IOUtils:<clinit>()V",
+            "method_body": "private static final int COPY_BUF_SIZE = 8024;\nprivate static final int SKIP_BUF_SIZE = 4096;\n\n// This buffer does not need to be synchronised because it is write only; the contents are ignored\n// Does not affect Immutability\nprivate static final byte[] SKIP_BUF = new byte[SKIP_BUF_SIZE];\n\n/** Private constructor to prevent instantiation of this utility class. */\nprivate IOUtils(){\n}",
+            "method_id": 41
+        },
+        {
+            "method_signature": "org.apache.commons.compress.utils.IOUtils:readFully(Ljava/io/InputStream;[B)I",
+            "method_body": "public static int readFully(InputStream input, byte[] b) throws IOException {\nreturn readFully(input, b, 0, b.length);\n}",
+            "method_id": 42
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.xz.XZUtils:internalIsXZCompressionAvailable()Z",
+            "method_body": "private static boolean internalIsXZCompressionAvailable() {\ntry {\nXZCompressorInputStream.matches(null, 0);\nreturn true;\n} catch (NoClassDefFoundError error) {\nreturn false;\n}\n}",
+            "method_id": 43
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.lzma.LZMAUtils:matches([BI)Z",
+            "method_body": "public static boolean matches(byte[] signature, int length) {\nif (length < HEADER_MAGIC.length) {\nreturn false;\n}\n\nfor (int i = 0; i < HEADER_MAGIC.length; ++i) {\nif (signature[i] != HEADER_MAGIC[i]) {\nreturn false;\n}\n}\n\nreturn true;\n}",
+            "method_id": 44
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorInputStream:<clinit>()V",
+            "method_body": "static final long MASK_OFFSET = 0xa282ead8L;\n\nprivate static final int STREAM_IDENTIFIER_TYPE = 0xff;\nprivate static final int COMPRESSED_CHUNK_TYPE = 0;\nprivate static final int UNCOMPRESSED_CHUNK_TYPE = 1;\nprivate static final int PADDING_CHUNK_TYPE = 0xfe;\nprivate static final int MIN_UNSKIPPABLE_TYPE = 2;\nprivate static final int MAX_UNSKIPPABLE_TYPE = 0x7f;\nprivate static final int MAX_SKIPPABLE_TYPE = 0xfd;\n\nprivate static final byte[] SZ_SIGNATURE = new byte[] {\n(byte) STREAM_IDENTIFIER_TYPE, // tag\n6, 0, 0, // length\n's', 'N', 'a', 'P', 'p', 'Y'\n};",
+            "method_id": 45
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.z.ZCompressorInputStream:matches([BI)Z",
+            "method_body": "public static boolean matches(byte[] signature, int length) {\nreturn length > 3 && signature[0] == MAGIC_1 && signature[1] == (byte) MAGIC_2;\n}",
+            "method_id": 46
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.pack200.Pack200CompressorInputStream$1:close()V",
+            "method_body": "public void close() {\n// unpack would close this stream but we\n// want to give the user code more control\n}",
+            "method_id": 47
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.CompressorStreamFactory:<init>()V",
+            "method_body": "public CompressorStreamFactory() {\nthis.decompressUntilEOF = null;\n}",
+            "method_id": 48
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream:<init>(Ljava/io/InputStream;Z)V",
+            "method_body": "public BZip2CompressorInputStream(final InputStream in, final boolean decompressConcatenated) throws IOException {\nthis.in = in;\nthis.decompressConcatenated = decompressConcatenated;\n\ninit(true);\ninitBlock();\n}",
+            "method_id": 49
+        },
+        {
+            "method_signature": "org.apache.commons.compress.utils.IOUtils:readFully(Ljava/io/InputStream;[BII)I",
+            "method_body": "public static int readFully(InputStream input, byte[] b, int offset, int len)\nthrows IOException {\nif (len < 0 || offset < 0 || len + offset > b.length) {\nthrow new IndexOutOfBoundsException();\n}\nint count = 0, x = 0;\nwhile (count != len) {\nx = input.read(b, offset + count, len - count);\nif (x == -1) {\nbreak;\n}\ncount += x;\n}\nreturn count;\n}",
+            "method_id": 50
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream:bsGetBit()Z",
+            "method_body": "private boolean bsGetBit() throws IOException {\nint bsLiveShadow = this.bsLive;\nint bsBuffShadow = this.bsBuff;\n\nif (bsLiveShadow < 1) {\nint thech = this.in.read();\n\nif (thech < 0) {\nthrow new IOException(\"unexpected end of stream\");\n}\n\nbsBuffShadow = (bsBuffShadow << 8) | thech;\nbsLiveShadow += 8;\nthis.bsBuff = bsBuffShadow;\n}\n\nthis.bsLive = bsLiveShadow - 1;\nreturn ((bsBuffShadow >> (bsLiveShadow - 1)) & 1) != 0;\n}",
+            "method_id": 51
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.xz.XZUtils:setCacheXZAvailablity(Z)V",
+            "method_body": "public static void setCacheXZAvailablity(boolean doCache) {\nif (!doCache) {\ncachedXZAvailability = CachedAvailability.DONT_CACHE;\n} else if (cachedXZAvailability == CachedAvailability.DONT_CACHE) {\nfinal boolean hasXz = internalIsXZCompressionAvailable();\ncachedXZAvailability = hasXz ? CachedAvailability.CACHED_AVAILABLE\n: CachedAvailability.CACHED_UNAVAILABLE;\n}\n}",
+            "method_id": 52
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream:getAndMoveToFrontDecode0(I)I",
+            "method_body": "private int getAndMoveToFrontDecode0(final int groupNo) throws IOException {\nfinal InputStream inShadow = this.in;\nfinal Data dataShadow = this.data;\nfinal int zt = dataShadow.selector[groupNo] & 0xff;\nfinal int[] limit_zt = dataShadow.limit[zt];\nint zn = dataShadow.minLens[zt];\nint zvec = bsR(zn);\nint bsLiveShadow = this.bsLive;\nint bsBuffShadow = this.bsBuff;\n\nwhile (zvec > limit_zt[zn]) {\nzn++;\nwhile (bsLiveShadow < 1) {\nfinal int thech = inShadow.read();\n\nif (thech >= 0) {\nbsBuffShadow = (bsBuffShadow << 8) | thech;\nbsLiveShadow += 8;\ncontinue;\n} else {\nthrow new IOException(\"unexpected end of stream\");\n}\n}\nbsLiveShadow--;\nzvec = (zvec << 1) | ((bsBuffShadow >> bsLiveShadow) & 1);\n}\n\nthis.bsLive = bsLiveShadow;\nthis.bsBuff = bsBuffShadow;\n\nreturn dataShadow.perm[zt][zvec - dataShadow.base[zt][zn]];\n}",
+            "method_id": 53
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.pack200.Pack200CompressorInputStream:<init>(Ljava/io/InputStream;Lorg/apache/commons/compress/compressors/pack200/Pack200Strategy;)V",
+            "method_body": "public Pack200CompressorInputStream(final InputStream in,\nfinal Pack200Strategy mode)\nthrows IOException {\nthis(in, null, mode, null);\n}",
+            "method_id": 54
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.bzip2.CRC:<init>()V",
+            "method_body": "CRC() {\ninitialiseCRC();\n}",
+            "method_id": 55
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.CompressorException:<init>(Ljava/lang/String;)V",
+            "method_body": "public CompressorException(String message) {\nsuper(message);\n}",
+            "method_id": 56
+        },
+        {
+            "method_signature": "org.apache.commons.compress.compressors.pack200.Pack200CompressorInputStream:<init>(Ljava/io/InputStream;)V",
+            "method_body": "public Pack200CompressorInputStream(final InputStream in)\nthrows IOException {\nthis(in, Pack200Strategy.IN_MEMORY);\n}",
+            "method_id": 57
+        }
+    ]
+}

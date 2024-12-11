@@ -1,0 +1,59 @@
+{
+    "bug_id": 1,
+    "test_id": 2,
+    "test_name": "org.apache.commons.codec.language.SoundexTest.testLocaleIndependence",
+    "test_body": null,
+    "stack_trace": "junit.framework.AssertionFailedError: tr: The character is not mapped: \u0130\nat junit.framework.Assert.fail(Assert.java:57)\nat junit.framework.TestCase.fail(TestCase.java:227)\nat org.apache.commons.codec.StringEncoderAbstractTest.testLocaleIndependence(StringEncoderAbstractTest.java:89)",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.codec.language.SoundexUtils:clean(Ljava/lang/String;)Ljava/lang/String;",
+            "method_body": "static String clean(String str) {\nif (str == null || str.length() == 0) {\nreturn str;\n}\nint len = str.length();\nchar[] chars = new char[len];\nint count = 0;\nfor (int i = 0; i < len; i++) {\nif (Character.isLetter(str.charAt(i))) {\nchars[count++] = str.charAt(i);\n}\n}\nif (count == len) {\nreturn str.toUpperCase();\n}\nreturn new String(chars, 0, count).toUpperCase(java.util.Locale.ENGLISH);\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.Soundex:encode(Ljava/lang/String;)Ljava/lang/String;",
+            "method_body": "public String encode(String pString) {\nreturn soundex(pString);\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.Soundex:getMappingCode(Ljava/lang/String;I)C",
+            "method_body": "private char getMappingCode(String str, int index) {\n// map() throws IllegalArgumentException\nchar mappedChar = this.map(str.charAt(index));\n// HW rule check\nif (index > 1 && mappedChar != '0') {\nchar hwChar = str.charAt(index - 1);\nif ('H' == hwChar || 'W' == hwChar) {\nchar preHWChar = str.charAt(index - 2);\nchar firstCode = this.map(preHWChar);\nif (firstCode == mappedChar || 'H' == preHWChar || 'W' == preHWChar) {\nreturn 0;\n}\n}\n}\nreturn mappedChar;\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.Soundex:getSoundexMapping()[C",
+            "method_body": "private char[] getSoundexMapping() {\nreturn this.soundexMapping;\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.Soundex:map(C)C",
+            "method_body": "private char map(char ch) {\nint index = ch - 'A';\nif (index < 0 || index >= this.getSoundexMapping().length) {\nthrow new IllegalArgumentException(\"The character is not mapped: \" + ch);\n}\nreturn this.getSoundexMapping()[index];\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.Soundex:soundex(Ljava/lang/String;)Ljava/lang/String;",
+            "method_body": "public String soundex(String str) {\nif (str == null) {\nreturn null;\n}\nstr = SoundexUtils.clean(str);\nif (str.length() == 0) {\nreturn str;\n}\nchar out[] = {'0', '0', '0', '0'};\nchar last, mapped;\nint incount = 1, count = 1;\nout[0] = str.charAt(0);\n// getMappingCode() throws IllegalArgumentException\nlast = getMappingCode(str, 0);\nwhile ((incount < str.length()) && (count < out.length)) {\nmapped = getMappingCode(str, incount++);\nif (mapped != 0) {\nif ((mapped != '0') && (mapped != last)) {\nout[count++] = mapped;\n}\nlast = mapped;\n}\n}\nreturn new String(out);\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.Soundex:<init>()V",
+            "method_body": "public Soundex() {\nthis(US_ENGLISH_MAPPING);\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.Soundex:<init>([C)V",
+            "method_body": "public Soundex(char[] mapping) {\nthis.setSoundexMapping(mapping);\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.Soundex:<clinit>()V",
+            "method_body": "public static final String US_ENGLISH_MAPPING_STRING = \"01230120022455012623010202\";\n\n/**\n* This is a default mapping of the 26 letters used in US English. A value of <code>0</code> for a letter position\n* means do not encode.\n*\n* @see Soundex#Soundex(char[])\n*/\npublic static final char[] US_ENGLISH_MAPPING = US_ENGLISH_MAPPING_STRING.toCharArray();\n\n/**\n* An instance of Soundex using the US_ENGLISH_MAPPING mapping.\n*\n* @see #US_ENGLISH_MAPPING\n*/\npublic static final Soundex US_ENGLISH = new Soundex();\n\n\n/**\n* Encodes the Strings and returns the number of characters in the two encoded Strings that are the same. This\n* return value ranges from 0 through 4: 0 indicates little or no similarity, and 4 indicates strong similarity or\n* identical values.\n*\n* @param s1\n*                  A String that will be encoded and compared.\n* @param s2\n*                  A String that will be encoded and compared.\n* @return The number of characters in the two encoded Strings that are the same from 0 to 4.\n*\n* @see SoundexUtils#difference(StringEncoder,String,String)\n* @see <a href=\"http://msdn.microsoft.com/library/default.asp?url=/library/en-us/tsqlref/ts_de-dz_8co5.asp\"> MS\n*          T-SQL DIFFERENCE </a>\n*\n* @throws EncoderException\n*                  if an error occurs encoding one of the strings\n* @since 1.3\n*/\npublic int difference(String s1, String s2) throws EncoderException {\nreturn SoundexUtils.difference(this, s1, s2);\n}",
+            "method_id": 8
+        },
+        {
+            "method_signature": "org.apache.commons.codec.language.Soundex:setSoundexMapping([C)V",
+            "method_body": "private void setSoundexMapping(char[] soundexMapping) {\nthis.soundexMapping = soundexMapping;\n}",
+            "method_id": 9
+        }
+    ]
+}

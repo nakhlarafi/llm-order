@@ -1,0 +1,44 @@
+{
+    "bug_id": 15,
+    "test_id": 0,
+    "test_name": "org.apache.commons.compress.archivers.zip.ZipArchiveEntryTest.testNullCommentEqualsEmptyComment",
+    "test_body": "public void testNullCommentEqualsEmptyComment() {\nZipArchiveEntry entry1 = new ZipArchiveEntry(\"foo\");\nZipArchiveEntry entry2 = new ZipArchiveEntry(\"foo\");\nZipArchiveEntry entry3 = new ZipArchiveEntry(\"foo\");\nentry1.setComment(null);\nentry2.setComment(\"\");\nentry3.setComment(\"bar\");\nassertEquals(entry1, entry2);\nassertFalse(entry1.equals(entry3));\nassertFalse(entry2.equals(entry3));\n}\n",
+    "stack_trace": "",
+    "covered_methods": [
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.ZipArchiveEntry:getPlatform()I",
+            "method_body": "public int getPlatform() {\nreturn platform;\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.ZipArchiveEntry:<init>(Ljava/util/zip/ZipEntry;)V",
+            "method_body": "private long size = SIZE_UNKNOWN;\nprivate int internalAttributes = 0;\nprivate int platform = PLATFORM_FAT;\nprivate long externalAttributes = 0;\nprivate LinkedHashMap<ZipShort, ZipExtraField> extraFields = null;\nprivate UnparseableExtraFieldData unparseableExtra = null;\nprivate String name = null;\nprivate byte[] rawName = null;\nprivate GeneralPurposeBit gpb = new GeneralPurposeBit();\nsuper(name);\nsetName(name);\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.ZipArchiveEntry:getName()Ljava/lang/String;",
+            "method_body": "public String getName() {\nreturn name == null ? super.getName() : name;\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.ZipArchiveEntry:setName(Ljava/lang/String;)V",
+            "method_body": "protected void setName(String name) {\nif (name != null && getPlatform() == PLATFORM_FAT\n&& name.indexOf(\"/\") == -1) {\nname = name.replace('\\\\', '/');\n}\nthis.name = name;\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.GeneralPurposeBit:<init>()V",
+            "method_body": "public GeneralPurposeBit() {\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.ZipArchiveEntry:<init>(Ljava/lang/String;)V",
+            "method_body": "public ZipArchiveEntry(String name) {\nsuper(name);\nsetName(name);\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "org.apache.commons.compress.archivers.zip.ZipArchiveEntry:equals(Ljava/lang/Object;)Z",
+            "method_body": "public boolean equals(Object obj) {\nif (this == obj) {\nreturn true;\n}\nif (obj == null || getClass() != obj.getClass()) {\nreturn false;\n}\nZipArchiveEntry other = (ZipArchiveEntry) obj;\nString myName = getName();\nString otherName = other.getName();\nif (myName == null) {\nif (otherName != null) {\nreturn false;\n}\n} else if (!myName.equals(otherName)) {\nreturn false;\n}\nString myComment = getComment();\nString otherComment = other.getComment();\nif (myComment == null) {\nif (otherComment != null) {\nreturn false;\n}\n} else if (!myComment.equals(otherComment)) {\nreturn false;\n}\nreturn getTime() == other.getTime()\n&& getInternalAttributes() == other.getInternalAttributes()\n&& getPlatform() == other.getPlatform()\n&& getExternalAttributes() == other.getExternalAttributes()\n&& getMethod() == other.getMethod()\n&& getSize() == other.getSize()\n&& getCrc() == other.getCrc()\n&& getCompressedSize() == other.getCompressedSize()\n&& Arrays.equals(getCentralDirectoryExtra(),\nother.getCentralDirectoryExtra())\n&& Arrays.equals(getLocalFileDataExtra(),\nother.getLocalFileDataExtra())\n&& gpb.equals(other.gpb);\n}",
+            "method_id": 6
+        }
+    ]
+}

@@ -1,0 +1,459 @@
+{
+    "bug_id": 1,
+    "test_id": 1,
+    "test_name": "com.fasterxml.jackson.dataformat.xml.lists.NestedUnwrappedListsTest.testNestedWithEmpty",
+    "test_body": "public void testNestedWithEmpty() throws Exception\n{\nfinal String XML =\n\"<ServiceDelivery>\\n\"\n+\"  <ResponseTimestamp>2012-09-12T09:28:17.213-04:00</ResponseTimestamp>\\n\"\n+\"  <VehicleMonitoringDelivery>\\n\"\n+\"  </VehicleMonitoringDelivery>\\n\"\n+\"</ServiceDelivery>\\n\"\n;\nServiceDelivery svc = _xmlMapper.readValue(XML, ServiceDelivery.class);\nassertNotNull(svc);\nassertNotNull(svc.vehicleMonitoringDelivery);\n// 06-Jan-2015, tatu: Really should have one empty entry, not 0\nassertEquals(1, svc.vehicleMonitoringDelivery.size());\n}\n",
+    "stack_trace": "junit.framework.AssertionFailedError: expected:<1> but was:<0>\nat junit.framework.Assert.fail(Assert.java:57)\nat junit.framework.Assert.failNotEquals(Assert.java:329)\nat junit.framework.Assert.assertEquals(Assert.java:78)\nat junit.framework.Assert.assertEquals(Assert.java:234)\nat junit.framework.Assert.assertEquals(Assert.java:241)\nat junit.framework.TestCase.assertEquals(TestCase.java:409)\nat com.fasterxml.jackson.dataformat.xml.lists.NestedUnwrappedListsTest.testNestedWithEmpty(NestedUnwrappedListsTest.java:100)",
+    "covered_methods": [
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.XmlMapper:<init>()V",
+            "method_body": "public XmlMapper() {\nthis(new XmlFactory());\n}",
+            "method_id": 0
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.XmlMapper:<init>(Lcom/fasterxml/jackson/dataformat/xml/XmlFactory;)V",
+            "method_body": "public XmlMapper(XmlFactory xmlFactory) {\nthis(xmlFactory, DEFAULT_XML_MODULE);\n}",
+            "method_id": 1
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.XmlMapper:<init>(Lcom/fasterxml/jackson/dataformat/xml/XmlFactory;Lcom/fasterxml/jackson/dataformat/xml/JacksonXmlModule;)V",
+            "method_body": "public XmlMapper(XmlFactory xmlFactory, JacksonXmlModule module)\n{\n/* Need to override serializer provider (due to root name handling);\n* deserializer provider fine as is\n*/\nsuper(xmlFactory, new XmlSerializerProvider(new XmlRootNameLookup()), null);\n_xmlModule = module;\n// but all the rest is done via Module interface!\nif (module != null) {\nregisterModule(module);\n}\n// 19-May-2015, tatu: Must ensure we use XML-specific indenter\n_serializationConfig = _serializationConfig.withDefaultPrettyPrinter(DEFAULT_XML_PRETTY_PRINTER);\n}",
+            "method_id": 2
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.XmlMapper:<clinit>()V",
+            "method_body": "private static final long serialVersionUID = 1L;\n\nprotected final static JacksonXmlModule DEFAULT_XML_MODULE = new JacksonXmlModule();\n\nprotected final static DefaultXmlPrettyPrinter DEFAULT_XML_PRETTY_PRINTER = new DefaultXmlPrettyPrinter();\n\n// need to hold on to module instance just in case copy() is used\nprotected final JacksonXmlModule _xmlModule;\n\n/*\n/**********************************************************\n/* Life-cycle: construction, configuration\n/**********************************************************\n*/\n\npublic XmlMapper() {\nthis(new XmlFactory());\n}",
+            "method_id": 3
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.JacksonXmlModule:<init>()V",
+            "method_body": "public JacksonXmlModule()\n{\nsuper(\"JackxonXmlModule\", PackageVersion.VERSION);\n}",
+            "method_id": 4
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.JacksonXmlModule:setupModule(Lcom/fasterxml/jackson/databind/Module$SetupContext;)V",
+            "method_body": "public void setupModule(SetupContext context)\n{\n// Need to modify BeanDeserializer, BeanSerializer that are used\ncontext.addBeanSerializerModifier(new XmlBeanSerializerModifier());\ncontext.addBeanDeserializerModifier(new XmlBeanDeserializerModifier(_cfgNameForTextElement));\n\n// as well as AnnotationIntrospector\ncontext.insertAnnotationIntrospector(_constructIntrospector());\n\n// and finally inform XmlFactory about overrides, if need be:\nif (_cfgNameForTextElement != FromXmlParser.DEFAULT_UNNAMED_TEXT_PROPERTY) {\nXmlMapper m = (XmlMapper) context.getOwner();\nm.setXMLTextElementName(_cfgNameForTextElement);\n}\n\n/* Usually this would be the first call; but here anything added will\n* be stuff user may has added, so do it afterwards instead.\n*/\nsuper.setupModule(context);\n}",
+            "method_id": 5
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.JacksonXmlModule:_constructIntrospector()Lcom/fasterxml/jackson/databind/AnnotationIntrospector;",
+            "method_body": "protected AnnotationIntrospector _constructIntrospector() {\nreturn new JacksonXmlAnnotationIntrospector(_cfgDefaultUseWrapper);\n}",
+            "method_id": 6
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.PackageVersion:<clinit>()V",
+            "method_body": "public final static Version VERSION = VersionUtil.parseVersion(\n\"2.7.0-rc4-SNAPSHOT\", \"com.fasterxml.jackson.dataformat\", \"jackson-dataformat-xml\");\n\n@Override\npublic Version version() {\nreturn VERSION;\n}",
+            "method_id": 7
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.util.DefaultXmlPrettyPrinter:<init>()V",
+            "method_body": "public void writeIndentation(JsonGenerator g, int level) throws IOException;\n\npublic void writeIndentation(XMLStreamWriter2 sw, int level) throws XMLStreamException;\n\n/**\n* @return True if indenter is considered inline (does not add linefeeds),\n*   false otherwise\n*/\npublic boolean isInline();\n}\n\n/*\n/**********************************************************\n/* Configuration\n/**********************************************************\n*/\n\n/**\n* By default, let's use only spaces to separate array values.\n*/\nprotected Indenter _arrayIndenter = new FixedSpaceIndenter();\n\n/**\n* By default, let's use linefeed-adding indenter for separate\n* object entries. We'll further configure indenter to use\n* system-specific linefeeds, and 2 spaces per level (as opposed to,\n* say, single tabs)\n*/\nprotected Indenter _objectIndenter = new Lf2SpacesIndenter();\n\n// // // Config, other white space configuration\n\n/**\n* By default we will add spaces around colons used to\n* separate object fields and values.\n* If disabled, will not use spaces around colon.\n*/\nprotected boolean _spacesInObjectEntries = true;\n\n/*\n/**********************************************************\n/* State\n/**********************************************************\n*/\n\n/**\n* Number of open levels of nesting. Used to determine amount of\n* indentation to use.\n*/\nprotected transient int _nesting = 0;\n\n/**\n* Marker flag set on start element, and cleared if an end element\n* is encountered. Used for suppressing indentation to allow empty\n* elements.\n*\n* @since 2.3.0\n*/\nprotected transient boolean _justHadStartElement;\n\n/*\n/**********************************************************\n/* Life-cycle (construct, configure)\n/**********************************************************\n*/\n\npublic DefaultXmlPrettyPrinter() { }",
+            "method_id": 8
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.util.DefaultXmlPrettyPrinter$FixedSpaceIndenter:<init>()V",
+            "method_body": "public FixedSpaceIndenter() { }\npublic FixedSpaceIndenter() { }",
+            "method_id": 9
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.util.DefaultXmlPrettyPrinter$Lf2SpacesIndenter:<init>()V",
+            "method_body": "public Lf2SpacesIndenter() { }\npublic Lf2SpacesIndenter() { }",
+            "method_id": 10
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.util.DefaultXmlPrettyPrinter$Lf2SpacesIndenter:<clinit>()V",
+            "method_body": "final static int SPACE_COUNT = 64;\nfinal static char[] SPACES = new char[SPACE_COUNT];\nstatic {\nArrays.fill(SPACES, ' ');\n}",
+            "method_id": 11
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.ser.XmlSerializerProvider:<init>(Lcom/fasterxml/jackson/dataformat/xml/util/XmlRootNameLookup;)V",
+            "method_body": "public XmlSerializerProvider(XmlRootNameLookup rootNames)\n{\nsuper();\n_rootNameLookup = rootNames;\n}",
+            "method_id": 12
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.ser.XmlSerializerProvider:<clinit>()V",
+            "method_body": "private static final long serialVersionUID = 1L;\n\n/**\n* If all we get to serialize is a null, there's no way to figure out\n* expected root name; so let's just default to something like \"&lt;null>\"...\n*/\nprotected final static QName ROOT_NAME_FOR_NULL = new QName(\"null\");\n\nprotected final XmlRootNameLookup _rootNameLookup;\n\npublic XmlSerializerProvider(XmlRootNameLookup rootNames)\n{\nsuper();\n_rootNameLookup = rootNames;\n}",
+            "method_id": 13
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.util.XmlRootNameLookup:<init>()V",
+            "method_body": "private static final long serialVersionUID = 1L;\n\n/**\n* For efficient operation, let's try to minimize number of times we\n* need to introspect root element name to use.\n*<p>\n* Note: changed to <code>transient</code> for 2.3; no point in serializing such\n* state\n*/\nprotected final transient LRUMap<ClassKey,QName> _rootNames = new LRUMap<ClassKey,QName>(40, 200);\n\npublic XmlRootNameLookup() { }",
+            "method_id": 14
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.ser.XmlBeanSerializerModifier:<init>()V",
+            "method_body": "public XmlBeanSerializerModifier() { }\npublic XmlBeanSerializerModifier() { }",
+            "method_id": 15
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlBeanDeserializerModifier:<init>(Ljava/lang/String;)V",
+            "method_body": "public XmlBeanDeserializerModifier(String nameForTextValue)\n{\n_cfgNameForTextValue = nameForTextValue;\n}",
+            "method_id": 16
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.JacksonXmlAnnotationIntrospector:<init>(Z)V",
+            "method_body": "public JacksonXmlAnnotationIntrospector(boolean defaultUseWrapper) {\n_cfgDefaultUseWrapper = defaultUseWrapper;\n}",
+            "method_id": 17
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.XmlFactory:<init>()V",
+            "method_body": "public XmlFactory() { this(null, null, null); }\npublic XmlFactory() { this(null, null, null); }",
+            "method_id": 18
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.XmlFactory:<init>(Lcom/fasterxml/jackson/core/ObjectCodec;Ljavax/xml/stream/XMLInputFactory;Ljavax/xml/stream/XMLOutputFactory;)V",
+            "method_body": "public XmlFactory(ObjectCodec oc, XMLInputFactory xmlIn, XMLOutputFactory xmlOut)\n{\nthis(oc, DEFAULT_XML_PARSER_FEATURE_FLAGS, DEFAULT_XML_GENERATOR_FEATURE_FLAGS,\nxmlIn, xmlOut, null);\n}",
+            "method_id": 19
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.XmlFactory:<init>(Lcom/fasterxml/jackson/core/ObjectCodec;IILjavax/xml/stream/XMLInputFactory;Ljavax/xml/stream/XMLOutputFactory;Ljava/lang/String;)V",
+            "method_body": "protected XmlFactory(ObjectCodec oc, int xpFeatures, int xgFeatures,\nXMLInputFactory xmlIn, XMLOutputFactory xmlOut,\nString nameForTextElem)\n{\nsuper(oc);\n_xmlParserFeatures = xpFeatures;\n_xmlGeneratorFeatures = xgFeatures;\n_cfgNameForTextElement = nameForTextElem;\nif (xmlIn == null) {\nxmlIn = XMLInputFactory.newInstance();\n}\nif (xmlOut == null) {\nxmlOut = XMLOutputFactory.newInstance();\n}\n_initFactories(xmlIn, xmlOut);\n_xmlInputFactory = xmlIn;\n_xmlOutputFactory = xmlOut;\n}",
+            "method_id": 20
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.XmlFactory:<clinit>()V",
+            "method_body": "public final static String FORMAT_NAME_XML = \"XML\";\n\n/**\n* Bitfield (set of flags) of all parser features that are enabled\n* by default.\n*/\nfinal static int DEFAULT_XML_PARSER_FEATURE_FLAGS = FromXmlParser.Feature.collectDefaults();\n\n/**\n* Bitfield (set of flags) of all generator features that are enabled\n* by default.\n*/\nfinal static int DEFAULT_XML_GENERATOR_FEATURE_FLAGS = ToXmlGenerator.Feature.collectDefaults();\n\n/*\n/**********************************************************\n/* Configuration\n/**********************************************************\n*/\n\nprotected int _xmlParserFeatures;\n\nprotected int _xmlGeneratorFeatures;\n\n// non-final for setters (why are they needed again?)\nprotected transient XMLInputFactory _xmlInputFactory;\n\nprotected transient XMLOutputFactory _xmlOutputFactory;\n\nprotected String _cfgNameForTextElement;\n\n/*\n/**********************************************************\n/* Factory construction, configuration\n/**********************************************************\n*/\n\n/**\n* Default constructor used to create factory instances.\n* Creation of a factory instance is a light-weight operation,\n* but it is still a good idea to reuse limited number of\n* factory instances (and quite often just a single instance):\n* factories are used as context for storing some reused\n* processing objects (such as symbol tables parsers use)\n* and this reuse only works within context of a single\n* factory instance.\n*/\npublic XmlFactory() { this(null, null, null); }",
+            "method_id": 21
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.XmlFactory:_initFactories(Ljavax/xml/stream/XMLInputFactory;Ljavax/xml/stream/XMLOutputFactory;)V",
+            "method_body": "protected void _initFactories(XMLInputFactory xmlIn, XMLOutputFactory xmlOut)\n{\n// Better ensure namespaces get built properly, so:\nxmlOut.setProperty(XMLOutputFactory.IS_REPAIRING_NAMESPACES, Boolean.TRUE);\n// and for parser, force coalescing as well (much simpler to use)\nxmlIn.setProperty(XMLInputFactory.IS_COALESCING, Boolean.TRUE);\n}",
+            "method_id": 22
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser$Feature:<clinit>()V",
+            "method_body": "public final static String DEFAULT_UNNAMED_TEXT_PROPERTY = \"\";\n\n/**\n* Enumeration that defines all togglable features for XML parsers.\n* None defined so far (2.6), so just a placeholder.\n*/\npublic enum Feature implements FormatFeature\n{\n;\n\nfinal boolean _defaultState;\nfinal int _mask;\n\n/**\n* Method that calculates bit set (flags) of all features that\n* are enabled by default.\n*/\npublic static int collectDefaults()\n{\nint flags = 0;\nfor (Feature f : values()) {\nif (f.enabledByDefault()) {\nflags |= f.getMask();\n}\n}\nreturn flags;\n}\n\nprivate Feature(boolean defaultState) {\n_defaultState = defaultState;\n_mask = (1 << ordinal());\n}\n\n@Override public boolean enabledByDefault() { return _defaultState; }\n@Override public int getMask() { return _mask; }\n@Override public boolean enabledIn(int flags) { return (flags & getMask()) != 0; }\n}",
+            "method_id": 23
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser$Feature:collectDefaults()I",
+            "method_body": "public static int collectDefaults()\n{\nint flags = 0;\nfor (Feature f : values()) {\nif (f.enabledByDefault()) {\nflags |= f.getMask();\n}\n}\nreturn flags;\n}",
+            "method_id": 24
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator$Feature:<init>(Ljava/lang/String;IZ)V",
+            "method_body": "private Feature(boolean defaultState) {\n_defaultState = defaultState;\n_mask = (1 << ordinal());\n}",
+            "method_id": 25
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator$Feature:<clinit>()V",
+            "method_body": "protected final static String DEFAULT_UNKNOWN_ELEMENT = \"unknown\";\n\n/**\n* Enumeration that defines all togglable extra XML-specific features\n*/\npublic enum Feature implements FormatFeature\n{\n/**\n* Feature that controls whether XML declaration should be written before\n* when generator is initialized (true) or not (false)\n*/\nWRITE_XML_DECLARATION(false),\n\n/**\n* Feature that controls whether output should be done as XML 1.1; if so,\n* certain aspects may differ from default (1.0) processing: for example,\n* XML declaration will be automatically added (regardless of setting\n* <code>WRITE_XML_DECLARATION</code>) as this is required for reader to\n* know to use 1.1 compliant handling. XML 1.1 can be used to allow quoted\n* control characters (Ascii codes 0 through 31) as well as additional linefeeds\n* and name characters.\n*/\nWRITE_XML_1_1(false)\n;\n\nfinal boolean _defaultState;\nfinal int _mask;\n\n/**\n* Method that calculates bit set (flags) of all features that\n* are enabled by default.\n*/\npublic static int collectDefaults()\n{\nint flags = 0;\nfor (Feature f : values()) {\nif (f.enabledByDefault()) {\nflags |= f.getMask();\n}\n}\nreturn flags;\n}\n\nprivate Feature(boolean defaultState) {\n_defaultState = defaultState;\n_mask = (1 << ordinal());\n}\n\n@Override public boolean enabledByDefault() { return _defaultState; }\n@Override public int getMask() { return _mask; }\n@Override public boolean enabledIn(int flags) { return (flags & getMask()) != 0; }\n}",
+            "method_id": 26
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator$Feature:collectDefaults()I",
+            "method_body": "public static int collectDefaults()\n{\nint flags = 0;\nfor (Feature f : values()) {\nif (f.enabledByDefault()) {\nflags |= f.getMask();\n}\n}\nreturn flags;\n}",
+            "method_id": 27
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator$Feature:enabledByDefault()Z",
+            "method_body": "@Override public boolean enabledByDefault() { return _defaultState; }\n@Override public boolean enabledByDefault() { return _defaultState; }",
+            "method_id": 28
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.util.AnnotationUtil:findIsAttributeAnnotation(Lcom/fasterxml/jackson/databind/AnnotationIntrospector;Lcom/fasterxml/jackson/databind/introspect/AnnotatedMember;)Ljava/lang/Boolean;",
+            "method_body": "public static Boolean findIsAttributeAnnotation(AnnotationIntrospector ai,\nAnnotatedMember prop)\n{\nfor (AnnotationIntrospector intr : ai.allIntrospectors()) {\nif (intr instanceof XmlAnnotationIntrospector) {\nBoolean b = ((XmlAnnotationIntrospector) intr).isOutputAsAttribute(prop);\nif (b != null) {\nreturn b;\n}\n} else  if (intr instanceof JaxbAnnotationIntrospector) {\nBoolean b = ((JaxbAnnotationIntrospector) intr).isOutputAsAttribute(prop);\nif (b != null) {\nreturn b;\n}\n}\n}\nreturn null;\n}",
+            "method_id": 29
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.util.TypeUtil:isIndexedType(Lcom/fasterxml/jackson/databind/JavaType;)Z",
+            "method_body": "public static boolean isIndexedType(JavaType type)\n{\nif (type.isContainerType()) {\nClass<?> cls = type.getRawClass();\n// One special case; byte[] will be serialized as base64-encoded String, not real array, so:\n// (actually, ditto for char[]; thought to be a String)\nif (cls == byte[].class || cls == char[].class) {\nreturn false;\n}\n// issue#5: also, should not add wrapping for Maps\nif (Map.class.isAssignableFrom(cls)) {\nreturn false;\n}\nreturn true;\n}\nreturn false;\n}",
+            "method_id": 30
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.util.AnnotationUtil:findIsTextAnnotation(Lcom/fasterxml/jackson/databind/AnnotationIntrospector;Lcom/fasterxml/jackson/databind/introspect/AnnotatedMember;)Ljava/lang/Boolean;",
+            "method_body": "public static Boolean findIsTextAnnotation(AnnotationIntrospector ai,\nAnnotatedMember prop)\n{\nfor (AnnotationIntrospector intr : ai.allIntrospectors()) {\nif (intr instanceof XmlAnnotationIntrospector) {\nBoolean b = ((XmlAnnotationIntrospector) intr).isOutputAsText(prop);\nif (b != null) {\nreturn b;\n}\n} else  if (intr instanceof JaxbAnnotationIntrospector) {\nBoolean b = ((JaxbAnnotationIntrospector) intr).isOutputAsText(prop);\nif (b != null) {\nreturn b;\n}\n}\n}\nreturn null;\n}",
+            "method_id": 31
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.JacksonXmlAnnotationIntrospector:_findXmlName(Lcom/fasterxml/jackson/databind/introspect/Annotated;)Lcom/fasterxml/jackson/databind/PropertyName;",
+            "method_body": "protected PropertyName _findXmlName(Annotated a)\n{\nJacksonXmlProperty pann = a.getAnnotation(JacksonXmlProperty.class);\nif (pann != null) {\nreturn PropertyName.construct(pann.localName(), pann.namespace());\n}\nreturn null;\n}",
+            "method_id": 32
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.JacksonXmlAnnotationIntrospector:isOutputAsAttribute(Lcom/fasterxml/jackson/databind/introspect/Annotated;)Ljava/lang/Boolean;",
+            "method_body": "public Boolean isOutputAsAttribute(Annotated ann)\n{\nJacksonXmlProperty prop = ann.getAnnotation(JacksonXmlProperty.class);\nif (prop != null) {\nreturn prop.isAttribute() ? Boolean.TRUE : Boolean.FALSE;\n}\nreturn null;\n}",
+            "method_id": 33
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.JacksonXmlAnnotationIntrospector:findWrapperName(Lcom/fasterxml/jackson/databind/introspect/Annotated;)Lcom/fasterxml/jackson/databind/PropertyName;",
+            "method_body": "public PropertyName findWrapperName(Annotated ann)\n{\nJacksonXmlElementWrapper w = ann.getAnnotation(JacksonXmlElementWrapper.class);\nif (w != null) {\n// Special case: wrapping explicitly blocked?\nif (!w.useWrapping()) {\nreturn PropertyName.NO_NAME;\n}\n// also: need to ensure we use marker:\nString localName = w.localName();\nif (localName == null || localName.length() == 0) {\nreturn PropertyName.USE_DEFAULT;\n}\nreturn PropertyName.construct(w.localName(), w.namespace());\n}\n/* 09-Sep-2012, tatu: In absence of configurating we need to use our\n*   default settings...\n*/\nif (_cfgDefaultUseWrapper) {\nreturn PropertyName.USE_DEFAULT;\n}\nreturn null;\n}",
+            "method_id": 34
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.JacksonXmlAnnotationIntrospector:isOutputAsText(Lcom/fasterxml/jackson/databind/introspect/Annotated;)Ljava/lang/Boolean;",
+            "method_body": "public Boolean isOutputAsText(Annotated ann)\n{\nJacksonXmlText prop = ann.getAnnotation(JacksonXmlText.class);\nif (prop != null) {\nreturn prop.value() ? Boolean.TRUE : Boolean.FALSE;\n}\nreturn null;\n}",
+            "method_id": 35
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.JacksonXmlAnnotationIntrospector:findNameForDeserialization(Lcom/fasterxml/jackson/databind/introspect/Annotated;)Lcom/fasterxml/jackson/databind/PropertyName;",
+            "method_body": "public PropertyName findNameForDeserialization(Annotated a)\n{\nPropertyName name = _findXmlName(a);\nif (name == null) {\nname = super.findNameForDeserialization(a);\nif (name == null) {\nif (a.hasAnnotation(JacksonXmlText.class)) {\nreturn PropertyName.USE_DEFAULT;\n}\n}\n}\nreturn name;\n}",
+            "method_id": 36
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.XmlFactory:createParser(Ljava/lang/String;)Lcom/fasterxml/jackson/core/JsonParser;",
+            "method_body": "public JsonParser createParser(String content) throws IOException {\nReader r = new StringReader(content);\nIOContext ctxt = _createContext(r, true);\nif (_inputDecorator != null) {\nr = _inputDecorator.decorate(ctxt, r);\n}\nreturn _createParser(r, ctxt);\n}",
+            "method_id": 37
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.XmlFactory:_createParser(Ljava/io/Reader;Lcom/fasterxml/jackson/core/io/IOContext;)Lcom/fasterxml/jackson/dataformat/xml/deser/FromXmlParser;",
+            "method_body": "protected FromXmlParser _createParser(Reader r, IOContext ctxt) throws IOException\n{\nXMLStreamReader sr;\ntry {\nsr = _xmlInputFactory.createXMLStreamReader(r);\nsr = _initializeXmlReader(sr);\n} catch (XMLStreamException e) {\nreturn StaxUtil.throwXmlAsIOException(e);\n}\nFromXmlParser xp = new FromXmlParser(ctxt, _generatorFeatures, _xmlGeneratorFeatures,\n_objectCodec, sr);\nif (_cfgNameForTextElement != null) {\nxp.setXMLTextElementName(_cfgNameForTextElement);\n}\nreturn xp;\n}",
+            "method_id": 38
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.XmlFactory:_initializeXmlReader(Ljavax/xml/stream/XMLStreamReader;)Ljavax/xml/stream/XMLStreamReader;",
+            "method_body": "protected final XMLStreamReader _initializeXmlReader(XMLStreamReader sr) throws IOException, XMLStreamException\n{\n// for now, nothing to do... except let's find the root element\nwhile (sr.next() != XMLStreamConstants.START_ELEMENT) {\n;\n}\nreturn sr;\n}",
+            "method_id": 39
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlBeanDeserializerModifier:_findSoleTextProp(Lcom/fasterxml/jackson/databind/DeserializationConfig;Ljava/util/Iterator;)Lcom/fasterxml/jackson/databind/deser/SettableBeanProperty;",
+            "method_body": "private SettableBeanProperty _findSoleTextProp(DeserializationConfig config,\nIterator<SettableBeanProperty> propIt)\n{\nfinal AnnotationIntrospector ai = config.getAnnotationIntrospector();\nSettableBeanProperty textProp = null;\nwhile (propIt.hasNext()) {\nSettableBeanProperty prop = propIt.next();\nAnnotatedMember m = prop.getMember();\nif (m != null) {\n// Ok, let's use a simple check: we should have renamed it earlier so:\nPropertyName n = prop.getFullName();\nif (_cfgNameForTextValue.equals(n.getSimpleName())) {\n// should we verify we only got one?\ntextProp = prop;\ncontinue;\n}\n// as-attribute are ok as well\nBoolean b = AnnotationUtil.findIsAttributeAnnotation(ai, m);\nif (b != null && b.booleanValue()) {\ncontinue;\n}\n}\n// Otherwise, it's something else; no go\nreturn null;\n}\nreturn textProp;\n}",
+            "method_id": 40
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser:close()V",
+            "method_body": "public void close() throws IOException\n{\nif (!_closed) {\n_closed = true;\ntry {\nif (_ioContext.isResourceManaged() || isEnabled(JsonParser.Feature.AUTO_CLOSE_SOURCE)) {\n_xmlTokens.closeCompletely();\n} else {\n_xmlTokens.close();\n}\n} finally {\n// as per [JACKSON-324], do in finally block\n// Also, internal buffer(s) can now be released as well\n_releaseBuffers();\n}\n}\n}",
+            "method_id": 41
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser:_releaseBuffers()V",
+            "method_body": "protected void _releaseBuffers() throws IOException {\n// anything we can/must release? Underlying parser should do all of it, for now?\n}",
+            "method_id": 42
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlTokenStream:closeCompletely()V",
+            "method_body": "public void closeCompletely() throws IOException\n{\ntry {\n_xmlReader.closeCompletely();\n} catch (XMLStreamException e) {\nStaxUtil.throwXmlAsIOException(e);\n}\n}",
+            "method_id": 43
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.WrapperHandlingDeserializer:<init>(Lcom/fasterxml/jackson/databind/deser/BeanDeserializerBase;)V",
+            "method_body": "public WrapperHandlingDeserializer(BeanDeserializerBase delegate) {\nthis(delegate, null);\n}",
+            "method_id": 44
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.WrapperHandlingDeserializer:<init>(Lcom/fasterxml/jackson/databind/deser/BeanDeserializerBase;Ljava/util/Set;)V",
+            "method_body": "public WrapperHandlingDeserializer(BeanDeserializerBase delegate, Set<String> namesToWrap)\n{\nsuper(delegate);\n_namesToWrap = namesToWrap;\n_type = delegate.getValueType();\n}",
+            "method_id": 45
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.WrapperHandlingDeserializer:createContextual(Lcom/fasterxml/jackson/databind/DeserializationContext;Lcom/fasterxml/jackson/databind/BeanProperty;)Lcom/fasterxml/jackson/databind/JsonDeserializer;",
+            "method_body": "public JsonDeserializer<?> createContextual(DeserializationContext ctxt,\nBeanProperty property)\nthrows JsonMappingException\n{\n// !!! 16-Jan-2015, tatu: TODO: change to be like so in 2.6.0 -- leaving\n//    out for 2.5 just to increase compatibility slightly with 2.4 databind\n/*\nJavaType vt = _type;\nif (vt == null) {\nvt = ctxt.constructType(_delegatee.handledType());\n}\nJsonDeserializer<?> del = ctxt.handleSecondaryContextualization(_delegatee, property, vt);\n*/\n\nJsonDeserializer<?> del = ctxt.handleSecondaryContextualization(_delegatee, property, _type);\nBeanDeserializerBase newDelegatee = _verifyDeserType(del);\n\n// Let's go through the properties now...\nIterator<SettableBeanProperty> it = newDelegatee.properties();\nHashSet<String> unwrappedNames = null;\nwhile (it.hasNext()) {\nSettableBeanProperty prop = it.next();\n/* First things first: only consider array/Collection types\n* (not perfect check, but simplest reasonable check)\n*/\nJavaType type = prop.getType();\nif (!TypeUtil.isIndexedType(type)) {\ncontinue;\n}\nPropertyName wrapperName = prop.getWrapperName();\n// skip anything with wrapper (should work as is)\nif (wrapperName != null && wrapperName != PropertyName.NO_NAME) {\ncontinue;\n}\nif (unwrappedNames == null) {\nunwrappedNames = new HashSet<String>();\n}\n// not optimal; should be able to use PropertyName...\nunwrappedNames.add(prop.getName());\n}\n// Ok: if nothing to take care of, just return the delegatee...\nif (unwrappedNames == null) {\nreturn newDelegatee;\n}\n// Otherwise, create the thing that can deal with virtual wrapping\nreturn new WrapperHandlingDeserializer(newDelegatee, unwrappedNames);\n}",
+            "method_id": 46
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.WrapperHandlingDeserializer:_verifyDeserType(Lcom/fasterxml/jackson/databind/JsonDeserializer;)Lcom/fasterxml/jackson/databind/deser/BeanDeserializerBase;",
+            "method_body": "protected BeanDeserializerBase _verifyDeserType(JsonDeserializer<?> deser)\n{\nif (!(deser instanceof BeanDeserializerBase)) {\nthrow new IllegalArgumentException(\"Can not change delegate to be of type \"\n+deser.getClass().getName());\n}\nreturn (BeanDeserializerBase) deser;\n}",
+            "method_id": 47
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser:<init>(Lcom/fasterxml/jackson/core/io/IOContext;IILcom/fasterxml/jackson/core/ObjectCodec;Ljavax/xml/stream/XMLStreamReader;)V",
+            "method_body": "public FromXmlParser(IOContext ctxt, int genericParserFeatures, int xmlFeatures,\nObjectCodec codec, XMLStreamReader xmlReader)\n{\nsuper(genericParserFeatures);\n_formatFeatures = xmlFeatures;\n_ioContext = ctxt;\n_objectCodec = codec;\n_parsingContext = XmlReadContext.createRootContext(-1, -1);\n// and thereby start a scope\n_nextToken = JsonToken.START_OBJECT;\n_xmlTokens = new XmlTokenStream(xmlReader, ctxt.getSourceReference());\n}",
+            "method_id": 48
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser:addVirtualWrapping(Ljava/util/Set;)V",
+            "method_body": "public void addVirtualWrapping(Set<String> namesToWrap)\n{\n/* 17-Sep-2012, tatu: Not 100% sure why, but this is necessary to avoid\n*   problems with Lists-in-Lists properties\n*/\nString name = _xmlTokens.getLocalName();\nif (name != null && namesToWrap.contains(name)) {\n_xmlTokens.repeatStartElement();\n}\n_namesToWrap = namesToWrap;\n_parsingContext.setNamesToWrap(namesToWrap);\n}",
+            "method_id": 49
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlReadContext:<init>(Lcom/fasterxml/jackson/dataformat/xml/deser/XmlReadContext;III)V",
+            "method_body": "public XmlReadContext(XmlReadContext parent, int type, int lineNr, int colNr)\n{\nsuper();\n_type = type;\n_parent = parent;\n_lineNr = lineNr;\n_columnNr = colNr;\n_index = -1;\n}",
+            "method_id": 50
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlReadContext:createRootContext(II)Lcom/fasterxml/jackson/dataformat/xml/deser/XmlReadContext;",
+            "method_body": "public static XmlReadContext createRootContext(int lineNr, int colNr) {\nreturn new XmlReadContext(null, TYPE_ROOT, lineNr, colNr);\n}",
+            "method_id": 51
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlReadContext:createChildObjectContext(II)Lcom/fasterxml/jackson/dataformat/xml/deser/XmlReadContext;",
+            "method_body": "public final XmlReadContext createChildObjectContext(int lineNr, int colNr)\n{\nXmlReadContext ctxt = _child;\nif (ctxt == null) {\n_child = ctxt = new XmlReadContext(this, TYPE_OBJECT, lineNr, colNr);\nreturn ctxt;\n}\nctxt.reset(TYPE_OBJECT, lineNr, colNr);\nreturn ctxt;\n}",
+            "method_id": 52
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlReadContext:setNamesToWrap(Ljava/util/Set;)V",
+            "method_body": "public void setNamesToWrap(Set<String> namesToWrap) {\n_namesToWrap = namesToWrap;\n}",
+            "method_id": 53
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlTokenStream:repeatStartElement()V",
+            "method_body": "protected void repeatStartElement()\n{\n//System.out.println(\" -> repeatStartElement for \"+_localName);\n// sanity check: can only be used when just returned START_ELEMENT:\nif (_currentState != XML_START_ELEMENT) {\nthrow new IllegalStateException(\"Current state not XML_START_ELEMENT (\"\n+XML_START_ELEMENT+\") but \"+_currentState);\n}\n// Important: add wrapper, to keep track...\nif (_currentWrapper == null) {\n_currentWrapper = ElementWrapper.matchingWrapper(_currentWrapper, _localName, _namespaceURI);\n} else {\n_currentWrapper = ElementWrapper.matchingWrapper(_currentWrapper.getParent(), _localName, _namespaceURI);\n}\n_repeatElement = REPLAY_START_DUP;\n}",
+            "method_id": 54
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser$1:<clinit>()V",
+            "method_body": "public JsonToken nextToken() throws IOException\n{\n_binaryValue = null;\nif (_nextToken != null) {\nJsonToken t = _nextToken;\n_currToken = t;\n_nextToken = null;\nswitch (t) {\ncase START_OBJECT:\n_parsingContext = _parsingContext.createChildObjectContext(-1, -1);\nbreak;\ncase START_ARRAY:\n_parsingContext = _parsingContext.createChildArrayContext(-1, -1);\nbreak;\ncase END_OBJECT:\ncase END_ARRAY:\n_parsingContext = _parsingContext.getParent();\n_namesToWrap = _parsingContext.getNamesToWrap();\nbreak;\ncase FIELD_NAME:\n_parsingContext.setCurrentName(_xmlTokens.getLocalName());\nbreak;\ndefault: // VALUE_STRING, VALUE_NULL\n// should be fine as is?\n}\nreturn t;\n}\nint token = _xmlTokens.next();\n\n// Need to have a loop just because we may have to eat/convert\n// a start-element that indicates an array element.\nwhile (token == XmlTokenStream.XML_START_ELEMENT) {\n// If we thought we might get leaf, no such luck\nif (_mayBeLeaf) {\n// leave _mayBeLeaf set, as we start a new context\n_nextToken = JsonToken.FIELD_NAME;\n_parsingContext = _parsingContext.createChildObjectContext(-1, -1);\nreturn (_currToken = JsonToken.START_OBJECT);\n}\nif (_parsingContext.inArray()) {\n// Yup: in array, so this element could be verified; but it won't be\n// reported anyway, and we need to process following event.\ntoken = _xmlTokens.next();\n_mayBeLeaf = true;\ncontinue;\n}\nString name = _xmlTokens.getLocalName();\n_parsingContext.setCurrentName(name);\n\n// Ok: virtual wrapping can be done by simply repeating current START_ELEMENT.\n// Couple of ways to do it; but start by making _xmlTokens replay the thing...\nif (_namesToWrap != null && _namesToWrap.contains(name)) {\n_xmlTokens.repeatStartElement();\n}\n\n_mayBeLeaf = true;\n// Ok: in array context we need to skip reporting field names.\n// But what's the best way to find next token?\nreturn (_currToken = JsonToken.FIELD_NAME);\n}\n\n// Ok; beyond start element, what do we get?\nswitch (token) {\ncase XmlTokenStream.XML_END_ELEMENT:\n// Simple, except that if this is a leaf, need to suppress end:\nif (_mayBeLeaf) {\n_mayBeLeaf = false;\n// 06-Jan-2015, tatu: as per [dataformat-xml#180], need to\n//    expose as empty Object, not null\nreturn (_currToken = JsonToken.VALUE_NULL);\n}\n_currToken = _parsingContext.inArray() ? JsonToken.END_ARRAY : JsonToken.END_OBJECT;\n_parsingContext = _parsingContext.getParent();\n_namesToWrap = _parsingContext.getNamesToWrap();\nreturn _currToken;\n\ncase XmlTokenStream.XML_ATTRIBUTE_NAME:\n// If there was a chance of leaf node, no more...\nif (_mayBeLeaf) {\n_mayBeLeaf = false;\n_nextToken = JsonToken.FIELD_NAME;\n_currText = _xmlTokens.getText();\n_parsingContext = _parsingContext.createChildObjectContext(-1, -1);\nreturn (_currToken = JsonToken.START_OBJECT);\n}\n_parsingContext.setCurrentName(_xmlTokens.getLocalName());\nreturn (_currToken = JsonToken.FIELD_NAME);\ncase XmlTokenStream.XML_ATTRIBUTE_VALUE:\n_currText = _xmlTokens.getText();\nreturn (_currToken = JsonToken.VALUE_STRING);\ncase XmlTokenStream.XML_TEXT:\n_currText = _xmlTokens.getText();\nif (_mayBeLeaf) {\n_mayBeLeaf = false;\n/* One more refinement (pronunced like \"hack\") is that if\n* we had an empty String (or all white space), and we are\n* deserializing an array, we better hide the empty text.\n*/\n// Also: must skip following END_ELEMENT\n_xmlTokens.skipEndElement();\nif (_parsingContext.inArray()) {\nif (_isEmpty(_currText)) {\n// 06-Jan-2015, tatu: as per [dataformat-xml#180], need to\n//    expose as empty Object, not null (or, worse, as used to\n//    be done, by swallowing the token)\n_currToken = JsonToken.END_ARRAY;\n_parsingContext = _parsingContext.getParent();\n_namesToWrap = _parsingContext.getNamesToWrap();\nreturn _currToken;\n}\n}\nreturn (_currToken = JsonToken.VALUE_STRING);\n} else {\n// [dataformat-xml#177]: empty text may also need to be skipped\nif (_parsingContext.inObject()\n&& (_currToken != JsonToken.FIELD_NAME) && _isEmpty(_currText)) {\n_currToken = JsonToken.END_OBJECT;\n_parsingContext = _parsingContext.getParent();\n_namesToWrap = _parsingContext.getNamesToWrap();\nreturn _currToken;\n}\n}\n// If not a leaf (or otherwise ignorable), need to transform into property...\n_parsingContext.setCurrentName(_cfgNameForTextElement);\n_nextToken = JsonToken.VALUE_STRING;\nreturn (_currToken = JsonToken.FIELD_NAME);\ncase XmlTokenStream.XML_END:\nreturn (_currToken = null);\n}\n\n// should never get here\n_throwInternal();\nreturn null;\n}",
+            "method_id": 55
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.ElementWrapper:<init>(Lcom/fasterxml/jackson/dataformat/xml/deser/ElementWrapper;Ljava/lang/String;Ljava/lang/String;)V",
+            "method_body": "private ElementWrapper(ElementWrapper parent,\nString wrapperLocalName, String wrapperNamespace)\n{\n_parent = parent;\n_wrapperName = wrapperLocalName;\n_wrapperNamespace = (wrapperNamespace == null) ? \"\" : wrapperNamespace;\n}",
+            "method_id": 56
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.ElementWrapper:matchingWrapper(Lcom/fasterxml/jackson/dataformat/xml/deser/ElementWrapper;Ljava/lang/String;Ljava/lang/String;)Lcom/fasterxml/jackson/dataformat/xml/deser/ElementWrapper;",
+            "method_body": "public static ElementWrapper matchingWrapper(ElementWrapper parent,\nString wrapperLocalName, String wrapperNamespace)\n{\nreturn new ElementWrapper(parent, wrapperLocalName, wrapperNamespace);\n}",
+            "method_id": 57
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.ElementWrapper:intermediateWrapper()Lcom/fasterxml/jackson/dataformat/xml/deser/ElementWrapper;",
+            "method_body": "public ElementWrapper intermediateWrapper() {\nreturn new ElementWrapper(this, null, null);\n}",
+            "method_id": 58
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser:getParsingContext()Lcom/fasterxml/jackson/dataformat/xml/deser/XmlReadContext;",
+            "method_body": "public XmlReadContext getParsingContext() {\nreturn _parsingContext;\n}",
+            "method_id": 59
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlBeanDeserializerModifier:updateProperties(Lcom/fasterxml/jackson/databind/DeserializationConfig;Lcom/fasterxml/jackson/databind/BeanDescription;Ljava/util/List;)Ljava/util/List;",
+            "method_body": "public List<BeanPropertyDefinition> updateProperties(DeserializationConfig config,\nBeanDescription beanDesc, List<BeanPropertyDefinition> propDefs)\n{\nfinal AnnotationIntrospector intr = config.getAnnotationIntrospector();\nint changed = 0;\n\nfor (int i = 0, propCount = propDefs.size(); i < propCount; ++i) {\nBeanPropertyDefinition prop = propDefs.get(i);\nAnnotatedMember acc = prop.getPrimaryMember();\n// should not be null, but just in case:\nif (acc == null) {\ncontinue;\n}\n/* First: handle \"as text\"? Such properties\n* are exposed as values of 'unnamed' fields; so one way to\n* map them is to rename property to have name \"\"... (and\n* hope this does not break other parts...)\n*/\nBoolean b = AnnotationUtil.findIsTextAnnotation(intr, acc);\nif (b != null && b.booleanValue()) {\n// unwrapped properties will appear as 'unnamed' (empty String)\nBeanPropertyDefinition newProp = prop.withSimpleName(_cfgNameForTextValue);\nif (newProp != prop) {\npropDefs.set(i, newProp);\n}\ncontinue;\n}\n// second: do we need to handle wrapping (for Lists)?\nPropertyName wrapperName = prop.getWrapperName();\n\nif (wrapperName != null && wrapperName != PropertyName.NO_NAME) {\nString localName = wrapperName.getSimpleName();\nif ((localName != null && localName.length() > 0)\n&& !localName.equals(prop.getName())) {\n// make copy-on-write as necessary\nif (changed == 0) {\npropDefs = new ArrayList<BeanPropertyDefinition>(propDefs);\n}\n++changed;\npropDefs.set(i, prop.withSimpleName(localName));\ncontinue;\n}\n// otherwise unwrapped; needs handling but later on\n}\n}\nreturn propDefs;\n}",
+            "method_id": 60
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlTokenStream:<init>(Ljavax/xml/stream/XMLStreamReader;Ljava/lang/Object;)V",
+            "method_body": "public XmlTokenStream(XMLStreamReader xmlReader, Object sourceRef)\n{\n_sourceReference = sourceRef;\n// Let's ensure we point to START_ELEMENT...\nif (xmlReader.getEventType() != XMLStreamConstants.START_ELEMENT) {\nthrow new IllegalArgumentException(\"Invalid XMLStreamReader passed: should be pointing to START_ELEMENT (\"\n+XMLStreamConstants.START_ELEMENT+\"), instead got \"+xmlReader.getEventType());\n}\n_xmlReader = Stax2ReaderAdapter.wrapIfNecessary(xmlReader);\n_currentState = XML_START_ELEMENT;\n_localName = _xmlReader.getLocalName();\n_namespaceURI = _xmlReader.getNamespaceURI();\n_attributeCount = _xmlReader.getAttributeCount();\n}",
+            "method_id": 61
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.WrapperHandlingDeserializer:deserialize(Lcom/fasterxml/jackson/core/JsonParser;Lcom/fasterxml/jackson/databind/DeserializationContext;)Ljava/lang/Object;",
+            "method_body": "public Object deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException\n{\n_configureParser(jp);\nreturn _delegatee.deserialize(jp,  ctxt);\n}",
+            "method_id": 62
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.WrapperHandlingDeserializer:_configureParser(Lcom/fasterxml/jackson/core/JsonParser;)V",
+            "method_body": "protected final void _configureParser(JsonParser jp) throws IOException\n{\n/* 19-Aug-2013, tatu: Although we should not usually get called with\n*   parser of other types, there are some cases where this may happen:\n*   specifically, during structural value conversions.\n*/\nif (jp instanceof FromXmlParser) {\n((FromXmlParser) jp).addVirtualWrapping(_namesToWrap);\n}\n}",
+            "method_id": 63
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlTokenStream:_initStartElement()I",
+            "method_body": "private final int _initStartElement() throws XMLStreamException\n{\nfinal String ns = _xmlReader.getNamespaceURI();\nfinal String localName = _xmlReader.getLocalName();\n_attributeCount = _xmlReader.getAttributeCount();\n_nextAttributeIndex = 0;\n\n/* Support for virtual wrapping: in wrapping, may either\n* create a new wrapper scope (if in sub-tree, or matches\n* wrapper element itself), or implicitly close existing\n* scope.\n*/\nif (_currentWrapper != null) {\nif (_currentWrapper.matchesWrapper(localName, ns)) {\n_currentWrapper = _currentWrapper.intermediateWrapper();\n} else {\n// implicit end is more interesting:\n_localName = _currentWrapper.getWrapperLocalName();\n_namespaceURI = _currentWrapper.getWrapperNamespace();\n_currentWrapper = _currentWrapper.getParent();\n//System.out.println(\" START_ELEMENT (\"+localName+\") not matching '\"+_localName+\"'; add extra XML-END-ELEMENT!\");\n// Important! We also need to restore the START_ELEMENT, so:\n_nextLocalName = localName;\n_nextNamespaceURI = ns;\n_repeatElement = REPLAY_START_DELAYED;\nreturn (_currentState = XML_END_ELEMENT);\n}\n}\n_localName = localName;\n_namespaceURI = ns;\nreturn (_currentState = XML_START_ELEMENT);\n}",
+            "method_id": 64
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlBeanDeserializerModifier:modifyDeserializer(Lcom/fasterxml/jackson/databind/DeserializationConfig;Lcom/fasterxml/jackson/databind/BeanDescription;Lcom/fasterxml/jackson/databind/JsonDeserializer;)Lcom/fasterxml/jackson/databind/JsonDeserializer;",
+            "method_body": "public JsonDeserializer<?> modifyDeserializer(DeserializationConfig config,\nBeanDescription beanDesc, JsonDeserializer<?> deser0)\n{\nif (!(deser0 instanceof BeanDeserializerBase)) {\nreturn deser0;\n}\n/* 17-Aug-2013, tatu: One important special case first: if we have one \"XML Text\"\n* property, it may be exposed as VALUE_STRING token (depending on whether any attribute\n* values are exposed): and to deserialize from that, we need special handling unless POJO\n* has appropriate single-string creator method.\n*/\nBeanDeserializerBase deser = (BeanDeserializerBase) deser0;\n\n// Heuristics are bit tricky; but for now let's assume that if POJO\n// can already work with VALUE_STRING, it's ok and doesn't need extra support\nif (!deser.getValueInstantiator().canCreateFromString()) {\nSettableBeanProperty textProp = _findSoleTextProp(config, deser.properties());\nif (textProp != null) {\nreturn new XmlTextDeserializer(deser, textProp);\n}\n}\nreturn new WrapperHandlingDeserializer(deser);\n}",
+            "method_id": 65
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser:getCurrentName()Ljava/lang/String;",
+            "method_body": "public String getCurrentName() throws IOException\n{\n// start markers require information from parent\nString name;\nif (_currToken == JsonToken.START_OBJECT || _currToken == JsonToken.START_ARRAY) {\nXmlReadContext parent = _parsingContext.getParent();\nname = parent.getCurrentName();\n} else {\nname = _parsingContext.getCurrentName();\n}\n// sanity check\nif (name == null) {\nthrow new IllegalStateException(\"Missing name, in state: \"+_currToken);\n}\nreturn name;\n}",
+            "method_id": 66
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlReadContext:getCurrentName()Ljava/lang/String;",
+            "method_body": "public final String getCurrentName() { return _currentName; }\npublic final String getCurrentName() { return _currentName; }",
+            "method_id": 67
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlReadContext:setCurrentName(Ljava/lang/String;)V",
+            "method_body": "public void setCurrentName(String name) {\n_currentName = name;\n}",
+            "method_id": 68
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlTokenStream:getText()Ljava/lang/String;",
+            "method_body": "public String getText() { return _textValue; }\npublic String getText() { return _textValue; }",
+            "method_id": 69
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlTokenStream:getLocalName()Ljava/lang/String;",
+            "method_body": "public String getLocalName() { return _localName; }\npublic String getLocalName() { return _localName; }",
+            "method_id": 70
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlTokenStream:next()I",
+            "method_body": "public int next() throws IOException\n{\nif (_repeatElement != 0) {\nreturn (_currentState = _handleRepeatElement());\n}\ntry {\nreturn _next();\n} catch (XMLStreamException e) {\nStaxUtil.throwXmlAsIOException(e);\nreturn -1;\n}\n}",
+            "method_id": 71
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlTokenStream:_next()I",
+            "method_body": "private final int _next() throws XMLStreamException\n{\nswitch (_currentState) {\ncase XML_ATTRIBUTE_VALUE:\n++_nextAttributeIndex;\n// fall through\ncase XML_START_ELEMENT: // attributes to return?\nif (_nextAttributeIndex < _attributeCount) {\n_localName = _xmlReader.getAttributeLocalName(_nextAttributeIndex);\n_namespaceURI = _xmlReader.getAttributeNamespace(_nextAttributeIndex);\n_textValue = _xmlReader.getAttributeValue(_nextAttributeIndex);\nreturn (_currentState = XML_ATTRIBUTE_NAME);\n}\n// otherwise need to find START/END_ELEMENT or text\nString text = _collectUntilTag();\n// If it's START_ELEMENT, ignore any text\nif (_xmlReader.getEventType() == XMLStreamReader.START_ELEMENT) {\nreturn _initStartElement();\n}\n// For END_ELEMENT we will return text, if any\nif (text != null) {\n_textValue = text;\nreturn (_currentState = XML_TEXT);\n}\nreturn _handleEndElement();\ncase XML_ATTRIBUTE_NAME:\n// if we just returned name, will need to just send value next\nreturn (_currentState = XML_ATTRIBUTE_VALUE);\ncase XML_TEXT:\n// text is always followed by END_ELEMENT\nreturn _handleEndElement();\ncase XML_END:\nreturn XML_END;\n//            throw new IllegalStateException(\"No more XML tokens available (end of input)\");\n}\n\n// Ok: must be END_ELEMENT; see what tag we get (or end)\nswitch (_skipUntilTag()) {\ncase XMLStreamConstants.END_DOCUMENT:\nreturn (_currentState = XML_END);\ncase XMLStreamConstants.END_ELEMENT:\nreturn _handleEndElement();\n}\n// START_ELEMENT...\nreturn _initStartElement();\n}",
+            "method_id": 72
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlTokenStream:_collectUntilTag()Ljava/lang/String;",
+            "method_body": "private final String _collectUntilTag() throws XMLStreamException\n{\nString text = null;\nwhile (true) {\nswitch (_xmlReader.next()) {\ncase XMLStreamConstants.START_ELEMENT:\ncase XMLStreamConstants.END_ELEMENT:\ncase XMLStreamConstants.END_DOCUMENT:\nreturn text;\n// note: SPACE is ignorable (and seldom seen), not to be included\ncase XMLStreamConstants.CHARACTERS:\ncase XMLStreamConstants.CDATA:\nif (text == null) {\ntext = _xmlReader.getText();\n} else { // can be optimized in future, if need be:\ntext += _xmlReader.getText();\n}\nbreak;\ndefault:\n// any other type (proc instr, comment etc) is just ignored\n}\n}\n}",
+            "method_id": 73
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser:getText()Ljava/lang/String;",
+            "method_body": "public String getText() throws IOException\n{\nif (_currToken == null) {\nreturn null;\n}\nswitch (_currToken) {\ncase FIELD_NAME:\nreturn getCurrentName();\ncase VALUE_STRING:\nreturn _currText;\ndefault:\nreturn _currToken.asString();\n}\n}",
+            "method_id": 74
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser:isExpectedStartArrayToken()Z",
+            "method_body": "public boolean isExpectedStartArrayToken()\n{\nJsonToken t = _currToken;\nif (t == JsonToken.START_OBJECT) {\n_currToken = JsonToken.START_ARRAY;\n// Ok: must replace current context with array as well\n_parsingContext.convertToArray();\n//System.out.println(\" isExpectedArrayStart: OBJ->Array, wraps now: \"+_parsingContext.getNamesToWrap());\n// And just in case a field name was to be returned, wipe it\n_nextToken = null;\n// and last thing, [dataformat-xml#33], better ignore attributes\n_xmlTokens.skipAttributes();\nreturn true;\n}\n//System.out.println(\" isExpectedArrayStart?: t=\"+t);\nreturn (t == JsonToken.START_ARRAY);\n}",
+            "method_id": 75
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.XmlMapper:setDefaultUseWrapper(Z)Lcom/fasterxml/jackson/dataformat/xml/XmlMapper;",
+            "method_body": "public XmlMapper setDefaultUseWrapper(boolean state) {\n// ser and deser configs should usually have the same introspector, so:\nAnnotationIntrospector ai0 = getDeserializationConfig().getAnnotationIntrospector();\nfor (AnnotationIntrospector ai : ai0.allIntrospectors()) {\nif (ai instanceof XmlAnnotationIntrospector) {\n((XmlAnnotationIntrospector) ai).setDefaultUseWrapper(state);\n}\n}\nreturn this;\n}",
+            "method_id": 76
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.JacksonXmlAnnotationIntrospector:setDefaultUseWrapper(Z)V",
+            "method_body": "public void setDefaultUseWrapper(boolean b) {\n_cfgDefaultUseWrapper = b;\n}",
+            "method_id": 77
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.ElementWrapper:isMatching()Z",
+            "method_body": "public boolean isMatching() { return _wrapperName != null; }\npublic boolean isMatching() { return _wrapperName != null; }",
+            "method_id": 78
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.ElementWrapper:getWrapperLocalName()Ljava/lang/String;",
+            "method_body": "public String getWrapperLocalName() { return _wrapperName; }\npublic String getWrapperLocalName() { return _wrapperName; }",
+            "method_id": 79
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.ElementWrapper:getWrapperNamespace()Ljava/lang/String;",
+            "method_body": "public String getWrapperNamespace() { return _wrapperNamespace; }\npublic String getWrapperNamespace() { return _wrapperNamespace; }",
+            "method_id": 80
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.ElementWrapper:getParent()Lcom/fasterxml/jackson/dataformat/xml/deser/ElementWrapper;",
+            "method_body": "public ElementWrapper getParent() { return _parent; }\npublic ElementWrapper getParent() { return _parent; }",
+            "method_id": 81
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlTokenStream:_handleEndElement()I",
+            "method_body": "private final int _handleEndElement()\n{\nif (_currentWrapper != null) {\nElementWrapper w = _currentWrapper;\n// important: if we close the scope, must duplicate END_ELEMENT as well\nif (w.isMatching()) {\n_repeatElement = REPLAY_END;\n_localName = w.getWrapperLocalName();\n_namespaceURI = w.getWrapperNamespace();\n_currentWrapper = _currentWrapper.getParent();\n//System.out.println(\" IMPLICIT requestRepeat of END_ELEMENT '\"+_localName);\n} else {\n_currentWrapper = _currentWrapper.getParent();\n}\n}\nreturn (_currentState = XML_END_ELEMENT);\n}",
+            "method_id": 82
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlTokenStream:_skipUntilTag()I",
+            "method_body": "private final int _skipUntilTag() throws XMLStreamException\n{\nwhile (_xmlReader.hasNext()) {\nint type;\nswitch (type = _xmlReader.next()) {\ncase XMLStreamConstants.START_ELEMENT:\ncase XMLStreamConstants.END_ELEMENT:\ncase XMLStreamConstants.END_DOCUMENT:\nreturn type;\ndefault:\n// any other type (proc instr, comment etc) is just ignored\n}\n}\nthrow new IllegalStateException(\"Expected to find a tag, instead reached end of input\");\n}",
+            "method_id": 83
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlReadContext:convertToArray()V",
+            "method_body": "protected void convertToArray() {\n_type = TYPE_ARRAY;\n}",
+            "method_id": 84
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlTokenStream:skipAttributes()V",
+            "method_body": "protected void skipAttributes()\n{\nif (_currentState == XML_ATTRIBUTE_NAME) {\n_attributeCount = 0;\n_currentState = XML_START_ELEMENT;\n} else if (_currentState == XML_START_ELEMENT) {\n/* 06-Jan-2012, tatu: As per [#47] it looks like we should NOT do anything\n*   in this particular case, because it occurs when original element had\n*   no attributes and we now point to the first child element.\n*/\n//              _attributeCount = 0;\n} else if (_currentState == XML_TEXT) {\n; // nothing to do... is it even legal?\n} else {\nthrow new IllegalStateException(\"Current state not XML_START_ELEMENT or XML_ATTRIBUTE_NAME (\"\n+XML_START_ELEMENT+\") but \"+_currentState);\n}\n}",
+            "method_id": 85
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlReadContext:getParent()Lcom/fasterxml/jackson/dataformat/xml/deser/XmlReadContext;",
+            "method_body": "public final XmlReadContext getParent() { return _parent; }\npublic final XmlReadContext getParent() { return _parent; }",
+            "method_id": 86
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlReadContext:getNamesToWrap()Ljava/util/Set;",
+            "method_body": "public Set<String> getNamesToWrap() {\nreturn _namesToWrap;\n}",
+            "method_id": 87
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.XmlTokenStream:skipEndElement()V",
+            "method_body": "public void skipEndElement() throws IOException\n{\nint type = next();\nif (type != XML_END_ELEMENT) {\nthrow new IOException(\"Expected END_ELEMENT, got event of type \"+type);\n}\n}",
+            "method_id": 88
+        },
+        {
+            "method_signature": "com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser:_isEmpty(Ljava/lang/String;)Z",
+            "method_body": "protected boolean _isEmpty(String str)\n{\nint len = (str == null) ? 0 : str.length();\nif (len > 0) {\nfor (int i = 0; i < len; ++i) {\nif (str.charAt(i) > ' ') {\nreturn false;\n}\n}\n}\nreturn true;\n}",
+            "method_id": 89
+        }
+    ]
+}
